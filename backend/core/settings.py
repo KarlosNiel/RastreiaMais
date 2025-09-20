@@ -29,14 +29,17 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-THIRD_APPS = []
+THIRD_APPS = [
+    
+]
 
 LOCAL_APPS = [
     'accounts',
     'alerts',
+    'appointments',
     'commons',
     'conditions',
-    'consultations',
+    'locations',
     'medications',
     'pendency',
     'reports'
