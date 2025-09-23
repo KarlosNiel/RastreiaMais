@@ -1,3 +1,253 @@
+@config "../tailwind.config.js";
 @import "tailwindcss";
 
-@config "../tailwind.config.js"
+/* ===================== Vars (mantidas) ===================== */
+:root {
+  --brand: #ec4d23;
+
+  /* Campos (light) */
+  --field-bg: #f7f7f7;
+  --field-border: #ededed;
+
+  /* Controles nativos */
+  accent-color: var(--brand);
+  color-scheme: light;
+}
+.dark {
+  --brand: #ec4d23;
+
+  /* Campos (dark) */
+  --field-bg: #121622;
+  --field-border: #1f2937;
+
+  accent-color: var(--brand);
+  color-scheme: dark;
+}
+
+/* =================== Design Tokens (Tailwind v4) =================== */
+/* Baseline de 4px + degraus usados no grid (gutter 24, margem 32) */
+@theme {
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px; /* gutter */
+  --spacing-8: 32px; /* margin container */
+  --spacing-9: 36px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-15: 60px;
+  --spacing-18: 72px;
+  --spacing-20: 80px;
+  --spacing-30: 120px;
+  --spacing-40: 160px;
+  --spacing-50: 200px;
+
+  /* Sombra/raio em sintonia com o theme extend */
+  --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.06);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* ============================== Base =============================== */
+html,
+body {
+  height: 100%;
+}
+body {
+  /* HeroUI define content/background; herdamos aqui */
+  @apply min-h-dvh antialiased bg-content1 text-foreground font-sans;
+  text-rendering: optimizeLegibility;
+}
+
+/* Mídia embarcada responsiva */
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Seleção com leve brand */
+::selection {
+  background: color-mix(in oklab, var(--brand) 18%, transparent);
+}
+
+/* Links */
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Foco: evita borda dupla quando o controle já tem focus-ring do HeroUI */
+:where(a, button, [role="button"], summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Caret/ponteiro nos campos */
+input,
+textarea {
+  caret-color: var(--brand);
+}
+
+/* Tipografia por tag (padrão) */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-heading;
+}
+h1 {
+  @apply text-2xl md:text-3xl font-semibold;
+}
+h2 {
+  @apply text-xl md:text-2xl font-semibold;
+}
+h3 {
+  @apply text-lg md:text-xl font-semibold;
+}
+p {
+  @apply leading-relaxed;
+}
+small {
+  @apply text-foreground/60;
+}
+
+/* ============================ Utilitários =========================== */
+/* Container responsivo padrão (genérico) */
+@utility container {
+  @apply mx-auto w-full max-w-7xl px-4;
+}
+
+/* Container do app alinhado ao grid do Figma (margem 32/40) */
+@utility container-app {
+  @apply mx-auto w-full max-w-[1280px] px-8 md:px-10;
+}
+
+/* Grid 12 colunas – gutter 24px, linhas com baseline 16px */
+@layer utilities {
+  .grid-12 {
+    @apply grid grid-cols-12 gap-x-6 gap-y-4;
+  }
+
+  /* Stacks verticais previsíveis */
+  .stack-4 > * + * {
+    margin-top: 1rem;
+  } /* 16px */
+  .stack-6 > * + * {
+    margin-top: 1.5rem;
+  } /* 24px */
+  .stack-8 > * + * {
+    margin-top: 2rem;
+  } /* 32px */
+
+  /* Tipografia utilitária (px/linha) */
+  .ty-display {
+    @apply text-[32px] leading-[40px] font-bold tracking-tight;
+  }
+  .ty-title {
+    @apply text-[28px] leading-[36px] font-bold tracking-tight;
+  }
+  .ty-h2 {
+    @apply text-[24px] leading-[32px] font-semibold;
+  }
+  .ty-sub {
+    @apply text-[20px] leading-[28px] font-semibold;
+  }
+  .ty-body {
+    @apply text-[16px] leading-[24px] font-normal;
+  }
+  .ty-meta {
+    @apply text-[14px] leading-[20px] font-medium;
+  }
+  .ty-help {
+    @apply text-[12px] leading-[18px] font-normal;
+  }
+
+  /* Cores/limites de cartão rápidos */
+  .bg-card {
+    background: var(--field-bg);
+  }
+  .border-base {
+    border: 1px solid var(--field-border);
+  }
+  .border-card {
+    border-color: var(--field-border);
+  }
+  .text-muted {
+    color: color-mix(in oklab, currentColor 60%, transparent);
+  }
+}
+
+/* ====================== Tabelas & Scrollbar ======================== */
+.table-basic thead {
+  background-color: color-mix(in oklab, currentColor 5%, transparent);
+}
+.table-basic th,
+.table-basic td {
+  @apply p-3 text-sm;
+}
+.table-basic tbody tr + tr {
+  border-top: 1px solid var(--field-border);
+}
+
+/* Scrollbar webkit (suave) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, currentColor 20%, transparent);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ============ Preferência por menos movimento ============ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === Skeleton util (server-safe) === */
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@layer utilities {
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: color-mix(in oklab, currentColor 8%, transparent);
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, currentColor 14%, transparent),
+      transparent
+    );
+    animation: skeleton-shimmer 1.2s infinite;
+  }
+}
