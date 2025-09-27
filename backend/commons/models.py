@@ -81,4 +81,18 @@ class BaseModel(models.Model):
 
     def hard_delete(self, keep_parents=False): #* Esse keep_parents serve pra dizer se os objetos pais do objeto deletado devem ser deletados também
         super().delete(keep_parents=keep_parents)
+    
+    def get_creator_profile(self, user):
+        """Retorna o tipo de user que criou o objeto"""
+        if not user:
+            return None
+        
+        from accounts.models import PatientUser, ProfessionalUser, ManagerUser
+        
+        for model in [PatientUser, ProfessionalUser, ManagerUser]:
+            try:
+                return model.objects.get(user=user)
+            except model.DoesNotExist:
+                continue 
+        return None
 
