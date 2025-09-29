@@ -5,7 +5,7 @@ type Pattern = string; // prefixo da rota; ex: "/dashboard", "/pacientes"
 
 const accessMatrix: Record<Role, Pattern[]> = {
   MANAGER: [
-    "/dashboard",
+    "/gestor",
     "/config/usuarios-e-permissoes",
     "/profissional",
     "/pacientes",

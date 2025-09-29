@@ -4,22 +4,9 @@
 import { HeroUIProvider } from "@heroui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import dynamic from "next/dynamic";
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 
-// Carrega DevTools somente em desenvolvimento (sem SSR)
-const RQDevtools: ComponentType<any> | null =
-  process.env.NODE_ENV === "development"
-    ? dynamic(
-        () =>
-          import("@tanstack/react-query-devtools").then(
-            (m) => m.ReactQueryDevtools
-          ),
-        { ssr: false }
-      )
-    : null;
-
-// Singleton para o QueryClient (evita recriar entre renders)
+// Singleton do QueryClient (persiste entre HMR)
 function getQueryClient() {
   const g = globalThis as unknown as { __rq?: QueryClient };
   if (!g.__rq) {
@@ -39,22 +26,17 @@ function getQueryClient() {
 }
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const queryClient = getQueryClient();
-
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light" // ou "system" se preferir seguir o SO
+      defaultTheme="light" // ou "system"
       enableSystem
       disableTransitionOnChange
       storageKey="rastreia-theme"
     >
       <HeroUIProvider className="font-sans">
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={getQueryClient()}>
           {children}
-          {RQDevtools ? (
-            <RQDevtools initialIsOpen={false} buttonPosition="bottom-right" />
-          ) : null}
         </QueryClientProvider>
       </HeroUIProvider>
     </NextThemesProvider>

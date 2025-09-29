@@ -4,7 +4,7 @@ export const routes = {
   login: "/auth/login",
 
   // gestor
-  dashboard: "/dashboard",
+  dashboard: "/gestor",
   usersAndRoles: "/config/usuarios-e-permissoes",
 
   // profissional

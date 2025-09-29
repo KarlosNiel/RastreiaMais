@@ -1,9 +1,15 @@
 @config "../tailwind.config.js";
 @import "tailwindcss";
 
-/* ===================== Vars (mantidas) ===================== */
+/* ===================== Vars ===================== */
 :root {
   --brand: #ec4d23;
+  --focus: color-mix(
+    in oklab,
+    var(--brand) 88%,
+    white 12%
+  ); /* cor do anel de foco */
+  --app-bg: var(--nextui-background, #ffffff);
 
   /* Campos (light) */
   --field-bg: #f7f7f7;
@@ -15,6 +21,8 @@
 }
 .dark {
   --brand: #ec4d23;
+  --focus: color-mix(in oklab, var(--brand) 90%, black 10%);
+  --app-bg: var(--nextui-background, #0b0d12);
 
   /* Campos (dark) */
   --field-bg: #121622;
@@ -44,7 +52,7 @@
   --spacing-40: 160px;
   --spacing-50: 200px;
 
-  /* Sombra/raio em sintonia com o theme extend */
+  /* Sombras e raios */
   --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.06);
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -56,13 +64,12 @@ html,
 body {
   height: 100%;
 }
+
 body {
-  /* HeroUI define content/background; herdamos aqui */
   @apply min-h-dvh antialiased bg-content1 text-foreground font-sans;
   text-rendering: optimizeLegibility;
 }
 
-/* Mídia embarcada responsiva */
 img,
 svg,
 video,
@@ -72,12 +79,11 @@ canvas {
   height: auto;
 }
 
-/* Seleção com leve brand */
 ::selection {
   background: color-mix(in oklab, var(--brand) 18%, transparent);
 }
 
-/* Links */
+/* Links em texto corrido */
 a {
   color: var(--brand);
   text-decoration: none;
@@ -86,20 +92,47 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Foco: evita borda dupla quando o controle já tem focus-ring do HeroUI */
+/* NÃO pinte âncoras que são botões (HeroUI usa <a class="inline-flex ...">) */
+a.inline-flex,
+[data-slot] a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/* Botão de marca: garante branco em TODOS os slots do HeroUI */
+.btn-brand {
+  background: var(--brand);
+}
+.btn-brand [data-slot="label"],
+.btn-brand [data-slot="content"],
+.btn-brand [data-slot="start-content"],
+.btn-brand [data-slot="end-content"],
+.btn-brand span {
+  color: #fff !important;
+}
+.btn-brand[data-hover="true"] {
+  opacity: 0.9;
+}
+/* Evita sublinhar link dentro de botões */
+.btn-brand a:hover,
+[data-slot] a:hover {
+  text-decoration: none;
+}
+
+/* Foco: se o componente já usa ring, só definimos a cor */
 :where(a, button, [role="button"], summary):focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
-/* Caret/ponteiro nos campos */
+/* Ponteiro/caret em campos nativos (HeroUI já estiliza os dele) */
 input,
 textarea {
   caret-color: var(--brand);
 }
 
-/* Tipografia por tag (padrão) */
+/* Tipografia por tag */
 h1,
 h2,
 h3,
@@ -125,23 +158,21 @@ small {
 }
 
 /* ============================ Utilitários =========================== */
-/* Container responsivo padrão (genérico) */
+/* container padrão e container alinhado ao Figma */
 @utility container {
   @apply mx-auto w-full max-w-7xl px-4;
 }
-
-/* Container do app alinhado ao grid do Figma (margem 32/40) */
 @utility container-app {
   @apply mx-auto w-full max-w-[1280px] px-8 md:px-10;
 }
 
-/* Grid 12 colunas – gutter 24px, linhas com baseline 16px */
+/* Grid 12 colunas – gutter 24px, baseline 16px nas linhas */
 @layer utilities {
   .grid-12 {
     @apply grid grid-cols-12 gap-x-6 gap-y-4;
   }
 
-  /* Stacks verticais previsíveis */
+  /* stacks verticais previsíveis */
   .stack-4 > * + * {
     margin-top: 1rem;
   } /* 16px */
@@ -152,7 +183,7 @@ small {
     margin-top: 2rem;
   } /* 32px */
 
-  /* Tipografia utilitária (px/linha) */
+  /* Tipografia utilitária */
   .ty-display {
     @apply text-[32px] leading-[40px] font-bold tracking-tight;
   }
@@ -175,7 +206,7 @@ small {
     @apply text-[12px] leading-[18px] font-normal;
   }
 
-  /* Cores/limites de cartão rápidos */
+  /* Cartão rápido */
   .bg-card {
     background: var(--field-bg);
   }
@@ -188,9 +219,58 @@ small {
   .text-muted {
     color: color-mix(in oklab, currentColor 60%, transparent);
   }
+
+  /* Ring helpers (usados pelos seus botões) */
+  .ring-focus {
+    --tw-ring-color: var(--focus);
+  }
+  .ring-offset-app {
+    --tw-ring-offset-color: var(--app-bg);
+  }
+
+  /* Faixa colorida à esquerda (util genérica) */
+  .accent-left {
+    position: relative;
+    overflow: hidden;
+  }
+  .accent-left::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 6px; /* ajuste p/ 8px se quiser mais “peso” */
+    border-top-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+    background: var(--accent, var(--brand));
+  }
+
+  /* Badge util (ex.: +2 / -1 nos cards de KPI) */
+  .badge {
+    @apply inline-flex items-center h-6 rounded-full px-2 text-[12px] font-medium border;
+  }
+  .badge--up {
+    @apply border-emerald-300 text-emerald-700 bg-emerald-50
+           dark:border-emerald-700 dark:text-emerald-300 dark:bg-emerald-900/20;
+  }
+  .badge--down {
+    @apply border-rose-300 text-rose-700 bg-rose-50
+           dark:border-rose-600 dark:text-rose-300 dark:bg-rose-900/20;
+  }
+
+  /* Paginação util (container + item) */
+  .paginate {
+    @apply flex items-center gap-2;
+  }
+  .paginate-btn {
+    @apply h-8 min-w-8 px-2 rounded-lg border border-divider text-sm
+           hover:bg-content2 data-[active=true]:bg-[var(--brand)]
+           data-[active=true]:text-white;
+  }
 }
 
 /* ====================== Tabelas & Scrollbar ======================== */
+.table-basic {
+  --row-sep: var(--field-border);
+}
 .table-basic thead {
   background-color: color-mix(in oklab, currentColor 5%, transparent);
 }
@@ -199,7 +279,30 @@ small {
   @apply p-3 text-sm;
 }
 .table-basic tbody tr + tr {
-  border-top: 1px solid var(--field-border);
+  border-top: 1px solid var(--row-sep);
+}
+
+/* Zebra suave + hover */
+.table-zebra tbody tr:nth-child(odd) {
+  background: color-mix(in oklab, currentColor 3.5%, transparent);
+}
+.table-zebra tbody tr:hover {
+  background: color-mix(in oklab, currentColor 7%, transparent);
+}
+
+/* Sticky header opcional */
+.table-sticky thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Célula truncando com reticências */
+.td-ellipsis {
+  max-width: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Scrollbar webkit (suave) */

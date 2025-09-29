@@ -11,7 +11,7 @@ export type Role = "PATIENT" | "PROFESSIONAL" | "MANAGER";
 
 export const navByRole: Record<Role, { label: string; href: string }[]> = {
   MANAGER: [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Gestor", href: "/gestor" },
     { label: "Profissional", href: "/profissional" },
     { label: "Pacientes", href: "/pacientes" },
     { label: "Configuração", href: "/config/usuarios-e-permissoes" },

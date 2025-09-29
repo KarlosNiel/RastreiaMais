@@ -52,7 +52,6 @@ export default function LoginPacientePage() {
           value={cpf}
           onValueChange={(v) => setCpf(formatCpf(v))}
           placeholder="000.000.000-00"
-          description="Formato: 000.000.000-00"
           isRequired
           autoFocus
           autoComplete="off"

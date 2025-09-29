@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 type Role = "PATIENT" | "PROFESSIONAL" | "MANAGER" | null;
 
 const NAV: { label: string; href: string; roles: Exclude<Role, null>[] }[] = [
-  { label: "Dashboard Gestor", href: "/dashboard", roles: ["MANAGER"] },
+  { label: "Dashboard Gestor", href: "/gestor", roles: ["MANAGER"] },
   {
     label: "Profissional",
     href: "/profissional",

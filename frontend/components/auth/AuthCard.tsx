@@ -27,10 +27,10 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
         className
       )}
     >
-      {/* md+: duas colunas; a da esquerda (imagem) estica na mesma altura */}
       <div className="flex flex-col md:flex-row">
+        {/* Coluna da imagem (desktop) */}
         {imageSrc ? (
-          <div className="relative hidden md:block md:w-1/2 self-stretch overflow-hidden md:rounded-l-2xl">
+          <div className="relative hidden self-stretch overflow-hidden md:block md:w-1/2 md:rounded-l-2xl">
             <Image
               src={imageSrc}
               alt="Imagem ilustrativa de autenticação"
@@ -39,31 +39,30 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
               priority
               className="object-cover"
             />
-            {/* leve máscara para contraste em dark/light */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 to-transparent dark:from-black/30" />
           </div>
         ) : null}
 
-        {/* Coluna de conteúdo */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col">
+        {/* Coluna do conteúdo */}
+        <div className="flex w-full flex-col p-8 md:w-1/2 md:p-12">
           {/* Marca */}
-          <div className="text-brand-primary font-heading ty-h2 mb-8 select-none">
+          <div className="mb-6 select-none font-heading text-[var(--brand)] ty-h2">
             Rastreia+
           </div>
 
-          {/* Heading com escala tipográfica do sistema */}
-          <h1 className="ty-title md:ty-display text-brand-primary text-center mb-8">
+          {/* Heading (alinhado ao Figma) */}
+          <h1 className="mb-8 text-left font-heading text-[var(--brand)] ty-title md:ty-display">
             {heading}
           </h1>
 
-          {/* Form em largura controlada para não “esticar” demais */}
-          <div className="w-full mx-auto md:max-w-sm stack-6">{children}</div>
+          {/* Área do formulário */}
+          <div className="stack-6 mx-auto w-full md:max-w-sm">{children}</div>
 
-          {/* Suporte */}
+          {/* Contato de suporte */}
           <div className="mt-8 text-center text-sm">
             <p className="text-foreground/60">Precisa falar com a gente?</p>
             <a
-              className="text-brand-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 rounded-md"
+              className="underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]/50 rounded-md text-[var(--brand)]"
               href={`mailto:${supportEmail}`}
               aria-label={`Enviar email para ${supportEmail}`}
             >
@@ -71,7 +70,6 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
             </a>
           </div>
 
-          {/* Divisor + Footer */}
           <Divider className="mt-8" />
           <div className="pt-4 text-center text-xs text-foreground/60">
             © <time suppressHydrationWarning>{new Date().getFullYear()}</time>{" "}
@@ -83,11 +81,7 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
   );
 }
 
-/* ====================== Campos ======================
-   - label fora do campo (sem sobreposição)
-   - altura exata h-12 (48px)
-   - foco/hover alinhados ao tema
-*/
+/* ====================== Campos ====================== */
 export function TextField(props: React.ComponentProps<typeof Input>) {
   return (
     <Input
@@ -118,17 +112,20 @@ export function TextField(props: React.ComponentProps<typeof Input>) {
   );
 }
 
-/* Botão com brand + micro feedback de clique */
+/* ====================== Botão Submit ====================== */
 export function SubmitButton(props: React.ComponentProps<typeof Button>) {
   return (
     <Button
       type="submit"
+      color="primary"
+      variant="solid"
+      radius="xl"
       className={cn(
         "h-12 w-full rounded-2xl text-base",
-        "bg-brand-primary text-white",
         "shadow-[0_3px_0_rgba(0,0,0,0.08)] hover:opacity-95",
         "active:translate-y-px active:shadow-[0_2px_0_rgba(0,0,0,0.10)]",
-        "transition"
+        // Segurança extra caso estilhos globais de <a> mudem:
+        "[&_[data-slot=label]]:!text-white [&_[data-slot=content]]:!text-white [&_span]:!text-white"
       )}
       {...props}
     />

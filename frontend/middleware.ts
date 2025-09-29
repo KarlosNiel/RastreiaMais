@@ -11,7 +11,7 @@ const ENABLE_PATIENT_PORTAL =
 
 // Mapeamento de prefixo de rota -> papéis permitidos
 const ACL: Array<{ prefix: string; roles: Role[]; enabled?: boolean }> = [
-  { prefix: "/dashboard", roles: ["MANAGER"] },
+  { prefix: "/gestor", roles: ["MANAGER"] },
   { prefix: "/config", roles: ["MANAGER"] },
   { prefix: "/profissional", roles: ["PROFESSIONAL", "MANAGER"] },
   { prefix: "/pacientes", roles: ["PROFESSIONAL", "MANAGER"] },
@@ -58,7 +58,7 @@ export function middleware(req: NextRequest) {
 // Só roda nas áreas protegidas
 export const config = {
   matcher: [
-    "/dashboard/:path*",
+    "/gestor/:path*",
     "/config/:path*",
     "/profissional/:path*",
     "/pacientes/:path*",
