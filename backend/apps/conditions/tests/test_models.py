@@ -3,8 +3,8 @@ Testes para modelos do app conditions
 """
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from conditions.models import DCNT, HAS, DM, OtherDCNT
-from conditions.tests.factories import DCNTFactory, HASFactory, DMFactory, OtherDCNTFactory
+from apps.conditions.models import DCNT, HAS, DM, OtherDCNT
+from apps.conditions.tests.factories import DCNTFactory, HASFactory, DMFactory, OtherDCNTFactory
 
 
 class DCNTModelTest(TestCase):

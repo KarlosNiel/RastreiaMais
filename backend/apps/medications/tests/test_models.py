@@ -4,8 +4,8 @@ Testes para modelos do app medications
 from django.test import TestCase
 from django.utils import timezone
 from datetime import date, timedelta
-from accounts.tests.factories import PatientWithCreatorFactory
-from medications.models import Medication
+from apps.accounts.tests.factories import PatientWithCreatorFactory
+from apps.medications.models import Medication
 
 
 class MedicationModelTest(TestCase):

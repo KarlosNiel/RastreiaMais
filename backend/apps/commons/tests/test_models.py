@@ -4,8 +4,8 @@ Testes para modelos do app commons
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from commons.models import BaseModel, SoftDeleteQuerySet, ActiveManager, AllManager
-from accounts.tests.factories import UserFactory
+from apps.commons.models import BaseModel, SoftDeleteQuerySet, ActiveManager, AllManager
+from apps.accounts.tests.factories import UserFactory
 
 
 class CommonsModelTest(TestCase):
@@ -13,22 +13,22 @@ class CommonsModelTest(TestCase):
     
     def test_base_model_import(self):
         """Testa que BaseModel pode ser importado"""
-        from commons.models import BaseModel
+        from apps.commons.models import BaseModel
         self.assertTrue(True, "BaseModel pode ser importado")
     
     def test_soft_delete_queryset_import(self):
         """Testa que SoftDeleteQuerySet pode ser importado"""
-        from commons.models import SoftDeleteQuerySet
+        from apps.commons.models import SoftDeleteQuerySet
         self.assertTrue(True, "SoftDeleteQuerySet pode ser importado")
     
     def test_active_manager_import(self):
         """Testa que ActiveManager pode ser importado"""
-        from commons.models import ActiveManager
+        from apps.commons.models import ActiveManager
         self.assertTrue(True, "ActiveManager pode ser importado")
     
     def test_all_manager_import(self):
         """Testa que AllManager pode ser importado"""
-        from commons.models import AllManager
+        from apps.commons.models import AllManager
         self.assertTrue(True, "AllManager pode ser importado")
     
     def test_base_model_abstract(self):
@@ -81,7 +81,7 @@ class CommonsPlaceholderTest(TestCase):
     def test_commons_app_exists(self):
         """Testa que o app commons existe e pode ser importado"""
         try:
-            import commons
+            import apps.commons
             self.assertTrue(True, "App commons pode ser importado")
         except ImportError:
             self.fail("App commons não pode ser importado")

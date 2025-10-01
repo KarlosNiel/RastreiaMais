@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
-from accounts.models import PatientUser, ProfessionalUser, ManagerUser
+from apps.accounts.models import PatientUser, ProfessionalUser, ManagerUser
 
 
 class PatientUserModelTest(TestCase):

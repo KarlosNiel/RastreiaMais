@@ -39,15 +39,15 @@ def run_tests_by_app():
     
     # Lista de apps para testar com descrições
     apps_to_test = {
-        'accounts': 'Sistema de usuários (pacientes, profissionais, managers)',
-        'medications': 'Gerenciamento de medicamentos',
-        'appointments': 'Sistema de consultas e agendamentos',
-        'alerts': 'Sistema de alertas',
-        'conditions': 'Condições de saúde (DCNT, HAS, DM)',
-        'locations': 'Endereços, micro áreas e instituições',
-        'pendency': 'Sistema de pendências',
-        'reports': 'Sistema de relatórios',
-        'commons': 'Modelos base e utilitários comuns'
+        'apps.accounts': 'Sistema de usuários (pacientes, profissionais, managers)',
+        'apps.medications': 'Gerenciamento de medicamentos',
+        'apps.appointments': 'Sistema de consultas e agendamentos',
+        'apps.alerts': 'Sistema de alertas',
+        'apps.conditions': 'Condições de saúde (DCNT, HAS, DM)',
+        'apps.locations': 'Endereços, micro áreas e instituições',
+        'apps.pendencies': 'Sistema de pendências',
+        'apps.reports': 'Sistema de relatórios',
+        'apps.commons': 'Modelos base e utilitários comuns'
     }
     
     print("=" * 80)
@@ -197,15 +197,15 @@ def run_tests():
     
     # Lista de apps para testar
     apps_to_test = [
-        'accounts',
-        'medications', 
-        'appointments',
-        'alerts',
-        'conditions',
-        'locations',
-        'pendency',
-        'reports',
-        'commons'
+        'apps.accounts',
+        'apps.medications', 
+        'apps.appointments',
+        'apps.alerts',
+        'apps.conditions',
+        'apps.locations',
+        'apps.pendencies',
+        'apps.reports',
+        'apps.commons'
     ]
     
     failures = test_runner.run_tests(apps_to_test)

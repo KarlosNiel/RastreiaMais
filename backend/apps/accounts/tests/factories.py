@@ -3,7 +3,7 @@ Factories para criação de dados de teste
 """
 import factory
 from django.contrib.auth.models import User
-from accounts.models import PatientUser, ProfessionalUser, ManagerUser
+from apps.accounts.models import PatientUser, ProfessionalUser, ManagerUser
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -76,7 +76,11 @@ class ProfessionalWithManagerFactory(factory.django.DjangoModelFactory):
     
     user = factory.SubFactory(UserFactory)
     role = factory.Iterator(['Odontologista', 'Enfermeiro', 'ACS'])
-    created_by = factory.SubFactory(ManagerWithProfileFactory)
+    created_by = factory.SelfAttribute("manager.user")
+
+    # Criamos junto um manager para preencher o created_by
+    manager = factory.SubFactory(ManagerWithProfileFactory)
+
 
 
 class PatientWithCreatorFactory(factory.django.DjangoModelFactory):

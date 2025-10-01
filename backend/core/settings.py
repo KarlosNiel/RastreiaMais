@@ -152,5 +152,27 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Documentação da API para auxiliar APS e UBS no gerenciamento de Pessoas com Doenças Crônicas não transmissiveis.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    "SCHEMA_PATH_PREFIX": r"/api"
+    "SCHEMA_PATH_PREFIX": r"/api",
+
+    "TAGS": [
+        {"name": "token", "description": "Obtenção e renovação de tokens JWT para autenticação"},
+        
+        {"name": "Accounts - Manager", "description": "Gerenciamento de contas de gestores do sistema"},
+        {"name": "Accounts - Professional", "description": "Gerenciamento de contas de profissionais de saúde"},
+        {"name": "Accounts - Patient", "description": "Gerenciamento de contas de pacientes"},
+        
+        {"name": "Alerts", "description": "Criação e acompanhamento de alertas relacionados às condições de saúde"},
+        {"name": "Appointments", "description": "Agendamento e gerenciamento de consultas e exames"},
+        
+        {"name": "Conditions - HAS", "description": "Gerenciamento de casos de Hipertensão Arterial Sistólica"},
+        {"name": "Conditions - DM", "description": "Gerenciamento de casos de Diabetes Mellitus"},
+        {"name": "Conditions - Other", "description": "Gerenciamento de outras doenças crônicas não transmissíveis (DCNTs)"},
+        
+        {"name": "Locations - Address", "description": "Gerenciamento de endereços de pacientes e instituições"},
+        {"name": "Locations - Micro-Area", "description": "Gerenciamento das microáreas de cobertura da APS"},
+        {"name": "Locations - Institution", "description": "Gerenciamento das instituições de saúde cadastradas"},
+        
+        {"name": "Medications", "description": "Cadastro e gerenciamento de medicamentos prescritos"},
+        {"name": "Pendencies", "description": "Gerenciamento de pendências"},
+    ]
 }

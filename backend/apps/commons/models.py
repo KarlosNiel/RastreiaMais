@@ -87,7 +87,7 @@ class BaseModel(models.Model):
         if not user:
             return None
         
-        from accounts.models import PatientUser, ProfessionalUser, ManagerUser
+        from apps.accounts.models import PatientUser, ProfessionalUser, ManagerUser
         
         for model in [PatientUser, ProfessionalUser, ManagerUser]:
             try:

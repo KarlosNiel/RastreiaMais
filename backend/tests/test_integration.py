@@ -4,10 +4,10 @@ Testes de integração para o sistema completo
 from django.test import TestCase, TransactionTestCase
 from django.contrib.auth.models import User
 from django.db import transaction
-from accounts.models import PatientUser, ProfessionalUser, ManagerUser
-from medications.models import Medication
-from appointments.models import Appointment
-from accounts.tests.factories import CompleteUserHierarchyFactory
+from apps.accounts.models import PatientUser, ProfessionalUser, ManagerUser
+from apps.medications.models import Medication
+from apps.appointments.models import Appointment
+from apps.accounts.tests.factories import CompleteUserHierarchyFactory
 from datetime import date, timedelta
 from django.utils import timezone
 

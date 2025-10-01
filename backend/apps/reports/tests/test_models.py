@@ -12,7 +12,7 @@ class ReportsPlaceholderTest(TestCase):
     def test_reports_app_exists(self):
         """Testa que o app reports existe e pode ser importado"""
         try:
-            import reports
+            import apps.reports
             self.assertTrue(True, "App reports pode ser importado")
         except ImportError:
             self.fail("App reports não pode ser importado")

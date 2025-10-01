@@ -2,8 +2,8 @@
 Testes para modelos do app pendency
 """
 from django.test import TestCase
-from pendencies.models import Pendency
-from pendencies.tests.factories import PendencyFactory
+from apps.pendencies.models import Pendency
+from apps.pendencies.tests.factories import PendencyFactory
 
 
 class PendencyModelTest(TestCase):

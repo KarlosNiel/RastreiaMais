@@ -60,7 +60,7 @@ class TestConfig:
         """Executa todos os testes"""
         TestRunner = get_runner(settings)
         test_runner = TestRunner()
-        failures = test_runner.run_tests(["accounts", "medications", "appointments"])
+        failures = test_runner.run_tests(["apps.accounts", "apps.medications", "apps.appointments"])
         return failures
 
 

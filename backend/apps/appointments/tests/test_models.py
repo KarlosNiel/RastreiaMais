@@ -4,8 +4,8 @@ Testes para modelos do app appointments
 from django.test import TestCase
 from django.utils import timezone
 from datetime import datetime, timedelta
-from accounts.tests.factories import PatientWithCreatorFactory, ProfessionalWithManagerFactory
-from appointments.models import Appointment
+from apps.accounts.tests.factories import PatientWithCreatorFactory, ProfessionalWithManagerFactory
+from apps.appointments.models import Appointment
 
 
 class AppointmentModelTest(TestCase):

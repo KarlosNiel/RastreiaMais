@@ -2,9 +2,9 @@
 Factories para criação de dados de teste do app pendency
 """
 import factory
-from pendencies.models import Pendency
-from accounts.tests.factories import PatientWithCreatorFactory
-from locations.tests.factories import MicroAreaFactory
+from apps.pendencies.models import Pendency
+from apps.accounts.tests.factories import PatientWithCreatorFactory
+from apps.locations.tests.factories import MicroAreaFactory
 
 
 class PendencyFactory(factory.django.DjangoModelFactory):
@@ -15,4 +15,4 @@ class PendencyFactory(factory.django.DjangoModelFactory):
     
     patient = factory.SubFactory(PatientWithCreatorFactory)
     micro_area = factory.SubFactory(MicroAreaFactory)
-    created_by = factory.SubFactory('accounts.tests.factories.UserFactory')
+    created_by = factory.SubFactory('apps.accounts.tests.factories.UserFactory')

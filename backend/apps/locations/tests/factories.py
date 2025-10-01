@@ -2,7 +2,7 @@
 Factories para criação de dados de teste do app locations
 """
 import factory
-from locations.models import Address, MicroArea, Institution
+from apps.locations.models import Address, MicroArea, Institution
 
 
 class AddressFactory(factory.django.DjangoModelFactory):
@@ -18,7 +18,7 @@ class AddressFactory(factory.django.DjangoModelFactory):
     number = factory.Faker('random_int', min=1, max=9999)
     complement = factory.Faker('secondary_address')
     zipcode = factory.Faker('postcode', locale='pt_BR')
-    created_by = factory.SubFactory('accounts.tests.factories.UserFactory')
+    created_by = factory.SubFactory('apps.accounts.tests.factories.UserFactory')
 
 
 class MicroAreaFactory(factory.django.DjangoModelFactory):
@@ -30,7 +30,7 @@ class MicroAreaFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Micro Área {n}')
     maps_localization = factory.Faker('url')
     address = factory.SubFactory(AddressFactory)
-    created_by = factory.SubFactory('accounts.tests.factories.UserFactory')
+    created_by = factory.SubFactory('apps.accounts.tests.factories.UserFactory')
 
 
 class InstitutionFactory(factory.django.DjangoModelFactory):
@@ -42,4 +42,4 @@ class InstitutionFactory(factory.django.DjangoModelFactory):
     name = factory.Faker('company')
     maps_localization = factory.Faker('url')
     address = factory.SubFactory(AddressFactory)
-    created_by = factory.SubFactory('accounts.tests.factories.UserFactory')
+    created_by = factory.SubFactory('apps.accounts.tests.factories.UserFactory')

@@ -12,7 +12,7 @@ class AlertsPlaceholderTest(TestCase):
     def test_alerts_app_exists(self):
         """Testa que o app alerts existe e pode ser importado"""
         try:
-            import alerts
+            import apps.alerts
             self.assertTrue(True, "App alerts pode ser importado")
         except ImportError:
             self.fail("App alerts não pode ser importado")

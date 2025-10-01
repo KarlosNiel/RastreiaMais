@@ -3,8 +3,8 @@ Testes para modelos do app locations
 """
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from locations.models import Address, MicroArea, Institution
-from locations.tests.factories import AddressFactory, MicroAreaFactory, InstitutionFactory
+from apps.locations.models import Address, MicroArea, Institution
+from apps.locations.tests.factories import AddressFactory, MicroAreaFactory, InstitutionFactory
 
 
 class AddressModelTest(TestCase):
