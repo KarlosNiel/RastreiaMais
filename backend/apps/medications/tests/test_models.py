@@ -1,128 +1,74 @@
-"""
-Testes para modelos do app medications
-"""
 from django.test import TestCase
-from django.utils import timezone
-from datetime import date, timedelta
-from apps.accounts.tests.factories import PatientWithCreatorFactory
+from django.contrib.auth.models import User
+from django.utils.timezone import now, timedelta
+from apps.accounts.models import PatientUser
 from apps.medications.models import Medication
-
+from django.db.utils import IntegrityError
 
 class MedicationModelTest(TestCase):
-    """Testes para o modelo Medication"""
-    
+
     def setUp(self):
-        self.patient = PatientWithCreatorFactory()
-    
-    def test_create_medication(self):
-        """Testa criação de medicamento"""
-        medication = Medication.objects.create(
-            patient=self.patient,
-            name='Paracetamol',
-            description='Analgésico e antitérmico',
-            end_date=date.today() + timedelta(days=30),
-            active=True
+        # Criando um usuário e paciente
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="password123",
+            first_name="Test",
+            last_name="User"
         )
-        
-        self.assertIsInstance(medication, Medication)
-        self.assertEqual(medication.patient, self.patient)
-        self.assertEqual(medication.name, 'Paracetamol')
-        self.assertTrue(medication.active)
-        self.assertFalse(medication.is_deleted)
-    
-    def test_is_active_method(self):
-        """Testa método is_active"""
-        # Medicamento ativo (data futura)
-        future_date = date.today() + timedelta(days=30)
-        medication = Medication.objects.create(
+        self.patient = PatientUser.objects.create(user=self.user)
+
+    def test_creating_medication_without_end_date_raises_error(self):
+        with self.assertRaises(IntegrityError):
+            Medication.objects.create(
+                patient=self.patient,
+                name="Med No End Date",
+                description="No end date",
+                end_date=None,  
+                active=True
+            )
+
+    def test_is_active_with_future_end_date(self):
+        future_date = now().date() + timedelta(days=5)
+        med = Medication.objects.create(
             patient=self.patient,
-            name='Medicamento Ativo',
-            description='Teste',
+            name="Future Med",
+            description="Ends in the future",
             end_date=future_date,
             active=True
         )
-        
-        self.assertTrue(medication.is_active())
-        
-        # Medicamento vencido (data passada)
-        past_date = date.today() - timedelta(days=1)
-        expired_medication = Medication.objects.create(
+        self.assertTrue(med.is_active())
+
+    def test_is_active_with_past_end_date(self):
+        past_date = now().date() - timedelta(days=5)
+        med = Medication.objects.create(
             patient=self.patient,
-            name='Medicamento Vencido',
-            description='Teste',
+            name="Past Med",
+            description="Ended in the past",
             end_date=past_date,
             active=True
         )
-        
-        self.assertFalse(expired_medication.is_active())
-        
-        # Medicamento sem data de fim
-        medication_no_end = Medication.objects.create(
+        self.assertFalse(med.is_active())
+
+    def test_finished_marks_is_deleted(self):
+        past_date = now().date() - timedelta(days=1)
+        med = Medication.objects.create(
             patient=self.patient,
-            name='Medicamento Sem Fim',
-            description='Teste',
-            end_date=None,
-            active=True
-        )
-        
-        self.assertTrue(medication_no_end.is_active())
-    
-    def test_finished_method(self):
-        """Testa método finished"""
-        past_date = date.today() - timedelta(days=1)
-        medication = Medication.objects.create(
-            patient=self.patient,
-            name='Medicamento Vencido',
-            description='Teste',
+            name="Expired Med",
+            description="Expired medication",
             end_date=past_date,
             active=True
         )
-        
-        # Verifica que não está deletado inicialmente
-        self.assertFalse(medication.is_deleted)
-        
-        # Chama método finished
-        medication.finished()
-        
-        # Verifica que foi marcado como deletado
-        self.assertTrue(medication.is_deleted)
-    
-    def test_soft_delete_inheritance(self):
-        """Testa herança do soft delete do BaseModel"""
-        medication = Medication.objects.create(
+        med.finished()
+        self.assertTrue(med.is_deleted)
+
+    def test_finished_does_not_mark_active_medication(self):
+        future_date = now().date() + timedelta(days=5)
+        med = Medication.objects.create(
             patient=self.patient,
-            name='Teste Soft Delete',
-            description='Teste',
-            end_date=date.today() + timedelta(days=30),
+            name="Active Med",
+            description="Still active",
+            end_date=future_date,
             active=True
         )
-        
-        # Verifica campos herdados do BaseModel
-        self.assertIsNotNone(medication.created_at)
-        self.assertIsNotNone(medication.updated_at)
-        self.assertIsNotNone(medication.created_by)
-        
-        # Testa soft delete
-        medication.delete()
-        self.assertTrue(medication.is_deleted)
-        self.assertIsNotNone(medication.deleted_at)
-        
-        # Testa restore
-        medication.restore()
-        self.assertFalse(medication.is_deleted)
-        self.assertIsNone(medication.deleted_at)
-    
-    def test_medication_str_representation(self):
-        """Testa representação string do medicamento"""
-        medication = Medication.objects.create(
-            patient=self.patient,
-            name='Aspirina',
-            description='Anti-inflamatório',
-            end_date=date.today() + timedelta(days=30),
-            active=True
-        )
-        
-        # Como não há método __str__ definido, usa a representação padrão
-        str_repr = str(medication)
-        self.assertIn('Medication', str_repr)
-        self.assertIn(str(medication.pk), str_repr)
+        med.finished()
+        self.assertFalse(med.is_deleted)

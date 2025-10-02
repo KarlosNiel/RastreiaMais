@@ -8,5 +8,9 @@ class Pendency(BaseModel):
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     micro_area = models.ForeignKey(MicroArea, on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self):
+        micro_area_name = self.micro_area.name if self.micro_area else "Sem microárea"
+        return f"Pendency: {self.patient.user.get_full_name()} - {micro_area_name}"
+
 #* Sugestão:
 #* Caso o model Pendency seja mantido Pesquisar o que fazer para automatizar a questão de datas.

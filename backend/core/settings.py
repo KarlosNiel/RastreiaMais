@@ -33,8 +33,8 @@ THIRD_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
-    'drf_spectacular_sidecar'
-    
+    'drf_spectacular_sidecar',
+    'behave_django'
 ]
 
 LOCAL_APPS = [

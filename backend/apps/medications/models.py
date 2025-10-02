@@ -20,6 +20,7 @@ class Medication(BaseModel):
     def finished(self):
         if self.is_active() == False:
             self.is_deleted = True
+            self.save()
 
 #* Sugestão de melhoria futura:
 #* Se possivel Descobrir como fazer algo que automatize esse finished para que o valor mude automaticamente.

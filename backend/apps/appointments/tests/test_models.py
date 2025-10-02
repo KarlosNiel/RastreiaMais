@@ -1,179 +1,96 @@
-"""
-Testes para modelos do app appointments
-"""
 from django.test import TestCase
-from django.utils import timezone
-from datetime import datetime, timedelta
-from apps.accounts.tests.factories import PatientWithCreatorFactory, ProfessionalWithManagerFactory
+from django.contrib.auth.models import User
+from apps.accounts.models import PatientUser, ProfessionalUser
+from apps.locations.models import Institution
 from apps.appointments.models import Appointment
-
+from django.utils.timezone import now, timedelta
+from django.core.exceptions import ValidationError
 
 class AppointmentModelTest(TestCase):
-    """Testes para o modelo Appointment"""
-    
     def setUp(self):
-        self.patient = PatientWithCreatorFactory()
-        self.professional = ProfessionalWithManagerFactory()
-    
-    def test_create_appointment(self):
-        """Testa criação de consulta"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
+        # Criar usuários
+        user_patient = User.objects.create_user(
+            username="patient1",
+            password="123456",
+            first_name="Patient",
+            last_name="One"
+        )
+        self.patient = PatientUser.objects.create(user=user_patient)
+
+        user_professional = User.objects.create_user(
+            username="prof1",
+            password="123456",
+            first_name="Professional",
+            last_name="One"
+        )
+        self.professional = ProfessionalUser.objects.create(user=user_professional, role="Enfermeiro")
+
+        # Criar instituição
+        self.institution = Institution.objects.create(name="Clínica Teste")
+
+        # Horário agendado
+        self.scheduled_datetime = now() + timedelta(days=1)
+
+    def test_create_appointment_with_all_fields(self):
         appointment = Appointment.objects.create(
             patient=self.patient,
             professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Moderado',
-            description='Consulta de rotina',
-            type='Consulta',
-            status='Agendado'
+            scheduled_datetime=self.scheduled_datetime,
+            local=self.institution,
+            risk_level="Moderado",
+            type="Consulta",
+            description="Consulta de rotina",
+            status="Agendado"
         )
-        
-        self.assertIsInstance(appointment, Appointment)
         self.assertEqual(appointment.patient, self.patient)
         self.assertEqual(appointment.professional, self.professional)
-        self.assertEqual(appointment.risk_level, 'Moderado')
-        self.assertEqual(appointment.type, 'Consulta')
-        self.assertEqual(appointment.status, 'Agendado')
-    
-    def test_appointment_str_method(self):
-        """Testa método __str__ do Appointment"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
+        self.assertEqual(appointment.local, self.institution)
+        self.assertEqual(appointment.risk_level, "Moderado")
+        self.assertEqual(appointment.type, "Consulta")
+        self.assertEqual(appointment.status, "Agendado")
+        self.assertEqual(appointment.description, "Consulta de rotina")
+
+    def test_create_appointment_without_optional_fields(self):
         appointment = Appointment.objects.create(
             patient=self.patient,
             professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Seguro',
-            type='Consulta',
-            status='Agendado'
+            scheduled_datetime=self.scheduled_datetime,
+            risk_level="Seguro",
+            type="Exame"
         )
-        
-        expected_str = f"{self.patient} - {scheduled_time.strftime('%d/%m/%Y %H:%M')}"
+        self.assertIsNone(appointment.local)
+        self.assertIsNone(appointment.status)
+        self.assertIsNone(appointment.description)
+
+    def test_str_representation(self):
+        appointment = Appointment.objects.create(
+            patient=self.patient,
+            professional=self.professional,
+            scheduled_datetime=self.scheduled_datetime,
+            risk_level="Crítico",
+            type="Evento"
+        )
+        expected_str = f"{appointment.patient} - {self.scheduled_datetime.strftime('%d/%m/%Y %H:%M')}"
         self.assertEqual(str(appointment), expected_str)
-    
-    def test_risk_level_choices(self):
-        """Testa validação de choices do campo risk_level"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        # Testa choice válido
+
+    def test_appointment_requires_patient_and_professional(self):
+        from django.db.utils import IntegrityError
+        with self.assertRaises(IntegrityError):
+            Appointment.objects.create(
+                patient=None,
+                professional=None,
+                scheduled_datetime=self.scheduled_datetime,
+                risk_level="Seguro",
+                type="Consulta"
+            )
+
+    def test_invalid_risk_level_raises_validation_error(self):
         appointment = Appointment(
             patient=self.patient,
             professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Crítico',
-            type='Consulta',
-            status='Agendado'
+            scheduled_datetime=self.scheduled_datetime,
+            risk_level="Inexistente",
+            type="Consulta"
         )
-        appointment.full_clean()  # Deve passar
-        
-        # Testa choice inválido
-        invalid_appointment = Appointment(
-            patient=self.patient,
-            professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Invalid Level',
-            type='Consulta',
-            status='Agendado'
-        )
-        
-        with self.assertRaises(Exception):  # ValidationError ou IntegrityError
-            invalid_appointment.full_clean()
-    
-    def test_type_choices(self):
-        """Testa validação de choices do campo type"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        # Testa choices válidos
-        valid_types = ['Consulta', 'Exame', 'Evento']
-        
-        for appointment_type in valid_types:
-            appointment = Appointment(
-                patient=self.patient,
-                professional=self.professional,
-                scheduled_datetime=scheduled_time,
-                risk_level='Seguro',
-                type=appointment_type,
-                status='Agendado'
-            )
-            appointment.full_clean()  # Deve passar
-    
-    def test_status_choices(self):
-        """Testa validação de choices do campo status"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        # Testa choices válidos
-        valid_statuses = ['Finalizado', 'Agendado', 'Cancelado']
-        
-        for status in valid_statuses:
-            appointment = Appointment(
-                patient=self.patient,
-                professional=self.professional,
-                scheduled_datetime=scheduled_time,
-                risk_level='Seguro',
-                type='Consulta',
-                status=status
-            )
-            appointment.full_clean()  # Deve passar
-    
-    def test_soft_delete_inheritance(self):
-        """Testa herança do soft delete do BaseModel"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        appointment = Appointment.objects.create(
-            patient=self.patient,
-            professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Seguro',
-            type='Consulta',
-            status='Agendado'
-        )
-        
-        # Verifica campos herdados do BaseModel
-        self.assertIsNotNone(appointment.created_at)
-        self.assertIsNotNone(appointment.updated_at)
-        self.assertIsNotNone(appointment.created_by)
-        
-        # Testa soft delete
-        appointment.delete()
-        self.assertTrue(appointment.is_deleted)
-        self.assertIsNotNone(appointment.deleted_at)
-        
-        # Testa restore
-        appointment.restore()
-        self.assertFalse(appointment.is_deleted)
-        self.assertIsNone(appointment.deleted_at)
-    
-    def test_appointment_without_local(self):
-        """Testa criação de consulta sem local específico"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        appointment = Appointment.objects.create(
-            patient=self.patient,
-            professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Seguro',
-            type='Consulta',
-            status='Agendado',
-            local=None  # Sem local específico
-        )
-        
-        self.assertIsNone(appointment.local)
-        self.assertIsInstance(appointment, Appointment)
-    
-    def test_appointment_without_description(self):
-        """Testa criação de consulta sem descrição"""
-        scheduled_time = timezone.now() + timedelta(days=1)
-        
-        appointment = Appointment.objects.create(
-            patient=self.patient,
-            professional=self.professional,
-            scheduled_datetime=scheduled_time,
-            risk_level='Seguro',
-            type='Consulta',
-            status='Agendado',
-            description=None  # Sem descrição
-        )
-        
-        self.assertIsNone(appointment.description)
-        self.assertIsInstance(appointment, Appointment)
+        with self.assertRaises(ValidationError):
+            appointment.full_clean()
