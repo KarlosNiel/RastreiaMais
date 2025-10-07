@@ -79,30 +79,31 @@ export default async function ProfissionalPage() {
       </div>
 
       {/* ===== Linha 1: KPIs + Alertas ===== */}
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* KPIs (metade esquerda) */}
-        <div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        {/* KPIs — 2x2 preenchendo toda a altura do bloco de alertas */}
+        <div className="min-h-0">
+          <div className="grid h-full grid-cols-1 md:grid-cols-2 grid-rows-2 gap-3">
             {KPIS.map((kpi) => (
-              <KpiCard
-                key={kpi.key}
-                label={kpi.label}
-                value={kpi.value}
-                delta={kpi.delta}
-                accent={kpi.accent}
-                icon={KPI_ICONS[kpi.key]}
-              />
+              <div key={kpi.key} className="h-full">
+                <KpiCard
+                  label={kpi.label}
+                  value={kpi.value}
+                  delta={kpi.delta}
+                  accent={kpi.accent}
+                  icon={KPI_ICONS[kpi.key]}
+                />
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Alertas Recentes (metade direita) */}
+        {/* Alertas Recentes */}
         <AccentSection
-          className="h-full"
+          className="h-full flex flex-col"
           title="Alertas Recentes"
           accent="brand"
         >
-          <ul className="space-y-3">
+          <ul className="grow space-y-3">
             {[
               {
                 nome: "Maria C.",
