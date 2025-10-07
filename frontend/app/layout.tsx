@@ -1,4 +1,5 @@
 // frontend/app/layout.tsx
+import Footer from "@/components/layout/Footer";
 import { fontHeading, fontMono, fontSans } from "@/config/fonts";
 import { app as cfg } from "@/config/rastreiamais";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ export default function RootLayout({
         className="min-h-svh md:min-h-dvh font-sans antialiased"
       >
         <Providers>{children}</Providers>
+        <Footer />
       </body>
     </html>
   );

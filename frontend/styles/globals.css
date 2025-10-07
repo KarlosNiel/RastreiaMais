@@ -4,16 +4,17 @@
 /* ===================== Vars ===================== */
 :root {
   --brand: #ec4d23;
-  --focus: color-mix(
-    in oklab,
-    var(--brand) 88%,
-    white 12%
-  ); /* cor do anel de foco */
+  --focus: color-mix(in oklab, var(--brand) 88%, white 12%); /* anel de foco */
   --app-bg: var(--nextui-background, #ffffff);
 
   /* Campos (light) */
   --field-bg: #f7f7f7;
   --field-border: #ededed;
+
+  /* Timing & easing para micro-interações */
+  --ease-emph: cubic-bezier(0.2, 0, 0, 0.9);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
 
   /* Controles nativos */
   accent-color: var(--brand);
@@ -68,6 +69,9 @@ body {
 body {
   @apply min-h-dvh antialiased bg-content1 text-foreground font-sans;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 img,
@@ -102,6 +106,7 @@ a.inline-flex,
 /* Botão de marca: garante branco em TODOS os slots do HeroUI */
 .btn-brand {
   background: var(--brand);
+  transition: opacity var(--dur-fast) var(--ease-emph);
 }
 .btn-brand [data-slot="label"],
 .btn-brand [data-slot="content"],
@@ -113,23 +118,39 @@ a.inline-flex,
 .btn-brand[data-hover="true"] {
   opacity: 0.9;
 }
+.btn-brand[aria-disabled="true"],
+.btn-brand[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Evita sublinhar link dentro de botões */
 .btn-brand a:hover,
 [data-slot] a:hover {
   text-decoration: none;
 }
 
-/* Foco: se o componente já usa ring, só definimos a cor */
-:where(a, button, [role="button"], summary):focus-visible {
+/* Foco: suporta tanto nativo quanto data-focus-visible do HeroUI */
+:where(a, button, [role="button"], summary):focus-visible,
+:where([data-focus-visible="true"]) {
   outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: 6px;
 }
 
 /* Ponteiro/caret em campos nativos (HeroUI já estiliza os dele) */
 input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+input,
 textarea {
   caret-color: var(--brand);
+}
+::placeholder {
+  color: color-mix(in oklab, currentColor 45%, transparent);
 }
 
 /* Tipografia por tag */
@@ -166,8 +187,8 @@ small {
   @apply mx-auto w-full max-w-[1280px] px-8 md:px-10;
 }
 
-/* Grid 12 colunas – gutter 24px, baseline 16px nas linhas */
 @layer utilities {
+  /* Grid 12 colunas – gutter 24px, baseline 16px nas linhas */
   .grid-12 {
     @apply grid grid-cols-12 gap-x-6 gap-y-4;
   }
@@ -204,6 +225,9 @@ small {
   }
   .ty-help {
     @apply text-[12px] leading-[18px] font-normal;
+  }
+  .text-balance {
+    text-wrap: balance;
   }
 
   /* Cartão rápido */
@@ -261,9 +285,20 @@ small {
     @apply flex items-center gap-2;
   }
   .paginate-btn {
-    @apply h-8 min-w-8 px-2 rounded-lg border border-divider text-sm
-           hover:bg-content2 data-[active=true]:bg-[var(--brand)]
-           data-[active=true]:text-white;
+    @apply h-8 min-w-8 px-2 rounded-lg border border-divider text-sm hover:bg-content2;
+    transition:
+      background-color var(--dur-fast) var(--ease-emph),
+      color var(--dur-fast) var(--ease-emph);
+  }
+  /* regra direta para estado data-active (mais robusto que @apply com variant) */
+  .paginate-btn[data-active="true"] {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  /* Sombra util usada nos componentes */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -305,7 +340,10 @@ small {
   white-space: nowrap;
 }
 
-/* Scrollbar webkit (suave) */
+/* Scrollbar (WebKit + Firefox) */
+* {
+  scrollbar-width: thin;
+}
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -316,6 +354,10 @@ small {
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+* {
+  scrollbar-color: color-mix(in oklab, currentColor 20%, transparent)
+    transparent;
 }
 
 /* ============ Preferência por menos movimento ============ */
@@ -351,6 +393,13 @@ small {
       color-mix(in oklab, currentColor 14%, transparent),
       transparent
     );
-    animation: skeleton-shimmer 1.2s infinite;
+    animation: skeleton-shimmer 1.2s infinite linear;
   }
+}
+
+/* ===== Acessibilidade extra ===== */
+/* Esconde conteúdo ao usar atributo inert (modais) */
+[inert] {
+  pointer-events: none;
+  user-select: none;
 }

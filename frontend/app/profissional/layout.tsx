@@ -1,4 +1,4 @@
-// frontend/app/gestor/layout.tsx
+// app/profissional/layout.tsx
 "use client";
 
 import { RMButton } from "@/components/ui/RMButton";
@@ -7,17 +7,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { FormEvent } from "react";
 
-export default function GestorLayout({
+export default function ProfissionalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   function onSearchSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // TODO: integrar com a busca global
   }
 
   return (
     <>
+      {/* A11y */}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 z-[999] rounded-md border border-divider bg-content1 px-3 py-2 text-sm"
@@ -25,10 +27,8 @@ export default function GestorLayout({
         Pular para conteúdo
       </a>
 
-      <header
-        role="banner"
-        className="sticky top-0 z-40 border-b border-divider bg-content1/90 supports-[backdrop-filter]:backdrop-blur-md"
-      >
+      {/* Topbar fixa */}
+      <header className="sticky top-0 z-40 border-b border-divider bg-content1/90 supports-[backdrop-filter]:backdrop-blur-md">
         <div className="container-app py-3 md:py-4">
           {/* linha única: logo | busca (flex-1) | ações */}
           <div className="flex flex-nowrap items-center gap-3 md:gap-4">
@@ -49,7 +49,7 @@ export default function GestorLayout({
               />
             </Link>
 
-            {/* Busca – ocupa todo o espaço livre */}
+            {/* Busca – ocupa o espaço livre */}
             <form
               onSubmit={onSearchSubmit}
               role="search"
@@ -103,13 +103,14 @@ export default function GestorLayout({
               </RMButton>
               <RMButton
                 as={Link}
-                href="/cadastros/novo"
+                href="/pacientes/novo"
                 look="solid"
                 tone="brand"
                 size="lg"
               >
-                Novo Cadastro
+                Novo Paciente
               </RMButton>
+              {/* Ícones opcionais, iguais ao Gestor */}
               <RMButton
                 look="ghost"
                 tone="neutral"
@@ -143,6 +144,7 @@ export default function GestorLayout({
         </div>
       </header>
 
+      {/* Conteúdo */}
       <main id="main" className="container-app py-6 md:py-8">
         {children}
       </main>

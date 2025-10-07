@@ -11,6 +11,7 @@ const SLOT_WHITE =
   "[&_[data-slot=content]]:!text-white " +
   "[&_[data-slot=start-content]]:!text-white " +
   "[&_[data-slot=end-content]]:!text-white " +
+  "[&_[data-slot=spinner]]:!text-white " + // spinner também
   // se houver <a> dentro do label/content, mantenha branco
   "[&_[data-slot=label]_a]:!text-white " +
   "[&_[data-slot=content]_a]:!text-white " +
@@ -19,22 +20,32 @@ const SLOT_WHITE =
 
 const btn = tv({
   base: [
-    "h-9 px-3.5 rounded-xl text-sm font-medium",
+    "inline-flex items-center justify-center",
+    "rounded-xl text-sm font-medium",
     "transition-colors data-[hover=true]:shadow-none",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ring-offset-app",
-    "data-[disabled=true]:opacity-60",
+    "data-[disabled=true]:opacity-60 data-[disabled=true]:cursor-not-allowed",
+    "data-[pressed=true]:translate-y-[0.5px]",
   ].join(" "),
   variants: {
     look: { solid: "", outline: "border", soft: "", ghost: "" },
     tone: { brand: "", neutral: "", danger: "" },
-    size: { sm: "h-8 px-3 text-[13px] rounded-lg", md: "h-9 px-3.5" },
+    size: {
+      sm: "h-8 px-3 text-[13px] rounded-lg",
+      md: "h-9 px-3.5",
+      lg: "h-10 px-4 text-[15px] rounded-xl",
+    },
+    /** Ícone sozinho, quadrado, sem padding lateral */
+    iconOnly: {
+      true: "px-0 aspect-square",
+      false: "",
+    },
   },
   compoundVariants: [
     // ===== BRAND =====
     {
       look: "solid",
       tone: "brand",
-      // bg da marca + root branco + segurança nos slots
       class: `!bg-[var(--brand)] text-white hover:opacity-90 ${SLOT_WHITE}`,
     },
     {
@@ -87,17 +98,31 @@ const btn = tv({
         "text-rose-600 border-rose-300 hover:bg-rose-50 " +
         "dark:text-rose-300 dark:border-rose-500/60 dark:hover:bg-rose-500/10",
     },
+
+    // ===== ajustes para iconOnly por tamanho =====
+    { iconOnly: true, size: "sm", class: "h-8 w-8" },
+    { iconOnly: true, size: "md", class: "h-9 w-9" },
+    { iconOnly: true, size: "lg", class: "h-10 w-10" },
   ],
-  defaultVariants: { look: "outline", tone: "neutral", size: "md" },
+  defaultVariants: {
+    look: "outline",
+    tone: "neutral",
+    size: "md",
+    iconOnly: false,
+  },
 });
 
-type RMButtonProps = Omit<ButtonProps, "color" | "variant" | "size"> &
+type RMButtonProps = Omit<
+  ButtonProps,
+  "color" | "variant" | "size" | "isIconOnly"
+> &
   VariantProps<typeof btn>;
 
 export function RMButton({
   look,
   tone,
   size,
+  iconOnly,
   className,
   ...props
 }: RMButtonProps) {
@@ -109,6 +134,7 @@ export function RMButton({
     <Button
       radius="lg"
       color={colorProp}
+      isIconOnly={iconOnly === true}
       variant={
         look === "solid"
           ? "solid"
@@ -118,7 +144,7 @@ export function RMButton({
               ? "flat"
               : "light" // ghost
       }
-      className={cn(btn({ look, tone, size }), className)}
+      className={cn(btn({ look, tone, size, iconOnly }), className)}
       {...props}
     />
   );
