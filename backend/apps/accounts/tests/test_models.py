@@ -255,3 +255,27 @@ class UserCreationPermissionsTest(TestCase):
         
         self.assertIsInstance(patient1, PatientUser)
         self.assertIsInstance(patient2, PatientUser)
+
+from django.test import TestCase
+from django.core.exceptions import ValidationError
+from apps.accounts.models import User, PatientUser, ManagerUser, ProfessionalUser
+
+
+class SingleProfileMixinTest(TestCase):
+    def setUp(self):
+        # Cria um usuário base pra usar em todos os testes
+        self.user = User.objects.create_user(username="teste", password="123456")
+
+    def test_user_cannot_have_multiple_profiles(self):
+        """Usuário não pode ter mais de um perfil (Patient + Manager, por exemplo)"""
+        # Cria um PatientUser normalmente
+        patient = PatientUser.objects.create(user=self.user)
+
+        # Tenta criar um ManagerUser pro mesmo user
+        manager = ManagerUser(user=self.user)
+
+        # Deve levantar ValidationError
+        with self.assertRaises(ValidationError) as context:
+            manager.full_clean()
+
+        self.assertIn("já possui um outro perfil", str(context.exception))

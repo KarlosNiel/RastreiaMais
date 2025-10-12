@@ -8,8 +8,8 @@ class Medication(BaseModel):
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     description = models.TextField()
-    end_date = models.DateField()
-    active = models.BooleanField()
+    end_date = models.DateField(null=True, blank=True)
+    active = models.BooleanField(default=True)
     
     def is_active(self):
         if self.end_date == None or now().date() <= self.end_date:

@@ -58,8 +58,19 @@ class BaseModel(models.Model):
         
         if not self.is_deleted and self.deleted_at: #* se is deleted for false e deleted_at estiver preenchido, self.deleted_at vira null
             self.deleted_at = None
-    
+            self.deleted_by = None
 
+    def save(self, *args, user=None, **kwargs):
+            # Se for criação e não tiver created_by, define
+        if not self.pk and not self.created_by:
+            self.created_by = user
+
+            # Sempre atualiza updated_by
+        if user:
+            self.updated_by = user
+
+        super().save(*args, **kwargs)
+    
     def delete(self, user=None):
         self.is_deleted = True
         self.deleted_at = now()

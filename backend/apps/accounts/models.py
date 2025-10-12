@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from apps.commons.models import BaseModel
 from django.core.exceptions import ValidationError
-from apps.accounts.utils import get_creator_profile
+from apps.accounts.utils import get_creator_profile, SingleProfileMixin
 
 # Create your models here.
 
@@ -13,7 +13,7 @@ ROLE_CHOICES = [
 ]
 
 #Patient=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-class PatientUser(BaseModel):
+class PatientUser(SingleProfileMixin, BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -31,7 +31,7 @@ class PatientUser(BaseModel):
                     raise ValidationError('Apenas Gestores ou Profissionais podem criar Pacientes.')
 
 #Professional=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-class ProfessionalUser(BaseModel): 
+class ProfessionalUser(SingleProfileMixin, BaseModel): 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(choices=ROLE_CHOICES, max_length=100)
 
@@ -51,7 +51,7 @@ class ProfessionalUser(BaseModel):
 
 
 #Manager=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-class ManagerUser(BaseModel):
+class ManagerUser(SingleProfileMixin, BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=50)
 
