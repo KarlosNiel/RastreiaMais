@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from apps.commons.models import BaseModel
 from django.core.exceptions import ValidationError
-from apps.accounts.utils import get_creator_profile, SingleProfileMixin
+from apps.accounts.utils.utils import get_creator_profile, SingleProfileMixin
 
 # Create your models here.
 
