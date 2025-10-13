@@ -1,6 +1,5 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from apps.commons.permissions import BaseRolePermission
-from apps.commons.utils import get_user_role
 
 class PatientDataPermission(BaseRolePermission):
     message = "Você não tem permissão para acessar este recurso..."
