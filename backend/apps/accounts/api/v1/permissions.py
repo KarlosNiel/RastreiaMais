@@ -10,11 +10,8 @@ class PatientDataPermission(BaseRolePermission):
         if not user.is_authenticated:
             return False
         
-        if user.is_superuser:
+        if user.is_superuser or self.is_manager(user):#* Gestores podem tudo (acesso à rota)
             return True  
-
-        if self.is_manager(user): #* Gestores podem tudo (acesso à rota)
-            return True
         
         if self.is_professional(user): #* profissionais: acesso total à rota .
             return True
@@ -27,7 +24,7 @@ class PatientDataPermission(BaseRolePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if self.is_manager(user):
+        if user.is_superuser or self.is_manager(user):
             return True
 
         if self.is_professional(user):

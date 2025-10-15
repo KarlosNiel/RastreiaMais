@@ -12,19 +12,6 @@ class PatientUserViewset(BaseModelViewSet):
     serializer_class = PatientUserSerializer    
     permission_classes = [IsAuthenticated, PatientDataPermission]
     
-    def get_queryset(self):
-        user = self.request.user
-
-        if hasattr(user, 'manager'):
-            return PatientUser.all_objects.all()
-        
-        if hasattr(user, 'professional'):
-            return PatientUser.objects.all()
-        
-        if hasattr(user, 'patient'):
-            return PatientUser.objects.filter(user=user)
-        
-        return PatientUser.objects.none()
 
 @extend_schema(tags=['Accounts - Professional'])
 class ProfessionalUserViewset(BaseModelViewSet):
