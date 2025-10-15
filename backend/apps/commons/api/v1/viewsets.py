@@ -29,7 +29,18 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
 
     @action(detail=True, methods=["delete"], url_path='hard-delete')
     def hard_delete_object(self, request, pk=None):
+        user = request.user
+
+        if not user.is_superuser:
+            return Response(
+                {"detail": "Apenas superusuários podem realizar o hard-delete."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         instance = self.get_object()
         instance.hard_delete()
-        return Response({"detail": "Objeto Deletado Permanentemente!"}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Objeto Deletado Permanentemente!"}, 
+            status=status.HTTP_200_OK
+        )
 
