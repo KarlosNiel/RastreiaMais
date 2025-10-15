@@ -27,3 +27,9 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
         instance.restore(user=request.user)
         return Response({"detail": "Objeto restaurado com sucesso."}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["delete"], url_path='hard-delete')
+    def hard_delete_object(self, request, pk=None):
+        instance = self.get_object()
+        instance.hard_delete()
+        return Response({"detail": "Objeto Deletado Permanentemente!"}, status=status.HTTP_200_OK)
+
