@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS
 from apps.commons.permissions import BaseRolePermission
 
 class PatientDataPermission(BaseRolePermission):
@@ -61,6 +61,7 @@ class ProfessionalDataPermission(BaseRolePermission):
             self.message = "Pacientes não tem acesso aos dados dos profissionais..."
             return False
         
+        self.message = "Você não tem permissão para acessar está rota."        
         return False
     
     def has_object_permission(self, request, view, obj):
@@ -79,6 +80,7 @@ class ProfessionalDataPermission(BaseRolePermission):
             self.message = "Pacientes não tem acesso a este objeto de dados dos profissionais..."
             return False
         
+        self.message = "Você não tem permissão para acessar está rota."
         return False
 
 class ManagerDataPermission(BaseRolePermission):
