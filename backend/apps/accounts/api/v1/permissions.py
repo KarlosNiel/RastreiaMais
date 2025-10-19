@@ -45,11 +45,8 @@ class ProfessionalDataPermission(BaseRolePermission):
             self.message = "Usuário não autenticado!"
             return False
         
-        if user.is_superuser:
+        if user.is_superuser or self.is_manager(user): 
             return True 
-        
-        if self.is_manager(user): 
-            return True
         
         if self.is_professional(user) and request.method in SAFE_METHODS:
             return True
@@ -64,10 +61,7 @@ class ProfessionalDataPermission(BaseRolePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.is_superuser:
-            return True
-
-        if self.is_manager(user):
+        if user.is_superuser or self.is_manager(user):
             return True
         
         if self.is_professional(user) and request.method in SAFE_METHODS:

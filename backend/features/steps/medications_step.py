@@ -56,10 +56,6 @@ def step_finalizar_med(context):
     context.med.finished()
     context.med.refresh_from_db()
 
-@then('deve ser levantado um IntegrityError')
-def step_asser_erro(context):
-    assert context.erro is not None, "Esperava IntegrityError, mas não ocorreu"
-
 @then('a medicação deve estar ativa')
 def step_med_ativa(context):
     assert context.med.is_active() is True

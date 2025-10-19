@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from apps.commons.api.v1.utils import single_profile_validation
 
 class BaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,4 +37,28 @@ class BaseSerializer(serializers.ModelSerializer):
             }
             raise serializers.ValidationError(errors)
         
+            
+    def validate(self, attrs):
+        ready_only_fields_sent = []
+
+        for field_name, field in self.fields.items():
+            if field.read_only and field_name in self.initial_data:
+                ready_only_fields_sent.append(field_name)
+
+        if ready_only_fields_sent:
+            errors = {
+                field: "Este campe é somente leitura e não pode ser modificado."
+                for field in ready_only_fields_sent
+            }
+            raise serializers.ValidationError(errors)
+        
+        
+        user = attrs.get("user")
+        single_profile_validation(user, self.Meta.model)
+
+
         return attrs
+
+
+
+    

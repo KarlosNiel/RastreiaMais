@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework.viewsets import GenericViewSet
-from rest_framework import serializers
+
 
 class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.UpdateModelMixin, 
                         mixins.RetrieveModelMixin, mixins.ListModelMixin, GenericViewSet):
@@ -13,16 +13,36 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
     serializer_class = None
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        extra_data = {}
+        if 'created_by' in serializer.fields:
+            extra_data['created_by'] = self.request.user
+
+        serializer.save(**extra_data)
 
     def perform_update(self, serializer):
-        serializer.save(user=self.request.user)
+        extra_data = {}
+        if 'updated_by' in serializer.fields:
+            extra_data['updated_by'] = self.request.user
+
+        serializer.save(**extra_data)
 
     def perform_destroy(self, instance):
-        instance.delete(user=self.request.user)
+        if hasattr(instance, "deleted_by"):
+            instance.deleted_by = self.request.user
+            instance.save(update_fields=["deleted_by"])
+
+        instance.delete()
 
     @action(detail=True, methods=["patch"], url_path='restore')
     def restore_object(self, request, pk=None):
+        user = request.user
+
+        if not user.is_superuser or not user.is_manager(self):
+            return Response(
+                {"detail": "Apenas e gestores podem user o restore."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
         instance = self.get_object()
         instance.restore(user=request.user)
         return Response({"detail": "Objeto restaurado com sucesso."}, status=status.HTTP_200_OK)

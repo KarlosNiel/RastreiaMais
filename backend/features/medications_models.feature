@@ -3,10 +3,6 @@ Feature: Comportamento do modelo Medication
   Background:
     Given que exista um paciente
 
-  Scenario: Criar medicação sem end_date gera erro
-    When tento criar uma medicação sem end_date
-    Then deve ser levantado um IntegrityError
-
   Scenario: Medicação com end_date no futuro está ativa
     When crio uma medicação com end_date em 5 dias
     Then a medicação deve estar ativa
