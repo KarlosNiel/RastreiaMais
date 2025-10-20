@@ -39,7 +39,7 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
 
         if not user.is_superuser or not user.is_manager(self):
             return Response(
-                {"detail": "Apenas e gestores podem user o restore."},
+                {"detail": "Apenas superusuários e gestores podem user o restore."},
                 status=status.HTTP_403_FORBIDDEN
             )
             
