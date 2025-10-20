@@ -1,5 +1,5 @@
 // frontend/config/motion.ts
-import type { Transition, Variants, Viewport } from "framer-motion";
+import type { Transition, Variants, UseInViewOptions } from "framer-motion";
 
 /* -------------------- Transitions base -------------------- */
 export const transitions = {
@@ -23,7 +23,6 @@ const rt = (t: Transition = transitions.base): Transition =>
   prefersReducedMotion() ? { duration: 0 } : t;
 
 /* -------------------- Variants (factories) -------------------- */
-/** Fade in simples */
 export function createFadeIn(duration = 0.24): Variants {
   return {
     initial: { opacity: 0 },
@@ -35,7 +34,6 @@ export function createFadeIn(duration = 0.24): Variants {
   };
 }
 
-/** Fade + subir (y negativo) — recomendado para headers/cards */
 export function createFadeInUp(distance = 8, duration = 0.2): Variants {
   return {
     initial: { opacity: 0, y: distance },
@@ -52,7 +50,6 @@ export function createFadeInUp(distance = 8, duration = 0.2): Variants {
   };
 }
 
-/** Fade + descer (y positivo) */
 export function createFadeInDown(distance = 8, duration = 0.2): Variants {
   return {
     initial: { opacity: 0, y: -distance },
@@ -69,7 +66,6 @@ export function createFadeInDown(distance = 8, duration = 0.2): Variants {
   };
 }
 
-/** Slide em eixo X ou Y com fade */
 export function createSlideIn(
   axis: "x" | "y" = "y",
   distance = 12,
@@ -91,7 +87,6 @@ export function createSlideIn(
   };
 }
 
-/** Scale suave (útil para modais/tooltips) */
 export function createScaleIn(
   from = 0.96,
   t: Transition = transitions.spring
@@ -104,14 +99,12 @@ export function createScaleIn(
 }
 
 /* -------------------- Stagger helpers -------------------- */
-/** Container com stagger entre filhos */
 export const stagger = (delay = 0.05) => ({
   animate: {
     transition: { staggerChildren: prefersReducedMotion() ? 0 : delay },
   },
 });
 
-/** Variante de container com delay inicial opcional */
 export function createStaggerContainer(
   staggerChildren = 0.06,
   delayChildren = 0
@@ -124,7 +117,6 @@ export function createStaggerContainer(
   } as Variants;
 }
 
-/** Item padrão para usar junto do container de stagger */
 export const staggerItem: Variants = {
   initial: { opacity: 0, y: 6 },
   animate: { opacity: 1, y: 0, transition: rt(transitions.fast) },
@@ -132,14 +124,13 @@ export const staggerItem: Variants = {
 };
 
 /* -------------------- Viewport defaults (whileInView) -------------------- */
-export const viewportOnce: Viewport = {
+export const viewportOnce: UseInViewOptions = {
   once: true,
   amount: 0.2,
   margin: "0px 0px -10% 0px",
 };
 
 /* -------------------- Legacy export (compat) -------------------- */
-/** Compat: objeto estático como você usava antes (sem reduced-motion dinâmico) */
 export const fadeInUp: Variants = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },

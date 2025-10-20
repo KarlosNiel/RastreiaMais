@@ -1,3 +1,4 @@
+// components/gestor/ProfissionaisTable.tsx
 "use client";
 
 import { RMButton } from "@/components/ui/RMButton";
@@ -17,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
 
 type Status = "Ativo" | "Licença" | "Afastado";
@@ -49,20 +51,22 @@ const statusWeight: Record<Status, number> = {
   Afastado: 2,
 };
 
-const columns = [
-  {
-    name: "Profissional",
-    uid: "profissional",
-    sortable: true,
-    align: "start" as const,
-  },
-  { name: "Cargo", uid: "cargo", sortable: true, align: "start" as const },
-  { name: "Local", uid: "local", sortable: true, align: "start" as const },
-  { name: "Status", uid: "status", sortable: true, align: "center" as const },
-  { name: "Ações", uid: "actions", align: "end" as const },
-] as const;
+type Column = {
+  name: string;
+  uid: keyof ProfRow | "actions";
+  sortable?: boolean;
+  align?: "start" | "center" | "end";
+};
 
-/** Ícone de ordenação local para evitar depender de @heroui/shared-icons */
+const columns: Column[] = [
+  { name: "Profissional", uid: "profissional", sortable: true, align: "start" },
+  { name: "Cargo", uid: "cargo", sortable: true, align: "start" },
+  { name: "Local", uid: "local", sortable: true, align: "start" },
+  { name: "Status", uid: "status", sortable: true, align: "center" },
+  { name: "Ações", uid: "actions", align: "end" },
+];
+
+/** Ícone de ordenação local */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden {...props}>
     <path
@@ -88,15 +92,15 @@ export function ProfissionaisTable({
   initialRowsPerPage = 6,
 }: Props) {
   const [filterValue, setFilterValue] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<
-    "all" | Set<React.Key>
-  >("all");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
+    "all"
+  );
   const [rowsPerPage, setRowsPerPage] = React.useState(initialRowsPerPage);
   const [page, setPage] = React.useState(initialPage);
-  const [sortDescriptor, setSortDescriptor] = React.useState<{
-    column: React.Key;
-    direction: "ascending" | "descending";
-  }>({ column: "profissional", direction: "ascending" });
+  const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
+    column: "profissional" as Key,
+    direction: "ascending",
+  });
 
   const hasSearch = Boolean(filterValue?.trim());
 
@@ -113,8 +117,10 @@ export function ProfissionaisTable({
       );
     }
 
-    if (statusFilter !== "all" && Array.from(statusFilter).length) {
-      const sel = new Set(Array.from(statusFilter));
+    if (statusFilter !== "all" && (statusFilter as Set<Key>).size) {
+      const sel = new Set<string>(
+        Array.from(statusFilter as Set<Key>).map(String)
+      );
       data = data.filter((r) => sel.has(r.status));
     }
 
@@ -123,7 +129,6 @@ export function ProfissionaisTable({
 
   const pages = Math.max(1, Math.ceil(filteredItems.length / rowsPerPage));
 
-  // se filtros mudarem e a página ficar fora do total, volta para 1
   React.useEffect(() => {
     if (page > pages) setPage(1);
   }, [pages, page]);
@@ -139,7 +144,9 @@ export function ProfissionaisTable({
     const { column, direction } = sortDescriptor;
 
     return arr.sort((a, b) => {
-      const key = String(column) as keyof ProfRow | "status";
+      const key = String(column) as keyof ProfRow | "status" | "actions";
+
+      if (key === "actions") return 0; // não ordenável
 
       const firstRaw =
         key === "status" ? statusWeight[a.status] : (a as any)[key];
@@ -156,8 +163,10 @@ export function ProfissionaisTable({
     });
   }, [pageItems, sortDescriptor]);
 
-  const renderCell = React.useCallback((row: ProfRow, colKey: React.Key) => {
-    switch (colKey) {
+  const renderCell = React.useCallback((row: ProfRow, colKey: Key) => {
+    const key = String(colKey) as keyof ProfRow | "actions";
+
+    switch (key) {
       case "status":
         return (
           <div className="flex justify-center">
@@ -178,7 +187,7 @@ export function ProfissionaisTable({
           </div>
         );
       default:
-        return (row as any)[colKey];
+        return (row as any)[key];
     }
   }, []);
 
@@ -230,9 +239,15 @@ export function ProfissionaisTable({
                 aria-label="Filtro de status"
                 disallowEmptySelection
                 closeOnSelect={false}
-                selectedKeys={statusFilter}
                 selectionMode="multiple"
-                onSelectionChange={setStatusFilter as any}
+                selectedKeys={
+                  statusFilter === "all"
+                    ? "all"
+                    : (statusFilter as Iterable<Key>)
+                }
+                onSelectionChange={(keys) =>
+                  setStatusFilter(keys as "all" | Set<Key>)
+                }
               >
                 {STATUS_OPTIONS.map((s) => (
                   <DropdownItem key={s.uid}>{s.name}</DropdownItem>
@@ -243,7 +258,7 @@ export function ProfissionaisTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline outline-0 text-small"
+                className="bg-transparent outline-0 text-small"
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
@@ -304,11 +319,11 @@ export function ProfissionaisTable({
       }}
     >
       <TableHeader columns={columns}>
-        {(column) => (
+        {(column: Column) => (
           <TableColumn
             key={column.uid}
             align={column.align}
-            allowsSorting={column.sortable}
+            allowsSorting={!!column.sortable}
           >
             {column.name}
           </TableColumn>
@@ -316,9 +331,9 @@ export function ProfissionaisTable({
       </TableHeader>
 
       <TableBody emptyContent="Sem profissionais" items={sortedItems}>
-        {(item) => (
+        {(item: ProfRow) => (
           <TableRow key={item.id} className="even:bg-content2/60">
-            {(columnKey) => (
+            {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}
           </TableRow>

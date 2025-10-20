@@ -119,7 +119,7 @@ export function SubmitButton(props: React.ComponentProps<typeof Button>) {
       type="submit"
       color="primary"
       variant="solid"
-      radius="xl"
+      radius="lg"
       className={cn(
         "h-12 w-full rounded-2xl text-base",
         "shadow-[0_3px_0_rgba(0,0,0,0.08)] hover:opacity-95",

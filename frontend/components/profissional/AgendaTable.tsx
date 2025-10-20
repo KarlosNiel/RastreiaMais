@@ -1,3 +1,4 @@
+// components/profissional/AgendaTable.tsx
 "use client";
 
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -16,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
 
 /* ===== Tipos ===== */
@@ -27,12 +29,19 @@ const mapRiskToChip = (t: RiskTone): ChipTone =>
 
 export type AgendaRow = {
   id: string;
-  paciente: string; // "João S."
-  docMasked: string; // "****1234"
-  condicao: string; // "HAS", "DM", "HAS/DM"
-  hora: string; // "08:30"
-  local: string; // "UBS" | "Visita" | ...
+  paciente: string;
+  docMasked: string;
+  condicao: string;
+  hora: string;
+  local: string;
   risco: RiskTone;
+};
+
+type Column = {
+  name: string;
+  uid: keyof AgendaRow | "actions";
+  sortable?: boolean;
+  align?: "start" | "center" | "end";
 };
 
 /* ===== Config ===== */
@@ -42,17 +51,12 @@ const RISK_OPTIONS = [
   { name: "Crítico", uid: "critical" },
 ] as const;
 
-const COLUMNS = [
-  {
-    name: "Paciente",
-    uid: "paciente",
-    sortable: true,
-    align: "start" as const,
-  },
-  { name: "Horário", uid: "hora", sortable: true, align: "start" as const },
-  { name: "Local", uid: "local", sortable: true, align: "start" as const },
-  { name: "Risco", uid: "risco", sortable: true, align: "center" as const },
-  { name: "Ações", uid: "actions", sortable: false, align: "end" as const },
+const COLUMNS: readonly Column[] = [
+  { name: "Paciente", uid: "paciente", sortable: true, align: "start" },
+  { name: "Horário", uid: "hora", sortable: true, align: "start" },
+  { name: "Local", uid: "local", sortable: true, align: "start" },
+  { name: "Risco", uid: "risco", sortable: true, align: "center" },
+  { name: "Ações", uid: "actions", sortable: false, align: "end" },
 ] as const;
 
 // ordenação semântica de risco
@@ -79,29 +83,17 @@ const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
 /* ===== Props ===== */
 export type AgendaTableProps = {
   rows: AgendaRow[];
-
-  /** paginação */
   initialPage?: number;
-  /** padronizado com PendenciasTable */
   initialRowsPerPage?: number;
-
-  /** se quiser simular backend com mais páginas */
   totalPagesOverride?: number;
-
-  /** toolbar interna (search + filtro + page size). Default: false */
   enableToolbar?: boolean;
-
-  /** controle externo (quando enableToolbar = false) */
-  query?: string; // termo de busca externo
-  risks?: "all" | RiskTone[]; // filtro de risco externo
-
-  /** callback para ações da linha */
+  query?: string;
+  risks?: "all" | RiskTone[];
   onAction?: (action: "done" | "delete" | "open", row: AgendaRow) => void;
 };
 
 /* ===== Utils ===== */
 const toMinutes = (hhmm: string) => {
-  // "08:30" -> 510; fallback para comparador lexical
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
   if (!m) return Number.NaN;
   const h = Number(m[1]);
@@ -109,7 +101,6 @@ const toMinutes = (hhmm: string) => {
   return h * 60 + mm;
 };
 
-// collator pt-BR para ordenar strings de forma natural (ignora acentos)
 const collator = new Intl.Collator("pt", {
   sensitivity: "base",
   numeric: true,
@@ -126,19 +117,17 @@ export function AgendaTable({
   risks = "all",
   onAction,
 }: AgendaTableProps) {
-  // estados (usados quando enableToolbar = true)
+  // estados (toolbar opcional)
   const [filterValue, setFilterValue] = React.useState("");
-  const [riskFilter, setRiskFilter] = React.useState<"all" | Set<React.Key>>(
-    "all"
-  );
+  const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
   const [page, setPage] = React.useState(initialPage);
   const [pageSize, setPageSize] = React.useState(initialRowsPerPage);
-  const [sortDescriptor, setSortDescriptor] = React.useState<{
-    column: React.Key;
-    direction: "ascending" | "descending";
-  }>({ column: "hora", direction: "ascending" });
+  const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
+    column: "hora" as Key,
+    direction: "ascending",
+  });
 
-  // memo do filtro de riscos vindo de props (evita Set novo a cada render)
+  // memo do filtro de riscos vindo de props
   const riskSetFromProps = React.useMemo<"all" | Set<RiskTone>>(
     () => (risks === "all" ? "all" : new Set(risks)),
     [risks]
@@ -149,10 +138,10 @@ export function AgendaTable({
   const effectiveRiskSet: "all" | Set<RiskTone> = enableToolbar
     ? riskFilter === "all"
       ? "all"
-      : (new Set(Array.from(riskFilter) as RiskTone[]) as Set<RiskTone>)
+      : new Set(Array.from(riskFilter).map(String) as RiskTone[])
     : riskSetFromProps;
 
-  // reset de página quando filtros (externos) mudam
+  // reset de página quando filtros externos mudam
   React.useEffect(() => {
     if (!enableToolbar) setPage(1);
   }, [effectiveQuery, effectiveRiskSet, enableToolbar]);
@@ -161,7 +150,6 @@ export function AgendaTable({
   const filteredItems = React.useMemo(() => {
     let data = rows;
 
-    // busca
     const q = (effectiveQuery || "").toLowerCase().trim();
     if (q) {
       data = data.filter(
@@ -173,7 +161,6 @@ export function AgendaTable({
       );
     }
 
-    // risco
     if (effectiveRiskSet !== "all") {
       const sel = effectiveRiskSet as Set<RiskTone>;
       data = data.filter((r) => sel.has(r.risco));
@@ -194,13 +181,12 @@ export function AgendaTable({
     if (page > totalPages) setPage(1);
   }, [totalPages, page]);
 
-  // fatia a página
   const pageItems = React.useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredItems.slice(start, start + pageSize);
   }, [filteredItems, page, pageSize]);
 
-  // ordena (por página) — paciente, hora, local, risco
+  // ordena (por página)
   const sortedItems = React.useMemo<AgendaRow[]>(() => {
     const arr = [...pageItems];
     const { column, direction } = sortDescriptor;
@@ -233,16 +219,17 @@ export function AgendaTable({
           ? first - second
           : collator.compare(String(first), String(second));
 
-      return direction === "descending" ? -cmp : cmp;
+      return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
 
     return arr;
   }, [pageItems, sortDescriptor]);
 
-  // render célula
+  // render célula (use Key e converta para string antes de indexar)
   const renderCell = React.useCallback(
-    (row: AgendaRow, colKey: React.Key) => {
-      switch (colKey) {
+    (row: AgendaRow, colKey: Key) => {
+      const k = String(colKey) as keyof AgendaRow | "actions";
+      switch (k) {
         case "paciente":
           return (
             <>
@@ -309,13 +296,13 @@ export function AgendaTable({
             </div>
           );
         default:
-          return (row as any)[colKey];
+          return (row as any)[k];
       }
     },
     [onAction]
   );
 
-  // toolbar (opcional, quando enableToolbar = true)
+  // toolbar (opcional)
   const topContent = React.useMemo(() => {
     if (!enableToolbar) return null;
     const totalFiltered = filteredItems.length;
@@ -367,9 +354,13 @@ export function AgendaTable({
                 aria-label="Filtro de Risco"
                 disallowEmptySelection
                 closeOnSelect={false}
-                selectedKeys={riskFilter}
                 selectionMode="multiple"
-                onSelectionChange={setRiskFilter as any}
+                selectedKeys={
+                  riskFilter === "all" ? "all" : (riskFilter as Iterable<Key>)
+                }
+                onSelectionChange={(keys) =>
+                  setRiskFilter(keys as "all" | Set<Key>)
+                }
               >
                 {RISK_OPTIONS.map((opt) => (
                   <DropdownItem key={opt.uid} className="capitalize">
@@ -382,7 +373,7 @@ export function AgendaTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline outline-0 text-small"
+                className="bg-transparent outline-0 text-small"
                 aria-label="Linhas por página"
                 value={pageSize}
                 onChange={(e) => {
@@ -447,12 +438,13 @@ export function AgendaTable({
         base: "min-h-[320px]",
       }}
     >
-      <TableHeader columns={COLUMNS}>
-        {(column) => (
+      {/* use um array mutável aqui para evitar erro de readonly */}
+      <TableHeader columns={[...COLUMNS]}>
+        {(column: Column) => (
           <TableColumn
             key={column.uid}
             align={column.align}
-            allowsSorting={column.sortable}
+            allowsSorting={!!column.sortable}
           >
             {column.name}
           </TableColumn>
@@ -463,9 +455,9 @@ export function AgendaTable({
         emptyContent="Nenhum agendamento encontrado."
         items={sortedItems}
       >
-        {(item) => (
+        {(item: AgendaRow) => (
           <TableRow key={item.id} className="even:bg-content2/60">
-            {(columnKey) => (
+            {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}
           </TableRow>

@@ -1,3 +1,4 @@
+// components/gestor/PendenciasTable.tsx
 "use client";
 
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -16,9 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
+import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
 
 export type RiskTone = "safe" | "moderate" | "critical";
+
 export type PendenciasRow = {
   id: string;
   paciente: string;
@@ -34,22 +37,19 @@ const RISK_OPTIONS = [
   { name: "Crítico", uid: "critical" },
 ] as const;
 
-const columns = [
-  {
-    name: "Paciente",
-    uid: "paciente",
-    sortable: true,
-    align: "start" as const,
-  },
-  { name: "Pendências", uid: "pendencias", align: "start" as const },
-  { name: "Dias", uid: "dias", sortable: true, align: "end" as const },
-  {
-    name: "Microárea",
-    uid: "microarea",
-    sortable: true,
-    align: "start" as const,
-  },
-  { name: "Status", uid: "risco", sortable: true, align: "center" as const },
+type Column = {
+  name: string;
+  uid: keyof PendenciasRow | "risco";
+  sortable?: boolean;
+  align?: "start" | "center" | "end";
+};
+
+const columns: readonly Column[] = [
+  { name: "Paciente", uid: "paciente", sortable: true, align: "start" },
+  { name: "Pendências", uid: "pendencias", align: "start" },
+  { name: "Dias", uid: "dias", sortable: true, align: "end" },
+  { name: "Microárea", uid: "microarea", sortable: true, align: "start" },
+  { name: "Status", uid: "risco", sortable: true, align: "center" },
 ] as const;
 
 // ordem semântica para risco (↑ ascendente: Seguro < Atenção < Crítico)
@@ -85,22 +85,23 @@ export function PendenciasTable({
   initialRowsPerPage = 6,
 }: Props) {
   const [filterValue, setFilterValue] = React.useState("");
-  const [riskFilter, setRiskFilter] = React.useState<"all" | Set<React.Key>>(
-    "all"
+  // Usar Key de @react-types/shared
+  const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
+  const [visibleColumns] = React.useState<Set<string>>(
+    () => new Set(columns.map((c) => String(c.uid)))
   );
-  const [visibleColumns] = React.useState(new Set(columns.map((c) => c.uid)));
   const [rowsPerPage, setRowsPerPage] = React.useState(initialRowsPerPage);
   const [page, setPage] = React.useState(initialPage);
-  const [sortDescriptor, setSortDescriptor] = React.useState<{
-    column: React.Key;
-    direction: "ascending" | "descending";
-  }>({ column: "dias", direction: "descending" });
+  const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
+    column: "dias" as Key,
+    direction: "descending",
+  });
 
   const hasSearch = Boolean(filterValue?.trim());
 
-  const headerColumns = React.useMemo(() => {
-    if (visibleColumns === "all") return columns;
-    return columns.filter((c) => Array.from(visibleColumns).includes(c.uid));
+  const headerColumns = React.useMemo<Column[]>(() => {
+    // (não usamos "all" aqui; sempre um Set de strings)
+    return columns.filter((c) => visibleColumns.has(String(c.uid)));
   }, [visibleColumns]);
 
   const filteredItems = React.useMemo(() => {
@@ -116,8 +117,11 @@ export function PendenciasTable({
       );
     }
 
-    if (riskFilter !== "all" && Array.from(riskFilter).length) {
-      const sel = new Set(Array.from(riskFilter));
+    if (riskFilter !== "all" && (riskFilter as Set<Key>).size) {
+      // normaliza o Set<Key> para Set<string>
+      const sel = new Set<string>(
+        Array.from(riskFilter as Set<Key>).map(String)
+      );
       data = data.filter((r) => sel.has(r.risco));
     }
 
@@ -126,7 +130,6 @@ export function PendenciasTable({
 
   const pages = Math.max(1, Math.ceil(filteredItems.length / rowsPerPage));
 
-  // se o filtro reduzir a lista, evita ficar numa página inexistente
   React.useEffect(() => {
     if (page > pages) setPage(1);
   }, [pages, page]);
@@ -157,32 +160,31 @@ export function PendenciasTable({
     });
   }, [pageItems, sortDescriptor]);
 
-  const renderCell = React.useCallback(
-    (row: PendenciasRow, colKey: React.Key) => {
-      switch (colKey) {
-        case "risco":
-          return (
-            <div className="flex justify-center">
-              <StatusChip
-                size="sm"
-                tone={row.risco === "moderate" ? "attention" : row.risco}
-              >
-                {row.risco === "critical"
-                  ? "Crítico"
-                  : row.risco === "moderate"
-                    ? "Atenção"
-                    : "Seguro"}
-              </StatusChip>
-            </div>
-          );
-        case "dias":
-          return <span className="tabular-nums">{row.dias}</span>;
-        default:
-          return (row as any)[colKey];
-      }
-    },
-    []
-  );
+  const renderCell = React.useCallback((row: PendenciasRow, colKey: Key) => {
+    const key = String(colKey) as keyof PendenciasRow | "risco";
+
+    switch (key) {
+      case "risco":
+        return (
+          <div className="flex justify-center">
+            <StatusChip
+              size="sm"
+              tone={row.risco === "moderate" ? "attention" : row.risco}
+            >
+              {row.risco === "critical"
+                ? "Crítico"
+                : row.risco === "moderate"
+                  ? "Atenção"
+                  : "Seguro"}
+            </StatusChip>
+          </div>
+        );
+      case "dias":
+        return <span className="tabular-nums">{row.dias}</span>;
+      default:
+        return (row as any)[key];
+    }
+  }, []);
 
   const topContent = React.useMemo(() => {
     return (
@@ -232,9 +234,14 @@ export function PendenciasTable({
                 aria-label="Filtro de Risco"
                 disallowEmptySelection
                 closeOnSelect={false}
-                selectedKeys={riskFilter}
                 selectionMode="multiple"
-                onSelectionChange={setRiskFilter as any}
+                // selectedKeys precisa ser "all" | Iterable<Key>
+                selectedKeys={
+                  riskFilter === "all" ? "all" : (riskFilter as Iterable<Key>)
+                }
+                onSelectionChange={(keys) =>
+                  setRiskFilter(keys as "all" | Set<Key>)
+                }
               >
                 {RISK_OPTIONS.map((opt) => (
                   <DropdownItem key={opt.uid} className="capitalize">
@@ -247,7 +254,7 @@ export function PendenciasTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline outline-0 text-small"
+                className="bg-transparent outline-none text-small"
                 aria-label="Linhas por página"
                 value={rowsPerPage}
                 onChange={(e) => {
@@ -309,11 +316,11 @@ export function PendenciasTable({
       }}
     >
       <TableHeader columns={headerColumns}>
-        {(column) => (
+        {(column: Column) => (
           <TableColumn
             key={column.uid}
             align={column.align}
-            allowsSorting={column.sortable}
+            allowsSorting={!!column.sortable}
           >
             {column.name}
           </TableColumn>
@@ -321,9 +328,9 @@ export function PendenciasTable({
       </TableHeader>
 
       <TableBody emptyContent="Sem registros" items={sortedItems}>
-        {(item) => (
+        {(item: PendenciasRow) => (
           <TableRow key={item.id} className="even:bg-content2/60">
-            {(columnKey) => (
+            {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}
           </TableRow>

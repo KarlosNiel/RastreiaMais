@@ -15,8 +15,8 @@ const KPIS = [
     key: "pa",
     label: "Sua Pressão Arterial",
     value: "141x89 mmHg",
-    delta: "-0,8%",
-    accent: "rose" as const,
+    delta: -0.8, // número, não string
+    accent: "amber" as const, // "amber" é aceito pelo KpiCard
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
         <path fill="currentColor" d="M13 5V3h-2v2H8v6h2v10h4V11h2V5h-3z" />
@@ -27,7 +27,7 @@ const KPIS = [
     key: "risco",
     label: "Risco Cardiovascular",
     value: "Moderado",
-    delta: "",
+    delta: 0, // quando não houver variação, use 0
     accent: "amber" as const,
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
@@ -42,7 +42,7 @@ const KPIS = [
     key: "hdl",
     label: "Colesterol Bom (HDL)",
     value: "37 mg/dl",
-    delta: "+1,3%",
+    delta: 1.3,
     accent: "green" as const,
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
@@ -57,7 +57,7 @@ const KPIS = [
     key: "ldl",
     label: "Colesterol Ruim (LDL)",
     value: "150 mg/dl",
-    delta: "-2,2%",
+    delta: -2.2,
     accent: "blue" as const,
     icon: (
       <svg viewBox="0 0 24 24" className="size-5" aria-hidden>

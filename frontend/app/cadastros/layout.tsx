@@ -1,21 +1,29 @@
-// app/pacientes/layout.tsx
+// app/cadastros/layout.tsx
 "use client";
 
 import { RMButton } from "@/components/ui/RMButton";
-import { Input } from "@heroui/react";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent } from "react";
+import { useSelectedLayoutSegments } from "next/navigation";
 
-export default function PacientesLayout({
+/* Mapeia o rótulo amigável do último segmento da rota */
+const segmentLabel = (seg?: string) => {
+  switch (seg) {
+    case "novo":
+      return "Novo Profissional";
+    default:
+      return undefined;
+  }
+};
+
+export default function CadastrosLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  function onSearchSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    // TODO: integrar com busca global por paciente/CPF (router.push com query)
-  }
+  const segments = useSelectedLayoutSegments();
+  const last = segments.at(-1);
+  const lastLabel = segmentLabel(last);
 
   return (
     <>
@@ -30,7 +38,6 @@ export default function PacientesLayout({
       {/* Topbar */}
       <header className="sticky top-0 z-40 border-b border-divider bg-content1/90 supports-[backdrop-filter]:backdrop-blur-md">
         <div className="container-app py-3 md:py-4">
-          {/* alinhamento: logo | busca (flex-1) | ícones colados à direita */}
           <div className="flex w-full items-center justify-between gap-3 md:gap-4">
             {/* Logo */}
             <Link
@@ -49,59 +56,8 @@ export default function PacientesLayout({
               />
             </Link>
 
-            {/* Busca global (nome/CPF) */}
-            <form
-              onSubmit={onSearchSubmit}
-              role="search"
-              aria-label="Buscar pacientes"
-              className="flex-1 min-w-[280px]"
-            >
-              <Input
-                type="search"
-                name="q"
-                autoComplete="off"
-                spellCheck={false}
-                aria-label="Buscar por nome ou CPF"
-                placeholder="Buscar por nome ou CPF…"
-                radius="full"
-                variant="bordered"
-                startContent={
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="size-5 text-foreground/45 pointer-events-none"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                    />
-                  </svg>
-                }
-                classNames={{
-                  base: "w-full",
-                  inputWrapper:
-                    "h-11 bg-white border-divider rounded-full shadow-none focus-within:ring-2 focus-within:ring-focus/40",
-                  input:
-                    "text-sm placeholder:text-foreground/40 focus-visible:outline-none",
-                }}
-              />
-            </form>
-
-            {/* Ações rápidas (empurradas para a extrema direita) */}
-            <nav
-              aria-label="Ações"
-              className="ml-auto flex shrink-0 items-center gap-2"
-            >
-              <RMButton
-                as={Link}
-                href="/pacientes/novo"
-                look="solid"
-                tone="brand"
-                size="lg"
-              >
-                Novo Paciente
-              </RMButton>
-
+            {/* Ações (direita) */}
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               <RMButton
                 look="ghost"
                 tone="neutral"
@@ -131,7 +87,7 @@ export default function PacientesLayout({
                   />
                 </svg>
               </RMButton>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
