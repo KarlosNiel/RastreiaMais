@@ -1,6 +1,4 @@
-// lib/api.ts
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_URL = "http://localhost:8000";
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -13,14 +11,24 @@ export type ApiOptions = {
   cache?: RequestCache; // ex.: "no-store"
 };
 
+function buildUrl(path: string) {
+  return path.startsWith("http") ? path : `${API_URL}${path}`; 
+  //* Função helper que Se path já começa com http retorna path diretamente, se não concatena API_URL + path
+}
+
 export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const url = path.startsWith("http") ? path : `${API_URL}${path}`;
+  const url = buildUrl(path)
 
   const headers = new Headers({
     "Content-Type": "application/json",
     ...(opts.headers || {}),
   });
-  if (opts.authToken) headers.set("Authorization", `Bearer ${opts.authToken}`);
+
+  const token = opts.authToken ?? 
+  (typeof window != "undefined" ? localStorage.getItem("access") ?? undefined : undefined)
+
+  if (token) headers.set("Authorization", `Bearer ${token}`)
+    
 
   const res = await fetch(url, {
     method: opts.method ?? "GET",

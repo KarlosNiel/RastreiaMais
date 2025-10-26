@@ -1,6 +1,7 @@
 // frontend/app/providers.tsx
 "use client";
 
+import { AuthProvider } from "@/context/authContext";
 import { HeroUIProvider } from "@heroui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -27,18 +28,20 @@ function getQueryClient() {
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="light" // ou "system"
-      enableSystem
-      disableTransitionOnChange
-      storageKey="rastreia-theme"
-    >
-      <HeroUIProvider className="font-sans">
-        <QueryClientProvider client={getQueryClient()}>
-          {children}
-        </QueryClientProvider>
-      </HeroUIProvider>
-    </NextThemesProvider>
+    <AuthProvider>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="light" // ou "system"
+        enableSystem
+        disableTransitionOnChange
+        storageKey="rastreia-theme"
+      >
+        <HeroUIProvider className="font-sans">
+          <QueryClientProvider client={getQueryClient()}>
+            {children}
+          </QueryClientProvider>
+        </HeroUIProvider>
+      </NextThemesProvider>
+    </AuthProvider>
   );
 }
