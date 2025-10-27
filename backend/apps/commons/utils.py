@@ -1,3 +1,5 @@
+from apps.accounts.models import PatientUser, ProfessionalUser, ManagerUser
+
 def get_user_role(user):
     if hasattr(user, 'manager'):
         return 'manager'
@@ -9,3 +11,6 @@ def get_user_role(user):
         return 'patient'
     
     return None
+
+
+

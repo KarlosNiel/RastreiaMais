@@ -1,5 +1,5 @@
 from rest_framework.permissions import SAFE_METHODS
-from apps.commons.permissions import BaseRolePermission
+from apps.commons.api.v1.permissions import BaseRolePermission
 
 class AppoitmentsDataPermission(BaseRolePermission):
     message = "Você não tem permissão para acessar esse recurso."
@@ -11,13 +11,13 @@ class AppoitmentsDataPermission(BaseRolePermission):
             self.message = "Usuário não autenticado!"
             return False
         
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(user):
+        if self.is_professional(request):
             return True
         
-        if self.is_patient(user) and request.method in SAFE_METHODS:
+        if self.is_patient(request) and request.method in SAFE_METHODS:
             return True
         
         self.message = "Você não tem permissão para acessar está rota."
@@ -26,13 +26,13 @@ class AppoitmentsDataPermission(BaseRolePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(user):
+        if self.is_professional(request):
             return getattr(obj, "user", None) == user
         
-        if self.is_patient(user) and request.method in SAFE_METHODS:
+        if self.is_patient(request) and request.method in SAFE_METHODS:
             return getattr(obj, "user", None) == user
         
         return False

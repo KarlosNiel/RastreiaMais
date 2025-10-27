@@ -1,5 +1,5 @@
 from rest_framework.permissions import SAFE_METHODS
-from apps.commons.permissions import BaseRolePermission
+from apps.commons.api.v1.permissions import BaseRolePermission
 
 class LocationsDataPermissions(BaseRolePermission):
     message = "Você não tem permissão para acessar esse recurso."
@@ -10,14 +10,14 @@ class LocationsDataPermissions(BaseRolePermission):
         if not user.is_authenticated:
             return False
         
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(user):
+        if self.is_professional(request):
             self.message = "Profissionais não tem permissão para acessar está rota."
             return False
         
-        if self.is_patient(user):
+        if self.is_patient(request):
             self.message = "Pacientes não tem permissão para acessar está rota."
             return False
         
@@ -27,14 +27,14 @@ class LocationsDataPermissions(BaseRolePermission):
         if not user.is_authenticated:
             return False
         
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(user):
+        if self.is_professional(request):
             self.message = "Profissioanis não tem acesso as localidades..."
             return False
         
-        if self.is_patient(user):
+        if self.is_patient(request):
             self.message = "Pacientes não tem acesso as localidades..."
             return False
         

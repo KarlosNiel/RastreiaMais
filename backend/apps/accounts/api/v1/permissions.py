@@ -1,5 +1,5 @@
 from rest_framework.permissions import SAFE_METHODS
-from apps.commons.permissions import BaseRolePermission
+from apps.commons.api.v1.permissions import BaseRolePermission
 
 class PatientDataPermission(BaseRolePermission):
     message = "Você não tem permissão para acessar este recurso..."
@@ -10,13 +10,13 @@ class PatientDataPermission(BaseRolePermission):
         if not user.is_authenticated:
             return False
         
-        if user.is_superuser or self.is_manager(user):#* Gestores podem tudo (acesso à rota)
+        if user.is_superuser or self.is_manager(request):#* Gestores podem tudo (acesso à rota)
             return True  
         
-        if self.is_professional(user): #* profissionais: acesso total à rota .
+        if self.is_professional(request): #* profissionais: acesso total à rota .
             return True
         
-        if self.is_patient(user) and request.method in SAFE_METHODS: #*pacientes: apenas métodos seguros (leitura)
+        if self.is_patient(request) and request.method in SAFE_METHODS: #*pacientes: apenas métodos seguros (leitura)
             return True
         
         return False
@@ -24,13 +24,13 @@ class PatientDataPermission(BaseRolePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
 
-        if self.is_professional(user):
+        if self.is_professional(request):
             return True
         
-        if self.is_patient(user) and request.method in SAFE_METHODS:
+        if self.is_patient(request) and request.method in SAFE_METHODS:
             return getattr(obj, 'user', None) == user
         
         return False
@@ -45,13 +45,13 @@ class ProfessionalDataPermission(BaseRolePermission):
             self.message = "Usuário não autenticado!"
             return False
         
-        if user.is_superuser or self.is_manager(user): 
+        if user.is_superuser or self.is_manager(request): 
             return True 
         
-        if self.is_professional(user) and request.method in SAFE_METHODS:
+        if self.is_professional(request) and request.method in SAFE_METHODS:
             return True
         
-        if self.is_patient(user):
+        if self.is_patient(request):
             self.message = "Pacientes não tem acesso aos dados dos profissionais..."
             return False
         
@@ -61,13 +61,13 @@ class ProfessionalDataPermission(BaseRolePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.is_superuser or self.is_manager(user):
+        if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(user) and request.method in SAFE_METHODS:
-            return getattr(obj, 'user', None) == user
+        if self.is_professional(request) and request.method in SAFE_METHODS:
+            return getattr(obj, 'user', None) == request.user
         
-        if self.is_patient(user):
+        if self.is_patient(request):
             self.message = "Pacientes não tem acesso a este objeto de dados dos profissionais..."
             return False
         
@@ -91,7 +91,7 @@ class ManagerDataPermission(BaseRolePermission):
         if user.is_superuser:
             return True
         
-        if self.is_manager(user) and request.method in SAFE_METHODS:
+        if self.is_manager(request) and request.method in SAFE_METHODS:
             return True
         
         self.message = "Você não tem permissão para acessar está rota."
@@ -103,8 +103,8 @@ class ManagerDataPermission(BaseRolePermission):
         if user.is_superuser:
             return True
         
-        if self.is_manager(user) and request.method in SAFE_METHODS:
-            return getattr(obj, 'user', None) == user
+        if self.is_manager(request) and request.method in SAFE_METHODS:
+            return getattr(obj, 'user', None) == request.user
         
         return False
         
