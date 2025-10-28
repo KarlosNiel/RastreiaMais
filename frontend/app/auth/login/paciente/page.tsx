@@ -2,34 +2,43 @@
 "use client";
 
 import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
+import { loginAndAssertRole, setRoleCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-function formatCpf(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  const p1 = d.slice(0, 3);
-  const p2 = d.slice(3, 6);
-  const p3 = d.slice(6, 9);
-  const p4 = d.slice(9, 11);
-  return [p1, p2 && `.${p2}`, p3 && `.${p3}`, p4 && `-${p4}`]
-    .filter(Boolean)
-    .join("");
-}
-
 export default function LoginPacientePage() {
   const router = useRouter();
-  const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleDevLogin() {
-    document.cookie = [
-      "role=PATIENT",
-      "path=/",
-      "SameSite=Lax",
-      "Max-Age=3600",
-      // adicionar "; Secure" quando estiver em HTTPS
-    ].join("; ");
-    router.replace("/me");
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return; // evita duplo submit
+    setError(null);
+
+    const username = email.trim().toLowerCase();
+    if (!username) return setError("Informe o e-mail.");
+    if (!password) return setError("Informe sua senha.");
+
+    setLoading(true);
+    try {
+      // 1) Login + garantia de papel PACIENTE
+      await loginAndAssertRole(username, password, ["PATIENT"]);
+
+      // 2) Cookie leve p/ middleware e redirect
+      setRoleCookie("PATIENT");
+      router.replace("/me");
+    } catch (err: any) {
+      const msg =
+        typeof err?.message === "string" && err.message.trim()
+          ? err.message
+          : "Falha no login. Verifique suas credenciais e tente novamente.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -40,28 +49,9 @@ export default function LoginPacientePage() {
       <form
         className="stack-6"
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleDevLogin();
-        }}
+        onSubmit={handleSubmit}
         aria-label="Formulário de login do paciente"
       >
-        <TextField
-          label="CPF"
-          name="cpf"
-          value={cpf}
-          onValueChange={(v) => setCpf(formatCpf(v))}
-          placeholder="000.000.000-00"
-          isRequired
-          autoFocus
-          autoComplete="off"
-          inputMode="numeric"
-          pattern={String.raw`\d{3}\.\d{3}\.\d{3}-\d{2}`}
-          title="Informe no formato 000.000.000-00"
-          maxLength={14}
-          enterKeyHint="next"
-        />
-
         <TextField
           label="E-mail"
           type="email"
@@ -70,13 +60,34 @@ export default function LoginPacientePage() {
           onValueChange={setEmail}
           placeholder="nome@exemplo.com"
           isRequired
+          autoFocus
           autoComplete="email"
           autoCapitalize="none"
           spellCheck="false"
+          enterKeyHint="next"
+        />
+
+        <TextField
+          label="Senha"
+          type="password"
+          name="password"
+          value={password}
+          onValueChange={setPassword}
+          placeholder="******"
+          isRequired
+          autoComplete="current-password"
           enterKeyHint="done"
         />
 
-        <SubmitButton>Entrar</SubmitButton>
+        {error && (
+          <div role="alert" className="text-danger-500 text-sm">
+            {error}
+          </div>
+        )}
+
+        <SubmitButton isLoading={loading} disabled={loading}>
+          Entrar
+        </SubmitButton>
       </form>
     </AuthCard>
   );

@@ -2,26 +2,55 @@
 "use client";
 
 import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
+import { loginAndAssertRole, pickDashboard, setRoleCookie } from "@/lib/auth";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function LoginProfissionalPage() {
   const router = useRouter();
-  const [account, setAccount] = useState("");
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  function handleDevLogin() {
-    document.cookie = [
-      "role=PROFESSIONAL",
-      "path=/",
-      "SameSite=Lax",
-      "Max-Age=3600",
-      // adicionar "; Secure" quando estiver servindo em HTTPS
-    ].join("; ");
-    router.replace("/profissional");
+  const isValid = useMemo(() => {
+    const e = email.trim();
+    return e.length > 0 && pwd.length > 0;
+  }, [email, pwd]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isValid || loading) return;
+
+    setErrorMsg(null);
+    setLoading(true);
+
+    try {
+      const username = email.trim().toLowerCase();
+
+      // 1) Login exigindo MANAGER ou PROFESSIONAL
+      const me = await loginAndAssertRole(username, pwd, [
+        "MANAGER",
+        "PROFESSIONAL",
+      ]);
+
+      // 2) Define cookie leve para o middleware (prioridade MANAGER > PROFESSIONAL)
+      const role = me.roles.includes("MANAGER") ? "MANAGER" : "PROFESSIONAL";
+      setRoleCookie(role);
+
+      // 3) Redireciona para o dashboard adequado
+      router.replace(pickDashboard(me.roles));
+    } catch (err: any) {
+      const msg =
+        typeof err?.message === "string" && err.message.trim()
+          ? err.message
+          : "Erro inesperado ao entrar. Verifique suas credenciais e tente novamente.";
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,23 +62,8 @@ export default function LoginProfissionalPage() {
         className="stack-6"
         noValidate
         aria-label="Formulário de login do profissional"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleDevLogin();
-        }}
+        onSubmit={handleSubmit}
       >
-        <TextField
-          label="Nome da conta"
-          name="account"
-          value={account}
-          onValueChange={setAccount}
-          placeholder="ex.: USF Maria Madalena"
-          isRequired
-          autoFocus
-          autoComplete="organization"
-          enterKeyHint="next"
-        />
-
         <TextField
           label="E-mail"
           type="email"
@@ -58,6 +72,7 @@ export default function LoginProfissionalPage() {
           onValueChange={setEmail}
           placeholder="nome@exemplo.com"
           isRequired
+          autoFocus
           autoComplete="email"
           autoCapitalize="none"
           spellCheck="false"
@@ -91,7 +106,15 @@ export default function LoginProfissionalPage() {
           }
         />
 
-        <SubmitButton>Entrar</SubmitButton>
+        {errorMsg && (
+          <div role="alert" className="text-danger-500 text-sm">
+            {errorMsg}
+          </div>
+        )}
+
+        <SubmitButton isLoading={loading} disabled={loading || !isValid}>
+          Entrar
+        </SubmitButton>
       </form>
     </AuthCard>
   );
