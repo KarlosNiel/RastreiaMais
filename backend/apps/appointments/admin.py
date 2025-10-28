@@ -34,16 +34,6 @@ class AppointmentAdmin(BaseModelAdmin):
     date_hierarchy = 'scheduled_datetime'
     ordering = ('-scheduled_datetime',)
 
-    # Campos de auditoria do BaseModel continuam readonly
-    readonly_fields = BaseModelAdmin.readonly_fields + (
-        'patient',
-        'professional',
-        'scheduled_datetime',
-    )
-
-    # =====================================================
-    # CUSTOMIZADORES DE EXIBIÇÃO
-    # =====================================================
     def patient_display(self, obj):
         """Exibe o nome do paciente"""
         return obj.patient.user.get_full_name()

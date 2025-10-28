@@ -4,6 +4,10 @@ from apps.commons.models import BaseModel
 from django.core.exceptions import ValidationError
 from apps.accounts.utils.utils import get_creator_profile, SingleProfileMixin
 
+from apps.accounts.data.patient import LifeStyle, SocialdemographicData, PsychosocialRisks, EnvironmentalRisks, PhysicalMotorRisks, ClassificationConducmMultiProfessional
+
+
+
 # Create your models here.
 
 ROLE_CHOICES = [
@@ -13,7 +17,8 @@ ROLE_CHOICES = [
 ]
 
 #Patient=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-class PatientUser(SingleProfileMixin, BaseModel):
+class PatientUser(SingleProfileMixin, BaseModel, SocialdemographicData, LifeStyle, PsychosocialRisks,
+                EnvironmentalRisks, PhysicalMotorRisks, ClassificationConducmMultiProfessional):
     class Meta:
         verbose_name = "Paciente"
         verbose_name_plural = 'Pacientes'
@@ -77,4 +82,6 @@ class ManagerUser(SingleProfileMixin, BaseModel):
         if self.created_by and not self.pk:
             if not self.created_by.is_staff:
                 raise ValidationError("Apenas os Admins do Django podem criar Gestores.")
+
+#PatientData=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

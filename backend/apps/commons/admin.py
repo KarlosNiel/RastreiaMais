@@ -21,9 +21,11 @@ class LogEntryAdmin(admin.ModelAdmin):
     
     def has_view_permission(self, request, obj=None): #! Permite que apenas superusers vejam os logs
         return request.user.is_superuser
+    
+    
 
 class BaseModelAdmin(admin.ModelAdmin):
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at') #* Campos de leitura
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', "created_by", "updated_by", "deleted_by") #* Campos de leitura
     list_filter = ('is_deleted', 'created_at', 'updated_at') #* Filtragem 
     search_fields = ('id', 'user__username', 'user__first_name', 'user__last_name') #* Pesquisa 
     ordering = ('-created_at',)
