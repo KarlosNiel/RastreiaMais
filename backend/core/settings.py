@@ -202,9 +202,11 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
     "hide_apps": [],
 
-    "order_with_respect_to": ["auth",],
+    "order_with_respect_to": ["Admin", "auth",],
 
     "icons": {
+        "admin.LogEntry": "fa-solid fa-book",
+
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",

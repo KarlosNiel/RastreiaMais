@@ -4,7 +4,23 @@ from django.contrib.admin.models import LogEntry
 # Register your models here.
 @admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
-    pass
+    date_hierarchy = "action_time"
+
+    list_display = ["action_time", "user", "content_type", "object_repr", "action_flag", "change_message"]
+    list_filter = ["action_flag", "content_type", "user"]
+    search_fields = ["object_repr", "change_message"]
+
+    def has_add_permission(self, request): #! Impede a criação manual de logs
+        return False
+    
+    def has_change_permission(self, request, obj=None): #! Impede a edição de logs
+        return False
+    
+    def has_delete_permission(self, request, obj =None): #! Impede a remoção de logs
+        return False
+    
+    def has_view_permission(self, request, obj=None): #! Permite que apenas superusers vejam os logs
+        return request.user.is_superuser
 
 class BaseModelAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at', 'deleted_at') #* Campos de leitura
