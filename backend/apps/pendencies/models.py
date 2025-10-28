@@ -7,6 +7,7 @@ from apps.locations.models import MicroArea
 class Pendency(BaseModel):
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     micro_area = models.ForeignKey(MicroArea, on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.TextField()
 
     def __str__(self):
         micro_area_name = self.micro_area.name if self.micro_area else "Sem microárea"

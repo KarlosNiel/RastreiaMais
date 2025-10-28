@@ -35,7 +35,7 @@ THIRD_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'corsheaders',
-    'behave_django'
+    'behave_django',
 ]
 
 LOCAL_APPS = [
@@ -51,6 +51,7 @@ LOCAL_APPS = [
 ]
 
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -179,4 +180,90 @@ SPECTACULAR_SETTINGS = {
         {"name": "Medications", "description": "Cadastro e gerenciamento de medicamentos prescritos"},
         {"name": "Pendencies", "description": "Gerenciamento de pendências"},
     ]
+}
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Rastreia+ Admin",
+    "site_header": "Rastreia+",
+    "site_brand": "Administração",
+    "welcome_sign": "Rastreia+",
+    "copyright": "RastreiaMaisLTDA",
+    
+    "topmenu_links": [
+        {"app": "accounts"},
+        {"app": "alerts"},
+        {"app": "appointments"},
+        {"app": "conditions"},
+        {"app": "locations"},
+        {"app": "medications"},
+        {"app": "pendencies"},
+    ],
+
+    "show_sidebar": True,
+    "hide_apps": [],
+
+    "order_with_respect_to": ["auth",],
+
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+
+        "accounts.ManagerUser": "fa-solid fa-user-tie",
+        "accounts.ProfessionalUser": "fa-solid fa-user-doctor",
+        "accounts.PatientUser": "fa-solid fa-hospital-user",
+
+        "alerts.Alert": "fa-solid fa-bell",
+
+        "appointments.Appointment": "fa-solid fa-calendar-check",
+
+        "conditions.HAS": "fa-solid fa-heart-pulse",
+        "conditions.DM": "fa-solid fa-syringe",
+        "conditions.OtherDCNT": "fa-solid fa-virus",
+
+        "locations.Address": "fa-solid fa-map-location-dot",
+        "locations.MicroArea": "fa-solid fa-chart-area",
+        "locations.Institution": "fa-solid fa-building",
+
+        "medications.Medication": "fa-solid fa-pills",
+        
+        "pendencies.Pendency": "fa-solid fa-exclamation",
+    },
+
+    "changeform_format": "horizontal_tabs",
+
+    "show_ui_builder": True,
+}
+
+JAZZMIN_UI_TWEAKS = {
+
+    "navbar_small_text": True,
+    "footer_small_text": True,
+    "body_small_text": False,
+    "brand_small_text": True,
+    "brand_colour": "navbar-orange",
+    "accent": "accent-lightblue",
+    "navbar": "navbar-orange navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-orange",
+    "sidebar_nav_small_text": True,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
 }

@@ -1,6 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 
 # Register your models here.
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    pass
+
 class BaseModelAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at', 'deleted_at') #* Campos de leitura
     list_filter = ('is_deleted', 'created_at', 'updated_at') #* Filtragem 
