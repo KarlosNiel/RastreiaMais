@@ -14,6 +14,10 @@ ROLE_CHOICES = [
 
 #Patient=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class PatientUser(SingleProfileMixin, BaseModel):
+    class Meta:
+        verbose_name = "Paciente"
+        verbose_name_plural = 'Pacientes'
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -32,6 +36,10 @@ class PatientUser(SingleProfileMixin, BaseModel):
 
 #Professional=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class ProfessionalUser(SingleProfileMixin, BaseModel): 
+    class Meta: 
+        verbose_name = "Profissional"
+        verbose_name_plural = "Profissionais"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(choices=ROLE_CHOICES, max_length=100)
 
@@ -52,6 +60,10 @@ class ProfessionalUser(SingleProfileMixin, BaseModel):
 
 #Manager=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class ManagerUser(SingleProfileMixin, BaseModel):
+    class Meta:
+        verbose_name = "Gestor"
+        verbose_name_plural = "Gestores"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=50)
 

@@ -9,6 +9,10 @@ RISK_CHOICES = [
 ]
 
 class Alert(BaseModel):
+    class Meta:
+        verbose_name = "Alerta"
+        verbose_name_plural = "Alertas"
+
     title = models.CharField(max_length=150)
     description = models.TextField()
     risk_level = models.CharField(choices=RISK_CHOICES, max_length=20,  default='Moderado')
