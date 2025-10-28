@@ -5,6 +5,10 @@ from apps.locations.models import MicroArea
 
 # Create your models here.
 class Pendency(BaseModel):
+    class Meta:
+        verbose_name = "Pendência"
+        verbose_name_plural = "Pendências"
+
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     micro_area = models.ForeignKey(MicroArea, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField()

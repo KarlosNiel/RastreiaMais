@@ -11,6 +11,10 @@ class DCNT(BaseModel):
     family_history = models.BooleanField(null=True, blank=True)
 
 class HAS(DCNT):
+    class Meta:
+        verbose_name = "HAS"
+        verbose_name_plural = "HASs"
+
     COMPLICATIONS_CHOICES = [
         ('AVC', 'AVC'),
         ('Infarto', 'Infarto'),
@@ -18,6 +22,10 @@ class HAS(DCNT):
     any_complications_HBP = models.CharField(choices=COMPLICATIONS_CHOICES, max_length=30, null=True, blank=True)
 
 class DM(DCNT):
+    class Meta:
+        verbose_name = "DM"
+        verbose_name_plural = "DMs"
+
     TREATMENT_TYPE_CHOICES = [
         ('Oral', 'Oral'),
         ('Insulina', 'Insulina'),
@@ -34,6 +42,10 @@ class DM(DCNT):
     diabetic_foot_member = models.CharField(max_length=100, null=True, blank=True)
 
 class OtherDCNT(DCNT):
+    class Meta:
+        verbose_name = "Outra DCNT"
+        verbose_name_plural = "Outras DCNT"
+
     name = models.CharField(max_length=100, null=True, blank=True)
 
 #* Sugestão de melhoria:

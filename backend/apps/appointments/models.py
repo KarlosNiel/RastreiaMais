@@ -23,6 +23,10 @@ STATUS_CHOICES = [
 ]
 
 class Appointment(BaseModel):
+    class Meta:
+        verbose_name = "Agendamento"
+        verbose_name_plural = "Agendamentos"
+
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     professional = models.ForeignKey(ProfessionalUser, on_delete=models.CASCADE)
     scheduled_datetime = models.DateTimeField()

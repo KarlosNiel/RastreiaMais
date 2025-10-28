@@ -12,6 +12,10 @@ UF_CHOICE = [
 
 #Address=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class Address(BaseModel):
+    class Meta:
+        verbose_name = "Endereço"
+        verbose_name_plural = "Endereços"
+
     uf = models.CharField(choices=UF_CHOICE, max_length=2)
     city = models.CharField(max_length=100)
     district = models.CharField(max_length=100)
@@ -35,6 +39,10 @@ class Address(BaseModel):
 
 #Micro-Area=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class MicroArea(BaseModel):
+    class Meta:
+        verbose_name = "Micro-Área"
+        verbose_name_plural = "Micro-Áreas"
+
     name = models.CharField(max_length=100)
     maps_localization = models.URLField(null=True, blank=True)
     address = models.OneToOneField(Address, on_delete=models.CASCADE, null=True, blank=True)
@@ -44,6 +52,10 @@ class MicroArea(BaseModel):
 
 #Institution=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class Institution(BaseModel):
+    class Meta:
+        verbose_name = "Instituição"
+        verbose_name_plural = "Instituições"
+        
     name = models.CharField(max_length=100)
     maps_localization = models.URLField(null=True, blank=True)
     address = models.OneToOneField(Address, on_delete=models.CASCADE, null=True, blank=True)

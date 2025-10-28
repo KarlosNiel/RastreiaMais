@@ -5,6 +5,10 @@ from apps.accounts.models import PatientUser
 
 # Create your models here.
 class Medication(BaseModel):
+    class Meta:
+        verbose_name = "Medicação"
+        verbose_name_plural = "Medicações"
+        
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     description = models.TextField()
