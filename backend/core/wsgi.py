@@ -1,9 +1,9 @@
 """
-WSGI config for core project.
+Configuração WSGI para o projeto core.
 
-It exposes the WSGI callable as a module-level variable named ``application``.
+Expõe o callable WSGI como uma variável de nível de módulo chamada ``application``.
 
-For more information on this file, see
+Para mais informações sobre este arquivo, veja
 https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
@@ -11,6 +11,14 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+# Determina o ambiente baseado na variável DJANGO_ENV
+environment = os.environ.get('DJANGO_ENV', 'production')
+
+if environment == 'development':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings.development')
+elif environment == 'testing':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings.testing')
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings.production')
 
 application = get_wsgi_application()
