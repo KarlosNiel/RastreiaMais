@@ -9,6 +9,11 @@ import {
 import { AccentSection } from "@/components/ui/AccentSection";
 import { useMemo } from "react";
 
+import { useQuery } from "@tanstack/react-query";
+import { apiGet } from "@/lib/api";
+
+// ...existing code...
+
 /* ===== Mock de KPIs e Medicações (trocar por API) ===== */
 const KPIS = [
   {
@@ -101,7 +106,8 @@ const MEDICACOES: Med[] = [
   },
 ];
 
-/* ===== Mock de Consultas ===== */
+/* ===== Mock de Consultas (substituído por chamada à API) ===== */
+/* Mantive APPTS apenas para fallback local se a API falhar */
 const APPTS: ConsultaRow[] = [
   {
     id: "a1",
@@ -161,6 +167,72 @@ const APPTS: ConsultaRow[] = [
 
 export default function MePage() {
   const meds = useMemo(() => MEDICACOES, []);
+
+  // useQuery para buscar consultas da API
+const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["appointments"],
+    queryFn: async () => {
+      console.log('Token:', sessionStorage.getItem('access')); // debug temporário
+      const resp = await apiGet<any>("/api/v1/appointments/appointments/");
+      if (Array.isArray(resp)) return resp;
+      if (resp && Array.isArray(resp.results)) return resp.results;
+      return [];
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60,
+});
+
+  // transformar resposta da API para o tipo esperado pelo ConsultasTable
+  const rows = useMemo<ConsultaRow[]>(() => {
+    const source = (data ?? APPTS) as any[];
+    return source.map((a) => {
+      console.log(a);
+      // mapeamento defensivo com vários fallbacks para evitar erros
+      const profissional =
+        a.professional?.user?.first_name ?? "—";
+
+      const cargo =
+        a.professional?.role ??
+        "—";
+
+      const local =
+        a.location?.name ?? a.local?.name ?? "—";
+
+      // tentamos extrair data/hora a partir de campos comuns usados em APIs
+      const dt =
+        a.scheduled_datetime ??
+        null;
+
+      let dataStr = "—";
+      let horaStr = "—";
+      if (dt) {
+        const d = new Date(dt);
+        if (!Number.isNaN(d.getTime())) {
+          dataStr = d.toLocaleDateString();
+          horaStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        } else {
+          // se não for uma string de data válida, exiba como está
+          dataStr = String(dt);
+        }
+      } else {
+        // campos separados:
+        if (a.scheduled_datetime) dataStr = String(a.date);
+        if (a.scheduled_datetime) horaStr = String(a.hora);
+      }
+
+      const status = a.status;
+
+      return {
+        id: String(a.id ?? a.pk ?? Math.random().toString(36).slice(2, 9)),
+        profissional,
+        cargo,
+        local,
+        hora: horaStr,
+        data: dataStr,
+        status,
+      } as ConsultaRow;
+    });
+  }, [data]);
 
   return (
     <>
@@ -266,7 +338,13 @@ export default function MePage() {
           </span>
         }
       >
-        <ConsultasTable rows={APPTS} initialPage={1} initialRowsPerPage={4} />
+        {isLoading ? (
+          <div className="p-6">Carregando consultas...</div>
+        ) : isError ? (
+          <div className="p-6 text-red-600">Erro ao carregar consultas.</div>
+        ) : (
+          <ConsultasTable rows={rows} initialPage={1} initialRowsPerPage={4} />
+        )}
       </AccentSection>
     </>
   );

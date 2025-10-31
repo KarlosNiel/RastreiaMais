@@ -58,3 +58,5 @@ class ManagerUserSerializer(BaseSerializer):
         user_data = validated_data.pop("user")
         user = User.objects.create_user(**user_data)
         manager = ManagerUser.objects.create(user=user, **validated_data)
+    
+        return manager

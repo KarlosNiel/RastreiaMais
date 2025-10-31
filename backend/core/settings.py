@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -152,6 +153,11 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2), 
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7)
+}
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Rastreia+',
     'DESCRIPTION': 'Documentação da API para auxiliar APS e UBS no gerenciamento de Pessoas com Doenças Crônicas não transmissiveis.',
@@ -187,7 +193,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "Rastreia+",
     "site_brand": "Administração",
     "welcome_sign": "Rastreia+",
-    "copyright": "RastreiaMaisLTDA",
+    "copyright": "Rastreia+",
     
     "topmenu_links": [
         {"app": "auth"},

@@ -14,7 +14,6 @@ import {
 import { useMemo, useState } from "react";
 
 /* ===== Tipos ===== */
-export type ConsultaStatus = "ativo" | "cancelado" | "finalizado";
 
 export type ConsultaRow = {
   id: string;
@@ -23,7 +22,7 @@ export type ConsultaRow = {
   local: string;
   hora: string; // "16:00"
   data: string; // "11/09/25"
-  status: ConsultaStatus;
+  status: string;
 };
 
 type Props = {
@@ -34,15 +33,7 @@ type Props = {
 };
 
 /* ===== Helpers ===== */
-const statusToTone = (s: ConsultaStatus) =>
-  s === "ativo"
-    ? ("safe" as const)
-    : s === "cancelado"
-      ? ("critical" as const)
-      : ("neutral" as const);
 
-const statusToLabel = (s: ConsultaStatus) =>
-  s === "ativo" ? "Ativo" : s === "cancelado" ? "Cancelado" : "Finalizado";
 
 /* ===== Componente ===== */
 export function ConsultasTable({
@@ -101,8 +92,8 @@ export function ConsultasTable({
               <TableCell>{r.data}</TableCell>
 
               <TableCell className="text-right">
-                <StatusChip size="sm" tone={statusToTone(r.status)}>
-                  {statusToLabel(r.status)}
+                <StatusChip size="sm">
+                  {r.status}
                 </StatusChip>
               </TableCell>
             </TableRow>

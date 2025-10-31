@@ -12,4 +12,20 @@ class AppointmentViewset(BaseModelViewSet):
 
     queryset = Appointment.all_objects
     serializer_class = AppointmentSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.request.user.is_authenticated:
+            if hasattr(self.request.user, 'patientuser'):
+                return queryset.filter(patient=self.request.user.patientuser)
+            
+            elif hasattr(self.request.user, 'professionaluser'):
+                return queryset.filter(professional=self.request.user.professionaluser)
+            
+            elif self.request.user.is_superuser or hasattr(self.request.user, 'manageruser'):
+                return queryset
+            
+        return queryset.none()
+            
     
