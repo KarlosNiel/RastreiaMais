@@ -32,6 +32,7 @@ export function setRoleCookie(role: Role) {
     `role=${encodeURIComponent(role)}`,
     "Path=/",
     "SameSite=Lax",
+    "Max-Age=86400", // 24 horas - expira automaticamente
     isHttps ? "Secure" : "", // <- apenas em HTTPS
   ]
     .filter(Boolean)
@@ -104,6 +105,9 @@ export async function meFetch(): Promise<MeResponse> {
 export function logout() {
   clearTokens();
   clearRoleCookie();
+  if (isBrowser()) {
+    localStorage.removeItem("role");
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
