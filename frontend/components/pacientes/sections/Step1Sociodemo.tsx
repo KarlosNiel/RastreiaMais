@@ -72,13 +72,18 @@ const ESTADOS_CIVIS = [
  * (use no PatientWizard.stepFields[0])
  */
 export const STEP1_FIELDS = [
+  // obrigatórios segundo o SocioZ
   "socio.nome",
   "socio.nascimento",
   "socio.genero",
   "socio.sus_cpf",
-  "socio.endereco.logradouro",
-  "socio.endereco.uf",
   "socio.telefone",
+  "socio.endereco.logradouro",
+  "socio.endereco.bairro",
+  "socio.endereco.cidade",
+  "socio.endereco.uf",
+  "socio.escolaridade",
+  "socio.estado_civil",
 ] as const;
 
 export default function Step1Sociodemo() {
@@ -236,6 +241,7 @@ export default function Step1Sociodemo() {
                 name="socio.endereco.bairro"
                 label="Bairro"
                 placeholder="Ex.: Centro"
+                isRequired
                 autoComplete="address-level3"
               />
               <RHFInput
@@ -243,6 +249,7 @@ export default function Step1Sociodemo() {
                 name="socio.endereco.cidade"
                 label="Cidade"
                 placeholder="Ex.: Patos"
+                isRequired
                 autoComplete="address-level2"
               />
               <RHFSelect

@@ -269,7 +269,7 @@ function BlocoHAS() {
             />
             <RHFInput
               name="clinica.has.altura"
-              label="Altura (m)"
+              label="Altura (cm)"
               inputMode="decimal"
               valueParser={parseDecimal}
             />
@@ -584,7 +584,7 @@ function BlocoDM() {
             />
             <RHFInput
               name="clinica.dm.altura"
-              label="Altura (m)"
+              label="Altura (cm)"
               inputMode="decimal"
               valueParser={parseDecimal}
             />

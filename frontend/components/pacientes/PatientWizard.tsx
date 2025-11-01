@@ -6,7 +6,7 @@ import { Button } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import Step1 from "./sections/Step1Sociodemo";
+import Step1, { STEP1_FIELDS } from "./sections/Step1Sociodemo";
 import Step2, { STEP2_FIELDS } from "./sections/Step2Condicoes";
 import Step3, { getStep3FieldsDynamic } from "./sections/Step3Clinica";
 import Step4 from "./sections/Step4Multiprof";
@@ -28,11 +28,11 @@ const STEPS_META = [
 ] as const;
 
 const DEFAULT_FIELDS: string[][] = [
-  ["socio"],
-  [], // s2 é validado com STEP2_FIELDS
-  [], // s3 é dinâmico conforme HAS/DM
-  ["multiprof"], // s4
-  ["plano"], // s5
+  [], // s1 validado por STEP1_FIELDS (override abaixo)
+  [], // s2 validado por STEP2_REQUIRED (override abaixo)
+  [], // s3 dinâmico (override abaixo)
+  [], // s4: tudo opcional → não bloquear
+  [], // s5: opcional → não bloquear aqui (valide no submit se quiser)
 ];
 
 export default function PatientWizard({
@@ -53,24 +53,44 @@ export default function PatientWizard({
   const dm = watch("condicoes.dm");
   const step3Enabled = !!has || !!dm;
 
+  // Campos OBRIGATÓRIOS do Step 2 (removendo os opcionais)
+  const STEP2_REQUIRED = useMemo(
+    () =>
+      Array.from(STEP2_FIELDS).filter(
+        (f) =>
+          f !== "condicoes.outras_dcnts" &&
+          f !== "condicoes.outras_em_acompanhamento"
+      ),
+    []
+  );
+
   const fieldsByStep =
     stepFields?.length === STEPS_META.length ? stepFields : DEFAULT_FIELDS;
 
   /** devolve os targets de validação por step (s2/s3 dinâmicos) */
   const getTargetsForStep = useCallback(
     (idx: number): string[] => {
-      if (idx === 1) return Array.from(STEP2_FIELDS);
+      if (idx === 0) return Array.from(STEP1_FIELDS);
+      if (idx === 1) return STEP2_REQUIRED;
       if (idx === 2) {
         if (!step3Enabled) return []; // não valida nada se step3 desabilitado
         return getStep3FieldsDynamic({ has: !!has, dm: !!dm }).map(String);
       }
+      if (idx === 3) return []; // Step 4 opcional → nunca bloquear
+      if (idx === 4) return []; // (opcional) Step 5 opcional → nunca bloquear
       return fieldsByStep[idx] ?? [];
     },
-    [fieldsByStep, has, dm, step3Enabled]
+    [fieldsByStep, has, dm, step3Enabled, STEP2_REQUIRED]
   );
 
   const [step, setStep] = useState(0);
   const total = STEPS_META.length;
+  // Se o Step 3 ficar desabilitado enquanto o usuário está nele, salta para o próximo
+  useEffect(() => {
+    if (step === 2 && !step3Enabled) {
+      setStep(3); // manda para Multiprof.
+    }
+  }, [step, step3Enabled]);
 
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -122,35 +142,43 @@ export default function PatientWizard({
     [errors, getTargetsForStep]
   );
 
-  /** valida só o step atual (dinâmico nos passos 2 e 3) */
+  const { getFieldState } = useFormContext();
+
   const validateCurrent = useCallback(async () => {
     if (!validateOnNext) return true;
     const targets = getTargetsForStep(step);
-    const ok = await trigger(targets.length ? targets : undefined, {
-      shouldFocus: true,
-    });
-    if (!ok) {
-      const firstErr = findFirstErrorPath(errors);
-      if (
-        firstErr &&
-        (targets.length === 0 ||
-          targets.some((f) => firstErr === f || firstErr.startsWith(`${f}.`)))
-      ) {
-        setFocus(firstErr as any, { shouldSelect: true });
-      }
-      notifyWarn("Revise os campos desta etapa.");
+
+    // Se o step não tem alvos, não bloqueia navegação
+    if (!targets.length) return true;
+
+    // Valida apenas os alvos do step atual
+    const ok = await trigger(targets, { shouldFocus: false });
+    if (ok) return true;
+
+    // Confere se existe erro DENTRO dos alvos do step atual
+    const hasErrInCurrent = targets.some((t) => getFieldState(t).invalid);
+    if (!hasErrInCurrent) return true; // havia erro fora do step → não bloqueia
+
+    // Foco no primeiro erro do step atual (aproximação via mapa de erros)
+    const firstErr = findFirstErrorPath(errors);
+    if (
+      firstErr &&
+      targets.some((f) => firstErr === f || firstErr.startsWith(`${f}.`))
+    ) {
+      setFocus(firstErr as any, { shouldSelect: true });
     }
-    return ok;
+    notifyWarn("Revise os campos desta etapa.");
+    return false;
   }, [
     validateOnNext,
     getTargetsForStep,
     step,
     trigger,
+    getFieldState,
     findFirstErrorPath,
     errors,
     setFocus,
   ]);
-
   /** rolar o cartão para o título do step */
   const smoothToContentTop = useCallback(() => {
     requestAnimationFrame(() => {
@@ -236,7 +264,7 @@ export default function PatientWizard({
   }, [next, prev]);
 
   return (
-    <section className="overflow-hidden rounded-[16px] border border-card bg-content1 shadow-soft">
+    <section className="overflow-hidden rounded-lg border border-card bg-content1 shadow-soft">
       {/* Cabeçalho: pílulas + barra de progresso */}
       <header className="px-6 md:px-8 pt-6 pb-4 bg-content1/80">
         <ol

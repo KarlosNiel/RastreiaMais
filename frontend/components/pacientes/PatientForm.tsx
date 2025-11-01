@@ -147,7 +147,7 @@ export default function PatientForm(props: Props) {
     mode: "onChange",
     reValidateMode: "onBlur",
     shouldFocusError: true,
-    shouldUnregister: true, // limpa campos condicionais ao esconder
+    shouldUnregister: false,
   });
 
   const {
