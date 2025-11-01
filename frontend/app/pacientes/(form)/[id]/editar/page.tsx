@@ -4,14 +4,15 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
+  const { id } = await params;
   return {
-    title: `Editar Paciente #${params.id}`,
+    title: `Editar Paciente #${id}`,
     description: "Edição do cadastro do paciente",
   };
 }
@@ -45,7 +46,8 @@ async function fetchPaciente(id: number) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!Number.isFinite(id)) {
     throw new Error("ID inválido");
   }

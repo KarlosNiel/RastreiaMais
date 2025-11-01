@@ -50,7 +50,8 @@ export function clearRoleCookie() {
 
 export async function login(
   username: string,
-  password: string
+  password: string,
+  persistent: boolean = true
 ): Promise<MeResponse> {
   const res = await fetch(`${API}/api/token/`, {
     method: "POST",
@@ -71,16 +72,17 @@ export async function login(
   }
 
   const { access, refresh } = await res.json();
-  setTokens(access, refresh);
+  setTokens(access, refresh, persistent);
   return meFetch();
 }
 
 export async function loginAndAssertRole(
   username: string,
   password: string,
-  required: Role[]
+  required: Role[],
+  persistent: boolean = true
 ): Promise<MeResponse> {
-  const me = await login(username, password);
+  const me = await login(username, password, persistent);
   if (!hasAnyRole(me.roles, required)) {
     logout();
     throw new Error(
