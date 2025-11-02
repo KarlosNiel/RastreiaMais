@@ -30,10 +30,11 @@ class AppoitmentsDataPermission(BaseRolePermission):
             return True
         
         if self.is_professional(request):
-            return getattr(obj, "user", None) == user
+            return obj.professional == getattr(request.user, 'professionaluser', None)
+
         
         if self.is_patient(request) and request.method in SAFE_METHODS:
-            return getattr(obj, "user", None) == user
+            return obj.patient == getattr(request.user, 'patientuser', None)
         
         return False
             

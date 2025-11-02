@@ -17,9 +17,9 @@ TYPE_CHOICES = [
 ]
 
 STATUS_CHOICES = [
-    ('Finalizado', 'Criado'),
-    ('Agendado', 'Agendado'),
-    ('Cancelado', 'Cancelado')
+    ('ativo', 'Ativo'),
+    ('finalizado', 'Finalizado'),
+    ('cancelado', 'Cancelado')
 ]
 
 class Appointment(BaseModel):

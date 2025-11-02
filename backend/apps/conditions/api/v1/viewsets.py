@@ -9,7 +9,6 @@ from apps.commons.api.v1.viewsets import BaseModelViewSet
 @extend_schema(tags=['Conditions - HAS'])
 class HASViewset(BaseModelViewSet):
     permission_classes = [IsAuthenticated, ConditionsDataPermission]
-
     queryset = HAS.all_objects
     serializer_class = HASSerializer
 

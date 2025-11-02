@@ -1,5 +1,6 @@
 from django.db import models
 from apps.commons.models import BaseModel
+from apps.accounts.models import ProfessionalUser
 
 # Create your models here.
 RISK_CHOICES = [
@@ -12,7 +13,8 @@ class Alert(BaseModel):
     class Meta:
         verbose_name = "Alerta"
         verbose_name_plural = "Alertas"
-
+    
+    professional = models.ForeignKey (ProfessionalUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=150)
     description = models.TextField()
     risk_level = models.CharField(choices=RISK_CHOICES, max_length=20,  default='Moderado')

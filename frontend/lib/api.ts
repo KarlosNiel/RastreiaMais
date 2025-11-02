@@ -1,4 +1,5 @@
-// frontend/lib/api.ts
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 // ─────────────────────────────────────────────────────────────
@@ -41,141 +42,186 @@ export function clearTokens() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Headers util — não sobrescreve multipart
-// ─────────────────────────────────────────────────────────────
-function isFormDataBody(init: RequestInit) {
-  return typeof FormData !== "undefined" && init.body instanceof FormData;
-}
-
-function buildHeaders(init: RequestInit): Record<string, string> {
-  const base: Record<string, string> = {};
-  if (!isFormDataBody(init)) {
-    base["Content-Type"] = "application/json";
-  }
-
-  const incoming = (init.headers as Record<string, string>) || {};
-  Object.assign(base, incoming);
-
-  const acc = getAccess();
-  if (acc) base.Authorization = `Bearer ${acc}`;
-
-  return base;
-}
-
-// ─────────────────────────────────────────────────────────────
 // Error helpers
 // ─────────────────────────────────────────────────────────────
 class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  response?: any;
+  constructor(message: string, status: number, response?: any) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.response = response;
   }
 }
 
-async function readErrorMessage(res: Response) {
+function readErrorMessageFromAxios(errResp: any) {
   try {
-    const maybeJson = await res.clone().json();
-    if (maybeJson?.detail) return String(maybeJson.detail);
-    if (maybeJson?.message) return String(maybeJson.message);
-    return JSON.stringify(maybeJson);
+    const data = errResp?.data;
+    if (!data) return `HTTP ${errResp?.status ?? "Error"}`;
+    if (data.detail) return String(data.detail);
+    if (data.message) return String(data.message);
+    return JSON.stringify(data);
   } catch {
-    try {
-      const text = await res.text();
-      return text || `HTTP ${res.status}`;
-    } catch {
-      return `HTTP ${res.status}`;
-    }
+    return `HTTP ${errResp?.status ?? "Error"}`;
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Refresh mutex — evita múltiplos refresh concorrentes
+// Axios instance + refresh mutex
 // ─────────────────────────────────────────────────────────────
 let refreshInFlight: Promise<string | null> | null = null;
 
 async function ensureAccessToken(): Promise<string | null> {
-  // Se já temos um access válido, usa ele
   const current = getAccess();
   if (current) return current;
 
-  // Senão tenta refresh (com mutex)
   if (!refreshInFlight) {
     const ref = getRefresh();
     refreshInFlight = (async () => {
       if (!ref) return null;
-      const r = await fetch(`${API}/api/token/refresh/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh: ref }),
-      });
-      if (!r.ok) return null;
-      const { access } = await r.json();
-      if (access) setTokens(access, ref);
-      return access ?? null;
+      try {
+        const r = await axios.post(`${API}/api/token/refresh/`, { refresh: ref }, { headers: { "Content-Type": "application/json" } });
+        const access = r.data?.access;
+        if (access) setTokens(access, ref);
+        return access ?? null;
+      } catch {
+        // refresh failed -> clear tokens
+        clearTokens();
+        return null;
+      }
     })().finally(() => {
-      // libera o mutex após concluir
       refreshInFlight = null;
     });
   }
+
   return refreshInFlight;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Low-level fetch com retry de refresh (1x)
-// ─────────────────────────────────────────────────────────────
-async function raw(path: string, init: RequestInit = {}) {
-  const headers = buildHeaders(init);
-  const res = await fetch(`${API}${path}`, { ...init, headers });
-  return res;
+function isAuthPath(path: string) {
+  return path.startsWith("/api/token/") || path.startsWith("/api/auth/login");
 }
 
-/**
- * Executa a request e, se der 401 (não sendo rota de token), tenta um refresh 1x.
- */
-async function rawWithRetry(path: string, init: RequestInit = {}) {
-  let res = await raw(path, init);
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API,
+  withCredentials: false,
+});
 
-  const isAuthPath =
-    path.startsWith("/api/token/") || path.startsWith("/api/auth/login");
-
-  if (res.status === 401 && !isAuthPath) {
-    // tenta renovar
-    const newAccess = await ensureAccessToken();
-    if (newAccess) {
-      // refaz a chamada com o novo access no header
-      const retryHeaders = buildHeaders(init);
-      retryHeaders.Authorization = `Bearer ${newAccess}`;
-      res = await fetch(`${API}${path}`, { ...init, headers: retryHeaders });
+// request interceptor to attach access token
+axiosInstance.interceptors.request.use((config) => {
+  const acc = getAccess();
+  // debug mínimo
+  // console.debug("[API] request:", config.method, config.url, "has token:", !!acc);
+  if (acc) {
+    config.headers = config.headers ?? {};
+    // do not override existing Authorization if already provided
+    if (!((config.headers as any)["Authorization"]) && !((config.headers as any)["authorization"])) {
+      (config.headers as any)["Authorization"] = `Bearer ${acc}`;
     }
   }
+  // if body is FormData, let the browser set Content-Type
+  const isFormData = typeof FormData !== "undefined" && (config as any).data instanceof FormData;
+  if (isFormData && config.headers) {
+    delete (config.headers as any)["Content-Type"];
+  }
+  return config;
+});
 
-  return res;
+// response interceptor to handle 401 -> try refresh once and retry original request
+axiosInstance.interceptors.response.use(
+  (resp) => resp,
+  async (error: AxiosError) => {
+    // proteções: error.config pode ser undefined em alguns cenários
+    if (!error || !error.config) {
+      return Promise.reject(error);
+    }
+
+    const originalConfig = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const status = error.response?.status;
+
+    // if no response or not 401, just reject
+    if (!error.response || status !== 401) {
+      return Promise.reject(error);
+    }
+
+    const requestPath = (originalConfig.url ?? "") as string;
+    // do not attempt refresh for auth endpoints
+    if (isAuthPath(requestPath) || originalConfig._retry) {
+      return Promise.reject(error);
+    }
+
+    // attempt refresh
+    const newAccess = await ensureAccessToken();
+    if (!newAccess) {
+      return Promise.reject(error);
+    }
+
+    // mark retry to avoid loops
+    originalConfig._retry = true;
+    originalConfig.headers = originalConfig.headers ?? {};
+    (originalConfig.headers as any)["Authorization"] = `Bearer ${newAccess}`;
+
+    try {
+      const retryResp = await axiosInstance.request(originalConfig);
+      return retryResp;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// Low-level helpers
+// ─────────────────────────────────────────────────────────────
+async function rawWithAxios(path: string, init: RequestInit = {}) {
+  // map RequestInit to axios config
+  const method = ((init.method ?? "GET") as string).toUpperCase();
+  const headers = { ...((init.headers as Record<string, string>) || {}) };
+  let data: any = undefined;
+
+  if ((init as any).body !== undefined) data = (init as any).body;
+
+  try {
+    const resp = await axiosInstance.request({
+      url: path,
+      method: method as any,
+      headers,
+      data,
+      // allow passing other axios options via init if needed
+    });
+    return resp;
+  } catch (err) {
+    throw err as AxiosError;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
-// JSON helpers
+// JSON helpers (public API consistent with previous implementation)
 // ─────────────────────────────────────────────────────────────
 export async function apiJSON<T = any>(path: string, init: RequestInit = {}) {
-  const res = await rawWithRetry(path, init);
-
-  if (!res.ok) {
-    const msg = await readErrorMessage(res);
-    throw new ApiError(msg, res.status);
+  try {
+    const res = await rawWithAxios(path, init);
+    // successful; return data (handle 204/205)
+    if (res.status === 204 || res.status === 205) return null as T;
+    return res.data as T;
+  } catch (err) {
+    const axiosErr = err as AxiosError;
+    const status = axiosErr.response?.status ?? 0;
+    const msg = readErrorMessageFromAxios(axiosErr.response);
+    throw new ApiError(msg, status, axiosErr.response?.data);
   }
-
-  if (res.status === 204 || res.status === 205) return null as T;
-  return (await res.json()) as T;
 }
 
 export async function apiRaw(path: string, init: RequestInit = {}) {
-  const res = await rawWithRetry(path, init);
-  if (!res.ok) {
-    const msg = await readErrorMessage(res);
-    throw new ApiError(msg, res.status);
+  try {
+    const res = await rawWithAxios(path, init);
+    return res;
+  } catch (err) {
+    const axiosErr = err as AxiosError;
+    const status = axiosErr.response?.status ?? 0;
+    const msg = readErrorMessageFromAxios(axiosErr.response);
+    throw new ApiError(msg, status, axiosErr.response?.data);
   }
-  return res;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -185,42 +231,33 @@ export function apiGet<T = any>(path: string, init: RequestInit = {}) {
   return apiJSON<T>(path, { ...init, method: "GET" });
 }
 
-export function apiPost<T = any>(
-  path: string,
-  body?: any,
-  init: RequestInit = {}
-) {
+export function apiPost<T = any>(path: string, body?: any, init: RequestInit = {}) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "POST",
-    body: isFD ? body : JSON.stringify(body ?? {}),
+    body: isFD ? body : body === undefined ? undefined : body,
+    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
   });
 }
 
-export function apiPut<T = any>(
-  path: string,
-  body?: any,
-  init: RequestInit = {}
-) {
+export function apiPut<T = any>(path: string, body?: any, init: RequestInit = {}) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "PUT",
-    body: isFD ? body : JSON.stringify(body ?? {}),
+    body: isFD ? body : body === undefined ? undefined : body,
+    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
   });
 }
 
-export function apiPatch<T = any>(
-  path: string,
-  body?: any,
-  init: RequestInit = {}
-) {
+export function apiPatch<T = any>(path: string, body?: any, init: RequestInit = {}) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "PATCH",
-    body: isFD ? body : JSON.stringify(body ?? {}),
+    body: isFD ? body : body === undefined ? undefined : body,
+    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
   });
 }
 

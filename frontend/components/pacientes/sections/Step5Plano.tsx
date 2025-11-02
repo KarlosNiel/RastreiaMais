@@ -2,7 +2,7 @@
 "use client";
 
 import { Button, Card, CardBody } from "@heroui/react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
 import { RHFDate } from "@/components/form/RHFDate";
@@ -27,9 +27,7 @@ function addDays(d: Date, days: number) {
 }
 
 export default function Step5Plano() {
-  const { getValues, watch, setValue } = useFormContext();
-
-  // Observa campos necessários para o resumo
+  const { getValues, getFieldState, setValue, watch } = useFormContext();
   const nome = watch("socio.nome");
   const has = watch("condicoes.has");
   const dm = watch("condicoes.dm");
@@ -44,8 +42,7 @@ export default function Step5Plano() {
   }, [has, dm]);
 
   const resumoHAS = useMemo(() => {
-    if (!has) return null;
-    if (!classPA) return null;
+    if (!has || !classPA) return null;
     const map: Record<string, string> = {
       normal: "PA normal",
       pre_hipertenso: "PA pré-hipertensa",
@@ -63,18 +60,34 @@ export default function Step5Plano() {
       : null;
   }, [dm, hba1c]);
 
-  /** Compose de resumo automático → persiste em plano.resumo sem obrigar edição */
-  useEffect(() => {
+  // Compose automático (valor “sugerido”)
+  const resumoAuto = useMemo(() => {
     const nomeTxt = shortName(nome);
-    const partes = [
+    return [
       `Paciente: ${nomeTxt}`,
       `Condições: ${condicoesTxt}`,
       resumoHAS ?? undefined,
       resumoDM ?? undefined,
-    ].filter(Boolean);
-    const resumo = partes.join(" · ");
-    setValue("plano.resumo", resumo, { shouldDirty: true });
-  }, [nome, condicoesTxt, resumoHAS, resumoDM, setValue]);
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }, [nome, condicoesTxt, resumoHAS, resumoDM]);
+
+  // Evita sobrescrever se o usuário já editou
+  const lastAutoRef = useRef<string>("");
+
+  useEffect(() => {
+    const state = getFieldState("plano.resumo");
+    const current = getValues("plano.resumo") as string | undefined;
+
+    const userEditou = state.isDirty && current !== lastAutoRef.current;
+
+    // Só escreve quando o usuário ainda não personalizou
+    if (!userEditou) {
+      setValue("plano.resumo", resumoAuto, { shouldDirty: false });
+      lastAutoRef.current = resumoAuto;
+    }
+  }, [resumoAuto, getValues, getFieldState, setValue]);
 
   const salvarRascunho = useCallback(() => {
     try {

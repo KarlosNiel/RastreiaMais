@@ -7,12 +7,6 @@ from apps.conditions.data.has import ClinicalEvaluationHAS, ClassificationConduc
 
 
 class DCNT(BaseModel):
-    patient = models.ForeignKey(
-        PatientUser,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        verbose_name="Paciente"
-    )
     is_diagnosed = models.BooleanField(
         "Diagnóstico confirmado", null=True, blank=True
     )
@@ -33,6 +27,13 @@ class HAS(DCNT, ClinicalEvaluationHAS, ClassificationConductHAS):
         verbose_name = "HAS"
         verbose_name_plural = "HASs"
 
+    patient = models.OneToOneField(
+        PatientUser,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        verbose_name="Paciente"
+    )
+
     any_complications_HBP = models.CharField(
         "Complicações relacionadas à pressão alta",
         max_length=30, null=True, blank=True,
@@ -44,6 +45,13 @@ class DM(DCNT, ClinicalEvaluationDM, RiskFactorsDM, ClassificationConductDM):
     class Meta:
         verbose_name = "DM"
         verbose_name_plural = "DMs"
+
+    patient = models.OneToOneField(
+        PatientUser,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        verbose_name="Paciente"
+    )
 
     treatment_type = models.CharField(
         "Tipo de tratamento", max_length=30, null=True, blank=True,
@@ -72,6 +80,19 @@ class OtherDCNT(DCNT):
     class Meta:
         verbose_name = "Outra DCNT"
         verbose_name_plural = "Outras DCNT"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['patient', 'name'],
+                name='unique_patient_other_dcnt'
+            )
+        ]
+
+    patient = models.ForeignKey(
+        PatientUser,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        verbose_name="Paciente"
+    )
 
     name = models.CharField(
         "Nome da DCNT", max_length=100, null=True, blank=True
