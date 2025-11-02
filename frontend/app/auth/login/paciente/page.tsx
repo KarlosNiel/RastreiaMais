@@ -10,6 +10,7 @@ export default function LoginPacientePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +25,7 @@ export default function LoginPacientePage() {
 
     setLoading(true);
     try {
-      // 1) Login + garantia de papel PACIENTE
-      await loginAndAssertRole(username, password, ["PATIENT"]);
+      await loginAndAssertRole(username, password, ["PATIENT"], rememberMe);
 
       // 2) Cookie leve p/ middleware e redirect
       setRoleCookie("PATIENT");
@@ -78,6 +78,16 @@ export default function LoginPacientePage() {
           autoComplete="current-password"
           enterKeyHint="done"
         />
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+          />
+          <span>Lembrar-me neste dispositivo</span>
+        </label>
 
         {error && (
           <div role="alert" className="text-danger-500 text-sm">

@@ -11,7 +11,9 @@ function isBrowser() {
 
 function getAccess(): string | null {
   try {
-    return isBrowser() ? sessionStorage.getItem("access") : null;
+    if (!isBrowser()) return null;
+    // Tenta localStorage primeiro, depois sessionStorage (compatibilidade)
+    return localStorage.getItem("access") || sessionStorage.getItem("access");
   } catch {
     return null;
   }
@@ -19,23 +21,42 @@ function getAccess(): string | null {
 
 function getRefresh(): string | null {
   try {
-    return isBrowser() ? sessionStorage.getItem("refresh") : null;
+    if (!isBrowser()) return null;
+    // Tenta localStorage primeiro, depois sessionStorage (compatibilidade)
+    return localStorage.getItem("refresh") || sessionStorage.getItem("refresh");
   } catch {
     return null;
   }
 }
 
-export function setTokens(access: string, refresh: string) {
+export function setTokens(access: string, refresh: string, persistent: boolean = true) {
   try {
     if (!isBrowser()) return;
-    sessionStorage.setItem("access", access);
-    sessionStorage.setItem("refresh", refresh);
+    
+    if (persistent) {
+      // Armazena no localStorage para persistir entre sessões
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      // Remove do sessionStorage se existir
+      sessionStorage.removeItem("access");
+      sessionStorage.removeItem("refresh");
+    } else {
+      // Armazena apenas no sessionStorage (sessão atual)
+      sessionStorage.setItem("access", access);
+      sessionStorage.setItem("refresh", refresh);
+      // Remove do localStorage se existir
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+    }
   } catch {}
 }
 
 export function clearTokens() {
   try {
     if (!isBrowser()) return;
+    // Limpa de ambos os storages
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     sessionStorage.removeItem("access");
     sessionStorage.removeItem("refresh");
   } catch {}

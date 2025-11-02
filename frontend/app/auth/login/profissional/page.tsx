@@ -12,6 +12,7 @@ export default function LoginProfissionalPage() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true); 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -30,11 +31,10 @@ export default function LoginProfissionalPage() {
     try {
       const username = email.trim().toLowerCase();
 
-      // 1) Login exigindo MANAGER ou PROFESSIONAL
       const me = await loginAndAssertRole(username, pwd, [
         "MANAGER",
         "PROFESSIONAL",
-      ]);
+      ], rememberMe);
 
       // 2) Define cookie leve para o middleware (prioridade MANAGER > PROFESSIONAL)
       const role = me.roles.includes("MANAGER") ? "MANAGER" : "PROFESSIONAL";
@@ -105,6 +105,16 @@ export default function LoginProfissionalPage() {
             </button>
           }
         />
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+          />
+          <span>Lembrar-me neste dispositivo</span>
+        </label>
 
         {errorMsg && (
           <div role="alert" className="text-danger-500 text-sm">
