@@ -1,351 +1,148 @@
 // app/me/page.tsx
 "use client";
 
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import {
-  ConsultasTable,
-  type ConsultaRow,
-} from "@/components/portal/ConsultasTable";
-import { AccentSection } from "@/components/ui/AccentSection";
 import { useMemo } from "react";
-
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 
-// ...existing code...
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { ConsultasTable, type ConsultaRow } from "@/components/portal/ConsultasTable";
 
-/* ===== Mock de KPIs e Medicações (trocar por API) ===== */
+import {
+  HeartIcon,
+  ChartBarIcon,
+  ShieldExclamationIcon,
+  ExclamationTriangleIcon,
+  ClipboardDocumentCheckIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
+
+/* ===== Mock de KPIs e Medicações ===== */
 const KPIS = [
-  {
-    key: "pa",
-    label: "Sua Pressão Arterial",
-    value: "141x89 mmHg",
-    delta: -0.8, // número, não string
-    accent: "amber" as const, // "amber" é aceito pelo KpiCard
-    icon: (
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path fill="currentColor" d="M13 5V3h-2v2H8v6h2v10h4V11h2V5h-3z" />
-      </svg>
-    ),
-  },
-  {
-    key: "risco",
-    label: "Risco Cardiovascular",
-    value: "Moderado",
-    delta: 0, // quando não houver variação, use 0
-    accent: "amber" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M12 21s-6-4.35-8.485-6.836A6 6 0 0 1 12 4a6 6 0 0 1 8.485 10.164C18 16.65 12 21 12 21z"
-        />
-      </svg>
-    ),
-  },
-  {
-    key: "hdl",
-    label: "Colesterol Bom (HDL)",
-    value: "37 mg/dl",
-    delta: 1.3,
-    accent: "green" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M3 13h18v2H3v-2zM3 17h12v2H3v-2zM3 9h18v2H3V9z"
-        />
-      </svg>
-    ),
-  },
-  {
-    key: "ldl",
-    label: "Colesterol Ruim (LDL)",
-    value: "150 mg/dl",
-    delta: -2.2,
-    accent: "blue" as const,
-    icon: (
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path fill="currentColor" d="M3 5h18v4H3V5zm0 6h18v8H3v-8z" />
-      </svg>
-    ),
-  },
-] as const;
-
-type Med = { id: string; nome: string; obs?: string };
-const MEDICACOES: Med[] = [
-  {
-    id: "m1",
-    nome: "Hidroclorotiazida",
-    obs: "Tomar duas doses ao dia, 1 comprimido de manhã e outro à noite.",
-  },
-  {
-    id: "m2",
-    nome: "Hidroclorotiazida",
-    obs: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
-  {
-    id: "m3",
-    nome: "Hidroclorotiazida",
-    obs: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
-  {
-    id: "m4",
-    nome: "Hidroclorotiazida",
-    obs: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
-  {
-    id: "m5",
-    nome: "Hidroclorotiazida",
-    obs: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
-  {
-    id: "m6",
-    nome: "Hidroclorotiazida",
-    obs: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  },
+  { key: "pa", label: "Sua Pressão Arterial", value: "141x89 mmHg", delta: -0.8, accent: "amber" as const, icon: <ChartBarIcon className="h-5 w-5 stroke-orange-600" /> },
+  { key: "risco", label: "Risco Cardiovascular", value: "Moderado", delta: 0, accent: "amber" as const, icon: <ShieldExclamationIcon className="h-5 w-5 stroke-orange-600" /> },
+  { key: "hdl", label: "Colesterol Bom (HDL)", value: "37 mg/dl", delta: 1.3, accent: "green" as const, icon: <HeartIcon className="h-5 w-5 stroke-orange-600" /> },
+  { key: "ldl", label: "Colesterol Ruim (LDL)", value: "150 mg/dl", delta: -2.2, accent: "blue" as const, icon: <ExclamationTriangleIcon className="h-5 w-5 stroke-orange-600" /> },
 ];
 
-/* ===== Mock de Consultas (substituído por chamada à API) ===== */
-/* Mantive APPTS apenas para fallback local se a API falhar */
+const MEDICACOES = [
+  { id: "m1", nome: "Hidroclorotiazida", obs: "Tomar duas doses ao dia, 1 comprimido de manhã e outro à noite." },  
+  { id: "m2", nome: "Losartana", obs: "Tomar 1 comprimido pela manhã." },
+  { id: "m3", nome: "Atorvastatina", obs: "Tomar 1 comprimido à noite antes de dormir." },
+  { id: "m4", nome: "Atorvastatina", obs: "Tomar 1 comprimido à noite antes de dormir." }
+];
+
 const APPTS: ConsultaRow[] = [
-  {
-    id: "a1",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "ativo",
-  },
-  {
-    id: "a2",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "cancelado",
-  },
-  {
-    id: "a3",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "finalizado",
-  },
-  {
-    id: "a4",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "finalizado",
-  },
-  {
-    id: "a5",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "ativo",
-  },
-  {
-    id: "a6",
-    profissional: "Fernanda",
-    cargo: "Enfermeira",
-    local: "USF Maria Madalena",
-    hora: "16:00",
-    data: "11/09/25",
-    status: "ativo",
-  },
+  { id: "a1", profissional: "Fernanda", cargo: "Enfermeira", local: "USF Maria Madalena", hora: "16:00", data: "11/09/25", status: "ativo" },
+  { id: "a2", profissional: "João", cargo: "Médico", local: "USF Maria Madalena", hora: "10:00", data: "15/09/25", status: "finalizado" },
 ];
 
 export default function MePage() {
   const meds = useMemo(() => MEDICACOES, []);
 
-  // useQuery para buscar consultas da API
-const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["appointments"],
     queryFn: async () => {
-      console.log('Token:', sessionStorage.getItem('access')); // debug temporário
       const resp = await apiGet<any>("/api/v1/appointments/appointments/");
       if (Array.isArray(resp)) return resp;
-      if (resp && Array.isArray(resp.results)) return resp.results;
-      return [];
+      return resp?.results ?? [];
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60,
-});
+    staleTime: 60_000,
+  });
 
-  // transformar resposta da API para o tipo esperado pelo ConsultasTable
   const rows = useMemo<ConsultaRow[]>(() => {
     const source = (data ?? APPTS) as any[];
     return source.map((a) => {
-      console.log(a);
-      // mapeamento defensivo com vários fallbacks para evitar erros
-      const profissional =
-        a.professional?.user?.first_name ?? "—";
-
-      const cargo =
-        a.professional?.role ??
-        "—";
-
-      const local =
-        a.location?.name ?? a.local?.name ?? "—";
-
-      // tentamos extrair data/hora a partir de campos comuns usados em APIs
-      const dt =
-        a.scheduled_datetime ??
-        null;
-
-      let dataStr = "—";
-      let horaStr = "—";
-      if (dt) {
-        const d = new Date(dt);
-        if (!Number.isNaN(d.getTime())) {
-          dataStr = d.toLocaleDateString();
-          horaStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        } else {
-          // se não for uma string de data válida, exiba como está
-          dataStr = String(dt);
-        }
-      } else {
-        // campos separados:
-        if (a.scheduled_datetime) dataStr = String(a.date);
-        if (a.scheduled_datetime) horaStr = String(a.hora);
-      }
-
-      const status = a.status;
-
+      const d = a.scheduled_datetime ? new Date(a.scheduled_datetime) : null;
       return {
-        id: String(a.id ?? a.pk ?? Math.random().toString(36).slice(2, 9)),
-        profissional,
-        cargo,
-        local,
-        hora: horaStr,
-        data: dataStr,
-        status,
-      } as ConsultaRow;
+        id: String(a.id ?? a.pk ?? crypto.randomUUID()),
+        profissional: a.professional?.user?.first_name ?? "—",
+        cargo: a.professional?.role ?? "—",
+        local: a.location?.name ?? a.local?.name ?? "—",
+        data: d ? d.toLocaleDateString() : "—",
+        hora: d ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—",
+        status: a.status ?? "—",
+      };
     });
   }, [data]);
 
   return (
-    <>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="flex flex-col gap-2 pb-4 md:flex-row md:items-end md:justify-between md:pb-5">
         <div>
-          <h1 className="text-2xl font-semibold md:text-3xl">
-            Paciente Gustavo, 55 anos
-          </h1>
-          <p className="mt-1 text-sm text-foreground/60">
-            Hipertensão Arterial Sistêmica (HAS)
-            <span aria-hidden> ▾</span>
+          <h1 className="text-2xl font-semibold md:text-3xl dark:text-white">Paciente Gustavo, 55 anos</h1>
+          <p className="mt-1 text-sm text-foreground/60 dark:text-white">
+            Hipertensão Arterial Sistêmica (HAS) <span aria-hidden>▾</span>
           </p>
         </div>
       </header>
 
-      {/* Linha 1: KPIs + Medicações */}
-      <section
-        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"
-        aria-labelledby="sec-kpis-meds"
-      >
-        <h2 id="sec-kpis-meds" className="sr-only">
-          Indicadores e Medicações
-        </h2>
-
-        {/* KPIs 2x2 */}
-        <div className="min-h-0">
-          <div className="grid h-full grid-cols-1 grid-rows-2 gap-3 md:grid-cols-2">
-            {KPIS.map((kpi) => (
-              <div key={kpi.key} className="h-full">
-                <KpiCard
-                  label={kpi.label}
-                  value={kpi.value}
-                  delta={kpi.delta}
-                  accent={kpi.accent}
-                  icon={kpi.icon}
-                />
-              </div>
+      {/* KPIs + Medicações */}
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-1">
+        {/* KPIs */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          {KPIS.map(({ key, ...kpi }) => (
+              <KpiCard key={key} {...kpi} />
             ))}
-          </div>
         </div>
 
-        {/* Medicações Atuais */}
-        <AccentSection
-          className="flex h-full flex-col"
-          accent="blue"
-          title={
-            <span className="inline-flex items-center gap-2">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-5 text-indigo-600"
-                aria-hidden
-              >
-                <path
-                  fill="currentColor"
-                  d="M19 3H5a2 2 0 0 0-2 2v3h18V5a2 2 0 0 0-2-2Zm-9 7H3v9a2 2 0 0 0 2 2h5v-11Zm2 0v11h7a2 2 0 0 0 2-2v-9h-9Z"
-                />
-              </svg>
-              Medicações Atuais
-            </span>
-          }
-          contentClassName="p-0"
-        >
-          <div
-            className="max-h-80 overflow-auto p-4"
-            role="region"
-            aria-label="Lista de medicações atuais"
-          >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {/* Medicações */}
+        <section className="flex flex-row gap-[3%] items-baseline ">
+          {/* Medicações */}
+          <div className="rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 w-[31%] transition-all">
+            <div className="flex items-center gap-2 mb-4">
+              <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                Medicações Atuais
+              </h2>
+            </div>
+
+            <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 pr-1">
               {meds.map((m) => (
                 <article
                   key={m.id}
-                  className="rounded-xl border border-divider bg-content1 p-4"
+                  className="rounded-md border border-gray-200 dark:border-gray-800 p-4 
+                            bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
                 >
-                  <h3 className="text-[15px] font-semibold">{m.nome}</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    {m.nome}
+                  </h3>
                   {m.obs && (
-                    <p className="mt-1 text-sm text-foreground/60">{m.obs}</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {m.obs}
+                    </p>
                   )}
                 </article>
               ))}
             </div>
           </div>
-        </AccentSection>
-      </section>
 
-      {/* Linha 2: Suas Consultas */}
-      <AccentSection
-        className="mt-6"
-        accent="green"
-        title={
-          <span className="inline-flex items-center gap-2">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-5 text-emerald-600"
-              aria-hidden
-            >
-              <path
-                fill="currentColor"
-                d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V10h14v10Zm0-12H5V6h14v2Z"
+          {/* Consultas */}
+          <div className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-[66%] transition-all">
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                Suas Consultas
+              </h2>
+            </div>
+
+            {isLoading ? (
+              <div className="p-6 text-gray-500 dark:text-gray-400">Carregando consultas...</div>
+            ) : isError ? (
+              <div className="p-6 text-red-600 dark:text-red-400">Erro ao carregar consultas.</div>
+            ) : (
+              <ConsultasTable
+                rows={rows}
+                initialPage={1}
+                initialRowsPerPage={4}
+                className="rounded-md overflow-hidden"
               />
-            </svg>
-            Suas Consultas
-          </span>
-        }
-      >
-        {isLoading ? (
-          <div className="p-6">Carregando consultas...</div>
-        ) : isError ? (
-          <div className="p-6 text-red-600">Erro ao carregar consultas.</div>
-        ) : (
-          <ConsultasTable rows={rows} initialPage={1} initialRowsPerPage={4} />
-        )}
-      </AccentSection>
-    </>
+            )}
+          </div>
+        </section>
+      </section>
+    </div>
   );
 }
