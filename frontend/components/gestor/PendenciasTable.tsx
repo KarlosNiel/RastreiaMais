@@ -47,9 +47,9 @@ type Column = {
 const columns: readonly Column[] = [
   { name: "Paciente", uid: "paciente", sortable: true, align: "start" },
   { name: "Pendências", uid: "pendencias", align: "start" },
-  { name: "Dias", uid: "dias", sortable: true, align: "end" },
+  { name: "Dias", uid: "dias", sortable: true, align: "start" },
   { name: "Microárea", uid: "microarea", sortable: true, align: "start" },
-  { name: "Status", uid: "risco", sortable: true, align: "center" },
+  { name: "Status", uid: "risco", sortable: true, align: "start" },
 ] as const;
 
 // ordem semântica para risco (↑ ascendente: Seguro < Atenção < Crítico)
@@ -166,7 +166,7 @@ export function PendenciasTable({
     switch (key) {
       case "risco":
         return (
-          <div className="flex justify-center">
+          <div className="flex justify-start">
             <StatusChip
               size="sm"
               tone={row.risco === "moderate" ? "attention" : row.risco}
@@ -188,7 +188,7 @@ export function PendenciasTable({
 
   const topContent = React.useMemo(() => {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-1">
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
@@ -196,8 +196,10 @@ export function PendenciasTable({
             variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
-              inputWrapper: "h-11 bg-content2",
-              input: "text-[0.95rem]",
+              inputWrapper:
+                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
+                  input:
+                    "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
             placeholder="Buscar por paciente, pendência ou microárea…"
             startContent={
@@ -225,8 +227,8 @@ export function PendenciasTable({
 
           <div className="flex items-center gap-3">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
-                <Button variant="flat" radius="full">
+              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
+                <Button variant="flat" radius="full" className="flex justify-center items-center">
                   Risco
                 </Button>
               </DropdownTrigger>
@@ -254,7 +256,7 @@ export function PendenciasTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline-none text-small"
+                className="bg-transparent outline-none text-small border rounded"
                 aria-label="Linhas por página"
                 value={rowsPerPage}
                 onChange={(e) => {
@@ -289,6 +291,12 @@ export function PendenciasTable({
           page={page}
           total={pages}
           onChange={setPage}
+          classNames={{
+              next: "dark:bg-gray-800",
+              prev: "dark:bg-gray-800",
+              item: "dark:bg-gray-800",
+            }
+          }
         />
       </div>
     );
@@ -307,17 +315,17 @@ export function PendenciasTable({
       sortIcon={SortGlyph}
       onSortChange={setSortDescriptor}
       classNames={{
-        wrapper:
-          "rounded-2xl border border-divider bg-content1 p-1 shadow-soft",
-        thead: "bg-content2",
         th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-4",
+        td: "px-6 py-3",
         base: "min-h-[320px]",
+        table: "bg-gray-900",
+        wrapper: "bg-transparent border-none shadow-none px-2"
       }}
     >
       <TableHeader columns={headerColumns}>
         {(column: Column) => (
           <TableColumn
+            className="text-sm  dark:bg-gray-800"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
@@ -327,9 +335,9 @@ export function PendenciasTable({
         )}
       </TableHeader>
 
-      <TableBody emptyContent="Sem registros" items={sortedItems}>
+      <TableBody emptyContent="Sem registros" items={sortedItems} className="overflow-x-auto">
         {(item: PendenciasRow) => (
-          <TableRow key={item.id} className="even:bg-content2/60">
+          <TableRow key={item.id} className="dark:even:bg-gray-800 dark:odd:bg-gray-900">
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

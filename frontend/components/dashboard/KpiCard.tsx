@@ -10,6 +10,7 @@ export interface KpiCardProps {
   value: number | string;
   delta?: number;
   icon?: React.ReactNode;
+  accent?: "brand" | "amber" | "blue" | "red" | "green";
   className?: string;
 }
 
@@ -41,9 +42,9 @@ export function KpiCard({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
+        <div className="text-md text-gray-500 dark:text-gray-400">{label}</div>
         {icon && (
-          <div className="grid size-8 place-items-center rounded-xl bg-gray-100 dark:border-1 dark:bg-gray-800 dark:border-orange-600 text-gray-600 dark:text-gray-300">
+          <div className="grid size-8 place-items-center rounded-xl bg-gray-100 dark:border-1 dark:bg-gray-900 dark:border-orange-600 text-gray-600 dark:text-gray-300">
             {icon}
           </div>
         )}
@@ -53,8 +54,8 @@ export function KpiCard({
         <div className="text-2xl font-semibold">{value}</div>
       </div>
 
-      <p className="mt-2 text-[12px] text-gray-500 dark:text-gray-400">
-        Aumento/diminuição em relação ao mês anterior
+      <p className="mt-2 text-[14px] text-gray-500 dark:text-gray-400">
+        Dados relacionados a sua ultima checagem.
       </p>
     </Card>
   );

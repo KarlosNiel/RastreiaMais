@@ -1,4 +1,9 @@
-import type { KpiAccent } from "@/components/dashboard/KpiCard";
+import {
+  UsersIcon,
+  ExclamationTriangleIcon,
+  CalendarDaysIcon,
+  BellAlertIcon,
+} from "@heroicons/react/24/outline";
 
 export type KpiKey =
   | "totalPatients"
@@ -11,7 +16,7 @@ export type KpiDTO = {
   label: string;
   value: number;
   delta?: number;
-  accent: KpiAccent;
+  accent: any;
 };
 
 export async function getGestorKpis(): Promise<KpiDTO[]> {
@@ -50,36 +55,8 @@ export async function getGestorKpis(): Promise<KpiDTO[]> {
 }
 
 export const KPI_ICONS: Record<KpiKey, React.ReactNode> = {
-  totalPatients: (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.33 0-8 1.67-8 5v1h16v-1c0-3.33-3.67-5-8-5Z"
-      />
-    </svg>
-  ),
-  atRisk: (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M12 2 1 21h22L12 2Zm1 14h-2v-2h2v2Zm0-4h-2V8h2v4Z"
-      />
-    </svg>
-  ),
-  appointments: (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M19 3H5a2 2 0 0 0-2 2v12l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"
-      />
-    </svg>
-  ),
-  criticalAlerts: (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2V9h2v5Z"
-      />
-    </svg>
-  ),
+  totalPatients: <UsersIcon className="size-5 text-current stroke-orange-600" />,
+  atRisk: <ExclamationTriangleIcon className="size-5 text-current stroke-orange-600" />,
+  appointments: <CalendarDaysIcon className="size-5 text-current stroke-orange-600" />,
+  criticalAlerts: <BellAlertIcon className="size-5 text-current stroke-orange-600" />,
 };
