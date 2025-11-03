@@ -2,29 +2,14 @@
 
 import { Button } from "@heroui/button";
 import { SunIcon, MoonIcon, BellIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 export const Header = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
 
-  // Alterna o tema e salva no localStorage
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
-
-  // Mantém o tema salvo ao recarregar
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme === "dark") {
-      setDarkMode(true);
-    }
-  }, []);
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white backdrop-blur dark:border-gray-800 dark:bg-gray-900 transition-colors">
@@ -66,11 +51,11 @@ export const Header = () => {
               isIconOnly
               size="sm"
               variant="light"
-              onPress={() => setDarkMode(!darkMode)}
+              onPress={toggleTheme}
               aria-label="Alternar tema"
               className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
             > 
-              {darkMode ? (
+              {theme === "dark" ? (
                 <SunIcon className="size-5 text-white" strokeWidth={2} />
               ) : (
                 <MoonIcon className="size-5 text-gray-700" strokeWidth={2} />

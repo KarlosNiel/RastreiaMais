@@ -53,14 +53,14 @@ export function ConsultasTable({
 
   return (
     <div className={className}>
-      <Table aria-label="Tabela de consultas do paciente" removeWrapper className="rounded-md">
+      <Table aria-label="Tabela de consultas do paciente" removeWrapper className="overflow-x-auto">
         <TableHeader className="">
-          <TableColumn className="dark:text-white dark:bg-gray-800 ">Profissional</TableColumn>
-          <TableColumn className="dark:text-white dark:bg-gray-800">Cargo</TableColumn>
-          <TableColumn className="dark:text-white dark:bg-gray-800">Local</TableColumn>
-          <TableColumn className="dark:text-white dark:bg-gray-800">Horário</TableColumn>
-          <TableColumn className="dark:text-white dark:bg-gray-800">Data</TableColumn>
-          <TableColumn className="text-right dark:text-white dark:bg-gray-800">Status</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800 ">Profissional</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Cargo</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Local</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Horário</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Data</TableColumn>
+          <TableColumn className="text-sm text-right dark:text-white dark:bg-gray-800">Status</TableColumn>
         </TableHeader>
 
         <TableBody emptyContent="Nenhuma consulta encontrada">
@@ -92,7 +92,12 @@ export function ConsultasTable({
               <TableCell>{r.data}</TableCell>
 
               <TableCell className="text-right">
-                <StatusChip size="sm">
+                <StatusChip size="sm"     
+                  className={`
+                    ${r.status === "ativo" ? "bg-green-500/15 text-green-700 dark:text-green-300" : ""}
+                    ${r.status === "finalizado" ? "bg-gray-500/15 text-gray-600 dark:text-gray-400" : ""}
+                    ${r.status === "cancelado" ? "bg-red-500/15 text-red-600 dark:text-red-400" : ""}
+                  `}>
                   {r.status}
                 </StatusChip>
               </TableCell>

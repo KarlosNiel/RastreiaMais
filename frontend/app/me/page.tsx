@@ -80,68 +80,65 @@ export default function MePage() {
       </header>
 
       {/* KPIs + Medicações */}
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-1">
+      <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3">
         {/* KPIs */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:col-span-2">
           {KPIS.map(({ key, ...kpi }) => (
-              <KpiCard key={key} {...kpi} />
-            ))}
+            <KpiCard key={key} {...kpi} />
+          ))}
         </div>
 
         {/* Medicações */}
-        <section className="flex flex-row gap-[3%] items-baseline ">
-          {/* Medicações */}
-          <div className="rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 w-[31%] transition-all">
-            <div className="flex items-center gap-2 mb-4">
-              <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Medicações Atuais
-              </h2>
-            </div>
-
-            <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 pr-1">
-              {meds.map((m) => (
-                <article
-                  key={m.id}
-                  className="rounded-md border border-gray-200 dark:border-gray-800 p-4 
-                            bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
-                >
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                    {m.nome}
-                  </h3>
-                  {m.obs && (
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {m.obs}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
+        <div className="rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all md:col-span-1">
+          <div className="flex items-center gap-2 mb-4">
+            <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              Medicações Atuais
+            </h2>
           </div>
 
-          {/* Consultas */}
-          <div className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-[66%] transition-all">
-            <div className="flex items-center gap-2 mb-4">
-              <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Suas Consultas
-              </h2>
-            </div>
-
-            {isLoading ? (
-              <div className="p-6 text-gray-500 dark:text-gray-400">Carregando consultas...</div>
-            ) : isError ? (
-              <div className="p-6 text-red-600 dark:text-red-400">Erro ao carregar consultas.</div>
-            ) : (
-              <ConsultasTable
-                rows={rows}
-                initialPage={1}
-                initialRowsPerPage={4}
-                className="rounded-md overflow-hidden"
-              />
-            )}
+          <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 pr-2">
+            {meds.map((m) => (
+              <article
+                key={m.id}
+                className="rounded-md border border-gray-200 dark:border-gray-800 p-4 
+                          bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
+              >
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  {m.nome}
+                </h3>
+                {m.obs && (
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {m.obs}
+                  </p>
+                )}
+              </article>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* Consultas */}
+      <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-full transition-all">
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Suas Consultas
+          </h2>
+        </div>
+
+        {isLoading ? (
+          <div className="p-6 text-gray-500 dark:text-gray-400">Carregando consultas...</div>
+        ) : isError ? (
+          <div className="p-6 text-red-600 dark:text-red-400">Erro ao carregar consultas.</div>
+        ) : (
+          <ConsultasTable
+            rows={rows}
+            initialPage={1}
+            initialRowsPerPage={4}
+            className="rounded-md overflow-hidden"
+          />
+        )}
       </section>
     </div>
   );

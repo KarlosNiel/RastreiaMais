@@ -2,8 +2,8 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer id="sobre" className="border-t border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer id="sobre" className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
