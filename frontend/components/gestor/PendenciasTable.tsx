@@ -197,7 +197,7 @@ export function PendenciasTable({
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
+                    "h-11 bg-gray-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
                   input:
                     "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
@@ -318,14 +318,14 @@ export function PendenciasTable({
         th: "px-6 py-3 text-foreground/70 font-semibold",
         td: "px-6 py-3",
         base: "min-h-[320px]",
-        table: "bg-gray-900",
+        table: "dark:bg-gray-900",
         wrapper: "bg-transparent border-none shadow-none px-2"
       }}
     >
       <TableHeader columns={headerColumns}>
         {(column: Column) => (
           <TableColumn
-            className="text-sm  dark:bg-gray-800"
+            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
@@ -337,7 +337,7 @@ export function PendenciasTable({
 
       <TableBody emptyContent="Sem registros" items={sortedItems} className="overflow-x-auto">
         {(item: PendenciasRow) => (
-          <TableRow key={item.id} className="dark:even:bg-gray-800 dark:odd:bg-gray-900">
+          <TableRow key={item.id} className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900">
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

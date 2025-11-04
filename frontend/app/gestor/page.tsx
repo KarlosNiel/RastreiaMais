@@ -30,7 +30,7 @@ export default function GestorPage() {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
       {/* Header */}
       <header className="flex flex-col gap-2 pt-8 pb-4 md:flex-row md:items-center md:justify-between md:pt-8">
         <div>
@@ -95,14 +95,14 @@ export default function GestorPage() {
                 Alerta dos Pacientes
               </h2>
             </div>
-            <RMButton
-              look="soft"
-              tone="neutral"
+            <Button
+              variant="flat"                
               size="sm"
               aria-label="Adicionar alerta"
+              className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
             >
               +
-            </RMButton>
+            </Button>
           </div>
 
           <ul className="space-y-3">
@@ -187,7 +187,6 @@ export default function GestorPage() {
             Profissionais
           </h2>
         </div>
-        <div className="overflow-x-auto">
           <ProfissionaisTable
             rows={[
               { id: "p1", profissional: "Fernanda", cargo: "Enfermeira", local: "USF Maria Madalena", status: "Ativo" },
@@ -198,7 +197,6 @@ export default function GestorPage() {
             initialPage={1}
             initialRowsPerPage={6}
           />
-        </div>
       </section>
     </div>
   );

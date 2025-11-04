@@ -44,7 +44,7 @@ export function KpiCard({
       <div className="flex items-start justify-between gap-3">
         <div className="text-md text-gray-500 dark:text-gray-400">{label}</div>
         {icon && (
-          <div className="grid size-8 place-items-center rounded-xl bg-gray-100 dark:border-1 dark:bg-gray-900 dark:border-orange-600 text-gray-600 dark:text-gray-300">
+          <div className="grid size-8 place-items-center rounded-xl bg-white bg-gray-100 border-1 dark:bg-gray-900 border-orange-600 text-gray-600 dark:text-gray-300">
             {icon}
           </div>
         )}

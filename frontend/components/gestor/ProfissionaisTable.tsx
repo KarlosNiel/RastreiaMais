@@ -62,8 +62,8 @@ const columns: Column[] = [
   { name: "Profissional", uid: "profissional", sortable: true, align: "start" },
   { name: "Cargo", uid: "cargo", sortable: true, align: "start" },
   { name: "Local", uid: "local", sortable: true, align: "start" },
-  { name: "Status", uid: "status", sortable: true, align: "center" },
-  { name: "Ações", uid: "actions", align: "end" },
+  { name: "Status", uid: "status", sortable: true, align: "start" },
+  { name: "Ações", uid: "actions", align: "start" },
 ];
 
 /** Ícone de ordenação local */
@@ -169,7 +169,7 @@ export function ProfissionaisTable({
     switch (key) {
       case "status":
         return (
-          <div className="flex justify-center">
+          <div className="flex justify-start">
             <StatusChip tone={statusToneMap[row.status]}>
               {row.status}
             </StatusChip>
@@ -177,7 +177,7 @@ export function ProfissionaisTable({
         );
       case "actions":
         return (
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-start gap-2">
             <RMButton look="outline" tone="danger" size="sm">
               Agenda
             </RMButton>
@@ -193,7 +193,7 @@ export function ProfissionaisTable({
 
   const topContent = React.useMemo(() => {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-1">
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
@@ -201,8 +201,10 @@ export function ProfissionaisTable({
             variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
-              inputWrapper: "h-11 bg-content2",
-              input: "text-[0.95rem]",
+              inputWrapper:
+                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
+                  input:
+                    "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
             placeholder="Buscar por profissional, cargo ou local…"
             startContent={
@@ -230,8 +232,8 @@ export function ProfissionaisTable({
 
           <div className="flex gap-3 items-center">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
-                <Button variant="flat" radius="full">
+              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
+                <Button variant="flat" radius="full" className="flex justify-center items-center">
                   Status
                 </Button>
               </DropdownTrigger>
@@ -258,7 +260,7 @@ export function ProfissionaisTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline-0 text-small"
+                className="bg-transparent outline-0 text-small border rounded"
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
@@ -275,7 +277,7 @@ export function ProfissionaisTable({
 
         <div className="flex items-center justify-between">
           <span className="text-small text-default-500">
-            Total {filteredItems.length} profissionais
+            Total: {filteredItems.length} profissionais
           </span>
         </div>
       </div>
@@ -292,6 +294,12 @@ export function ProfissionaisTable({
           page={page}
           total={pages}
           onChange={setPage}
+          classNames={{
+              next: "dark:bg-gray-800",
+              prev: "dark:bg-gray-800",
+              item: "dark:bg-gray-800",
+            }
+          }
         />
       </div>
     );
@@ -310,17 +318,17 @@ export function ProfissionaisTable({
       sortIcon={SortGlyph}
       onSortChange={setSortDescriptor}
       classNames={{
-        wrapper:
-          "rounded-2xl border border-divider bg-content1 p-1 shadow-soft",
-        thead: "bg-content2",
         th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-4",
+        td: "px-6 py-3",
         base: "min-h-[320px]",
+        table: "dark:bg-gray-900",
+        wrapper: "bg-transparent border-none shadow-none px-2"
       }}
     >
       <TableHeader columns={columns}>
         {(column: Column) => (
           <TableColumn
+            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
@@ -330,9 +338,9 @@ export function ProfissionaisTable({
         )}
       </TableHeader>
 
-      <TableBody emptyContent="Sem profissionais" items={sortedItems}>
+      <TableBody emptyContent="Sem profissionais" items={sortedItems} className="overflow-x-auto"> 
         {(item: ProfRow) => (
-          <TableRow key={item.id} className="even:bg-content2/60">
+          <TableRow key={item.id} className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900">
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

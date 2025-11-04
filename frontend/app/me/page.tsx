@@ -96,12 +96,12 @@ export default function MePage() {
 
       return {
         id: String(a.id ?? a.pk ?? crypto.randomUUID()),
-        profissional: a.professional?.user?.first_name ?? "—",
-        cargo: a.professional?.role ?? "—",
-        local: a.location?.name ?? a.local?.name ?? "—",
-        data: d ? d.toLocaleDateString() : "—",
-        hora: d ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—",
-        status: a.status ?? "—",
+        profissional: profissional,
+        cargo: cargo,
+        local: local,
+        data: dataStr,
+        hora: horaStr,
+        status: status ?? "—",
       };
     });
   }, [data]);

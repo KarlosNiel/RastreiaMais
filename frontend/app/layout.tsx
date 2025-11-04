@@ -40,7 +40,9 @@ export default function RootLayout({
         className="min-h-svh md:min-h-dvh font-sans antialiased overflow-y-scroll scrollbar-none bg-gray-100 dark:bg-slate-950"
       >
         <Providers>
-          <Header />
+          <div className="relative z-50">
+            <Header />
+          </div>
           {children}
           <Footer />
         </Providers>
