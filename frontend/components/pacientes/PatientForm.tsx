@@ -11,71 +11,18 @@ import {
 } from "@/schemas/paciente";
 import { Card, CardBody } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
-/* ===========================
-   API helpers
-   =========================== */
-const RAW_BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? "";
-const API_BASE = RAW_BASE.replace(/\/$/, "");
-
-if (!API_BASE) {
-  // Aviso cedo em dev para não dar fetch em caminho relativo
-  // (em prod você pode trocar por um logger silencioso)
-  // eslint-disable-next-line no-console
-  console.warn("[PatientForm] API_BASE ausente. Defina NEXT_PUBLIC_API_URL.");
-}
-
-async function safeDetail(res: Response) {
-  try {
-    const j = await res.clone().json();
-    return (j as any)?.detail || (j as any)?.message || (j as any)?.error;
-  } catch {
-    try {
-      const t = await res.clone().text();
-      return t?.slice(0, 300);
-    } catch {
-      return undefined;
-    }
-  }
-}
-
-async function createPaciente(payload: RegistroPacienteCreate) {
-  const res = await fetch(`${API_BASE}/api/v1/accounts/patients/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    credentials: "include",
-    cache: "no-store",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const detail = await safeDetail(res);
-    throw new Error(detail || `Erro ${res.status} ao criar paciente`);
-  }
-  return res.json();
-}
-
-async function updatePaciente(id: number, payload: RegistroPacienteEdit) {
-  const res = await fetch(`${API_BASE}/api/v1/accounts/patients/${id}/`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    credentials: "include",
-    cache: "no-store",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const detail = await safeDetail(res);
-    throw new Error(detail || `Erro ${res.status} ao atualizar paciente`);
-  }
-  return res.json();
-}
+// Helpers de API
+import { createDM, createHAS, updateDM, updateHAS } from "@/lib/api/conditions";
+import { createPaciente, updatePaciente } from "@/lib/api/pacientes";
+import {
+  formToDmApi,
+  formToHasApi,
+  formToPatientApi,
+} from "@/lib/pacientes/mappers";
 
 /* ===========================
    Tipos de INPUT (pré-Zod)
@@ -88,7 +35,13 @@ type EditFormInput = z.input<typeof RegistroPacienteEditZ>;
    =========================== */
 type Props =
   | { mode: "create"; defaultValues?: Partial<CreateFormInput> }
-  | { mode: "edit"; id: number; defaultValues: CreateFormInput };
+  | {
+      mode: "edit";
+      id: number;
+      defaultValues: CreateFormInput;
+      hasId?: number | null;
+      dmId?: number | null;
+    };
 
 /* ===========================
    Defaults (Create)
@@ -153,11 +106,41 @@ export default function PatientForm(props: Props) {
   const {
     handleSubmit,
     setFocus,
+    reset,
     formState: { isSubmitting, errors, isDirty },
   } = methods;
 
+  // handler compartilhado (form + wizard)
+  const submitHandler = handleSubmit(onValid, onInvalid);
+
+  // Carrega rascunho salvo no localStorage (apenas no modo create)
+  useEffect(() => {
+    if (!isCreate) return;
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem("rastreia:paciente:draft");
+      if (!raw) return;
+
+      const draft = JSON.parse(raw);
+
+      const merged = {
+        ...CREATE_DEFAULTS,
+        ...(props.defaultValues ?? {}),
+        ...(draft ?? {}),
+      };
+
+      // tenta validar o draft; se estiver muito zoado, ainda assim carrega o merge cru
+      const parsed = schema.safeParse(merged);
+      reset((parsed.success ? parsed.data : merged) as any);
+    } catch (e) {
+      console.error("Falha ao carregar rascunho", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreate, reset]);
+
   // foco no primeiro erro "profundo"
-  const onInvalid = () => {
+  function onInvalid() {
     const findFirstPath = (obj: any, prefix = ""): string | null => {
       for (const k of Object.keys(obj ?? {})) {
         const path = prefix ? `${prefix}.${k}` : k;
@@ -174,36 +157,86 @@ export default function PatientForm(props: Props) {
     const first = findFirstPath(errors as any);
     if (first) setFocus(first as any, { shouldSelect: true });
     notifyWarn("Revise os campos destacados antes de continuar.");
-  };
+  }
 
-  const onValid = async (rawData: CreateFormInput | EditFormInput) => {
+  async function onValid(rawData: CreateFormInput | EditFormInput) {
     try {
-      // usamos parse para garantir coerções (date/number) mesmo após o resolver
+      // o resolver já validou, então podemos confiar em rawData;
+      // ainda assim, se quiser garantir coerções extras:
       const parsed = schema.parse(rawData);
 
+      // converte o objeto do form no payload que o backend espera para PatientUser
+      const apiPayload = formToPatientApi(
+        parsed as RegistroPacienteCreate | RegistroPacienteEdit,
+        isCreate ? "create" : "edit"
+      );
+
       if (isCreate) {
-        await createPaciente(parsed as RegistroPacienteCreate);
+        // 1) cria o paciente
+        const created = await createPaciente<{ id: number }>(apiPayload);
+        const patientId = (created as any).id;
+
+        // 2) cria registros de HAS/DM se marcados
+        const createData = parsed as RegistroPacienteCreate;
+
+        const hasPayload = formToHasApi(createData, patientId);
+        const dmPayload = formToDmApi(createData, patientId);
+
+        if (hasPayload) {
+          await createHAS(hasPayload);
+        }
+        if (dmPayload) {
+          await createDM(dmPayload);
+        }
+
+        // 3) limpamos o rascunho, já que o registro foi salvo
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("rastreia:paciente:draft");
+        }
+
         notifySuccess("Paciente cadastrado com sucesso.");
       } else {
-        await updatePaciente(
-          (props as Extract<Props, { mode: "edit" }>).id,
-          parsed as RegistroPacienteEdit
-        );
+        // EDIT: paciente + HAS/DM (PATCH)
+        const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;
+
+        // 1) atualiza dados do paciente
+        await updatePaciente(id, apiPayload);
+
+        const editData = parsed as RegistroPacienteEdit;
+
+        // 2) atualiza HAS, se existir registro
+        if (hasId) {
+          const hasPayload = formToHasApi(editData as any, id);
+          if (hasPayload) {
+            await updateHAS(hasId, hasPayload);
+          }
+        }
+
+        // 3) atualiza DM, se existir registro
+        if (dmId) {
+          const dmPayload = formToDmApi(editData as any, id);
+          if (dmPayload) {
+            await updateDM(dmId, dmPayload);
+          }
+        }
+
         notifySuccess("Dados do paciente atualizados.");
       }
     } catch (err: any) {
+      console.error("ERRO AO SALVAR PACIENTE", err);
       const msg =
         err?.message ??
         err?.response?.data?.detail ??
         "Não foi possível salvar. Tente novamente.";
       notifyError("Erro ao salvar", msg);
     }
-  };
+  }
 
   return (
     <FormProvider {...methods}>
       <form
-        onSubmit={handleSubmit(onValid, onInvalid)}
+        id="patient-form"
+        onSubmit={submitHandler}
         noValidate
         aria-busy={isSubmitting}
       >
@@ -213,7 +246,7 @@ export default function PatientForm(props: Props) {
           classNames={{ base: "overflow-visible" }}
         >
           <CardBody className="p-0">
-            <PatientWizard onSubmit={handleSubmit(onValid, onInvalid)} />
+            <PatientWizard onSubmit={submitHandler} />
           </CardBody>
         </Card>
 

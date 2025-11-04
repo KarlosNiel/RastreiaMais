@@ -1,18 +1,37 @@
 // lib/api/pacientes.ts
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? "";
+import type { PatientApiPayload } from "@/lib/pacientes/mappers";
+
+const RAW_BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? "";
+const API_BASE = RAW_BASE.replace(/\/$/, "");
+
+if (!API_BASE) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[lib/api/pacientes] API_BASE ausente. Defina NEXT_PUBLIC_API_URL ou API_URL."
+  );
+}
 
 type FetchOpts = RequestInit & { json?: boolean };
 
-async function http<T>(path: string, opts: FetchOpts = {}): Promise<T> {
+async function http<T = unknown>(
+  path: string,
+  opts: FetchOpts = {}
+): Promise<T> {
   const url = `${API_BASE}${path}`;
   const { json = true, headers, ...rest } = opts;
 
   const res = await fetch(url, {
     ...rest,
     headers: {
-      "Content-Type": "application/json",
+      ...(json
+        ? {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          }
+        : {}),
       ...(headers || {}),
     },
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -24,26 +43,26 @@ async function http<T>(path: string, opts: FetchOpts = {}): Promise<T> {
   return (json ? res.json() : (res as unknown as T)) as T;
 }
 
-// Ajuste os tipos se quiser importar dos schemas:
-// import type { RegistroPacienteCreate, RegistroPacienteEdit } from "@/schemas/paciente";
-
-export async function createPaciente(payload: any) {
-  // endpoint exemplo – ajuste para o do seu backend
-  return http("/api/v1/accounts/patients/", {
+// Criação de paciente (payload já vem no formato da API via formToPatientApi)
+export async function createPaciente<T = unknown>(payload: PatientApiPayload) {
+  return http<T>("/api/v1/accounts/patients/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function updatePaciente(id: number, payload: any) {
-  // PATCH para edição parcial (bate com o schema .partial())
-  return http(`/api/v1/accounts/patients/${id}/`, {
+// Atualização parcial (PATCH) – também usa PatientApiPayload, mas sem user no modo edit
+export async function updatePaciente<T = unknown>(
+  id: number,
+  payload: PatientApiPayload
+) {
+  return http<T>(`/api/v1/accounts/patients/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
 
-// opcional (usado na página de edição server-side)
-export async function getPaciente(id: number) {
-  return http(`/api/v1/accounts/patients/${id}/`);
+// Opcional (client-side). Para server-side na page de edição você já usa fetchPaciente com cookies().
+export async function getPaciente<T = unknown>(id: number) {
+  return http<T>(`/api/v1/accounts/patients/${id}/`);
 }

@@ -15,6 +15,12 @@ export default function PacientesFormLayout({
   const isNew = pathname?.includes("/pacientes/novo");
   const title = isNew ? "Novo Registro" : "Editar Registro";
 
+  const handleSaveDraftClick = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("paciente:salvar-rascunho"));
+    }
+  };
+
   return (
     <>
       {/* A11y: pular para conteúdo */}
@@ -46,7 +52,7 @@ export default function PacientesFormLayout({
               />
             </Link>
 
-            {/* Título (sempre centralizado por ocupar a coluna do meio) */}
+            {/* Título (sempre centralizado) */}
             <h1 className="text-center text-base md:text-lg font-semibold tracking-tight">
               {title}
             </h1>
@@ -58,15 +64,14 @@ export default function PacientesFormLayout({
                 aria-label={`Ações - ${title}`}
                 className="flex items-center gap-2"
               >
-                {/* Observação: usa form="patient-form".
-                   Garanta que o <form> em PatientForm.tsx tenha id="patient-form". */}
+                {/* AGORA: não submete o form, só dispara o evento de rascunho */}
                 <RMButton
                   look="outline"
                   tone="neutral"
                   size="md"
-                  type="submit"
-                  form="patient-form"
-                  aria-label="Salvar rascunho"
+                  type="button"
+                  onClick={handleSaveDraftClick}
+                  aria-label="Salvar rascunho localmente"
                 >
                   Salvar rascunho
                 </RMButton>
@@ -82,6 +87,7 @@ export default function PacientesFormLayout({
                   Cancelar
                 </RMButton>
 
+                {/* Submit real do formulário */}
                 <RMButton
                   look="solid"
                   tone="brand"
@@ -95,7 +101,7 @@ export default function PacientesFormLayout({
                 </RMButton>
               </nav>
 
-              {/* Divisória sutil + ícones secundários (md+) */}
+              {/* Ícones extras (notificações / perfil) */}
               <div className="hidden md:flex items-center gap-2 pl-3 ml-1 border-l border-divider">
                 <RMButton
                   look="ghost"

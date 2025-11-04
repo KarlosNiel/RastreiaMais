@@ -2,6 +2,7 @@
 
 import { StatusChip } from "@/components/ui/StatusChip";
 import {
+  Link,
   Pagination,
   Table,
   TableBody,
@@ -13,30 +14,29 @@ import {
 import { useMemo, useState } from "react";
 
 /* ===== Tipos ===== */
-export type ConsultaRow = {
+export type PacienteRow = {
   id: string;
-  profissional: string;
-  cargo: string;
-  local: string;
-  hora: string;
-  data: string;
+  nome: string;
+  cpf: string;
+  microArea: string;
+  telefone: string;
   status: string;
 };
 
-type Props = {
-  rows: ConsultaRow[];
+type TableProps = {
+  rows: PacienteRow[];
   initialPage?: number;
   initialRowsPerPage?: number;
   className?: string;
 };
 
-/* ===== Componente ===== */
-export function ConsultasTable({
+/* ===== Componente de tabela de Pacientes ===== */
+export function PacientesTable({
   rows,
   initialPage = 1,
-  initialRowsPerPage = 4,
+  initialRowsPerPage = 10,
   className,
-}: Props) {
+}: TableProps) {
   const [page, setPage] = useState(initialPage);
   const rowsPerPage = initialRowsPerPage;
   const pages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
@@ -48,10 +48,12 @@ export function ConsultasTable({
 
   return (
     <div
-      className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-4 ${className ?? ""}`}
+      className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-4 ${
+        className ?? ""
+      }`}
     >
       <Table
-        aria-label="Tabela de consultas do paciente"
+        aria-label="Tabela de pacientes"
         removeWrapper
         classNames={{
           th: "bg-gray-100 dark:bg-gray-800 text-sm font-semibold text-foreground",
@@ -59,15 +61,15 @@ export function ConsultasTable({
         }}
       >
         <TableHeader>
-          <TableColumn>Profissional</TableColumn>
-          <TableColumn>Cargo</TableColumn>
-          <TableColumn>Local</TableColumn>
-          <TableColumn>Horário</TableColumn>
-          <TableColumn>Data</TableColumn>
+          <TableColumn>Paciente</TableColumn>
+          <TableColumn>CPF</TableColumn>
+          <TableColumn>Telefone</TableColumn>
+          <TableColumn>Micro-área</TableColumn>
           <TableColumn className="text-right">Status</TableColumn>
+          <TableColumn className="text-right">Ações</TableColumn>
         </TableHeader>
 
-        <TableBody emptyContent="Nenhuma consulta encontrada">
+        <TableBody emptyContent="Nenhum paciente encontrado">
           {visible.map((r, idx) => (
             <TableRow
               key={r.id}
@@ -77,6 +79,7 @@ export function ConsultasTable({
                   : "bg-transparent"
               } transition-colors`}
             >
+              {/* Paciente (nome) + avatarzinho */}
               <TableCell className="whitespace-nowrap">
                 <div className="inline-flex items-center gap-2">
                   <div className="size-7 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700">
@@ -87,17 +90,34 @@ export function ConsultasTable({
                       />
                     </svg>
                   </div>
-                  <span>{r.profissional}</span>
+                  <span>{r.nome}</span>
                 </div>
               </TableCell>
 
-              <TableCell>{r.cargo}</TableCell>
-              <TableCell className="max-w-[260px] truncate">{r.local}</TableCell>
-              <TableCell>{r.hora}</TableCell>
-              <TableCell>{r.data}</TableCell>
+              {/* CPF */}
+              <TableCell className="font-mono text-sm">{r.cpf}</TableCell>
 
+              {/* Telefone */}
+              <TableCell className="whitespace-nowrap">{r.telefone}</TableCell>
+
+              {/* Micro-área */}
+              <TableCell className="max-w-[200px] truncate">
+                {r.microArea}
+              </TableCell>
+
+              {/* Status */}
               <TableCell className="text-right">
                 <StatusChip size="sm">{r.status}</StatusChip>
+              </TableCell>
+
+              {/* Ações: ir para edição do paciente */}
+              <TableCell className="text-right">
+                <Link
+                  href={`/pacientes/${r.id}/editar`}
+                  className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  Editar
+                </Link>
               </TableCell>
             </TableRow>
           ))}
@@ -116,4 +136,12 @@ export function ConsultasTable({
       </div>
     </div>
   );
+}
+
+/* ===== Página (/pacientes) ===== */
+export default function Page() {
+  // TODO: substituir pelo fetch real da lista de pacientes a partir do backend
+  const rows: PacienteRow[] = [];
+
+  return <PacientesTable rows={rows} />;
 }
