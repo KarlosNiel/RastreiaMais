@@ -48,13 +48,52 @@ export default function MePage() {
       return resp?.results ?? [];
     },
     refetchOnWindowFocus: false,
-    staleTime: 60_000,
-  });
+    staleTime: 1000 * 60 * 2, // 2 minutos para evitar muitas requisições
+    retry: (failureCount, error: any) => {
+      // Não tentar novamente se for erro 401 (não autorizado)
+      if (error?.status === 401) return false;
+      return failureCount < 3;
+    },
+});
 
   const rows = useMemo<ConsultaRow[]>(() => {
     const source = (data ?? APPTS) as any[];
     return source.map((a) => {
-      const d = a.scheduled_datetime ? new Date(a.scheduled_datetime) : null;
+      // mapeamento defensivo com vários fallbacks para evitar erros
+      const profissional =
+        a.professional?.user?.first_name ?? "—";
+
+      const cargo =
+        a.professional?.role ??
+        "—";
+
+      const local =
+        a.location?.name ?? a.local?.name ?? "—";
+
+      // tentamos extrair data/hora a partir de campos comuns usados em APIs
+      const dt =
+        a.scheduled_datetime ??
+        null;
+
+      let dataStr = "—";
+      let horaStr = "—";
+      if (dt) {
+        const d = new Date(dt);
+        if (!Number.isNaN(d.getTime())) {
+          dataStr = d.toLocaleDateString();
+          horaStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        } else {
+          // se não for uma string de data válida, exiba como está
+          dataStr = String(dt);
+        }
+      } else {
+        // campos separados:
+        if (a.scheduled_datetime) dataStr = String(a.date);
+        if (a.scheduled_datetime) horaStr = String(a.hora);
+      }
+
+      const status = a.status;
+
       return {
         id: String(a.id ?? a.pk ?? crypto.randomUUID()),
         profissional: a.professional?.user?.first_name ?? "—",
