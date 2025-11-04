@@ -1,11 +1,12 @@
 // frontend/app/layout.tsx
-import Footer from "@/components/layout/Footer";
+import { Footer } from "@/components/layout/Footer";
 import { fontHeading, fontMono, fontSans } from "@/config/fonts";
 import { app as cfg } from "@/config/rastreiamais";
 import { cn } from "@/lib/utils";
 import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 import Providers from "./providers";
+import { Header } from "@/components/layout/Header";
 
 export const metadata: Metadata = {
   title: {
@@ -36,8 +37,9 @@ export default function RootLayout({
     >
       <body
         suppressHydrationWarning
-        className="min-h-svh md:min-h-dvh font-sans antialiased"
+        className="min-h-svh md:min-h-dvh font-sans antialiased overflow-y-scroll scrollbar-none dark:bg-slate-950"
       >
+        <Header />
         <Providers>{children}</Providers>
         <Footer />
       </body>

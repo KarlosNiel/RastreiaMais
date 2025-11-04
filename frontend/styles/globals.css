@@ -1,405 +1,44 @@
 @config "../tailwind.config.js";
 @import "tailwindcss";
 
-/* ===================== Vars ===================== */
-:root {
-  --brand: #ec4d23;
-  --focus: color-mix(in oklab, var(--brand) 88%, white 12%); /* anel de foco */
-  --app-bg: var(--nextui-background, #ffffff);
-
-  /* Campos (light) */
-  --field-bg: #f7f7f7;
-  --field-border: #ededed;
-
-  /* Timing & easing para micro-interações */
-  --ease-emph: cubic-bezier(0.2, 0, 0, 0.9);
-  --dur-fast: 140ms;
-  --dur-base: 220ms;
-
-  /* Controles nativos */
-  accent-color: var(--brand);
-  color-scheme: light;
-}
-.dark {
-  --brand: #ec4d23;
-  --focus: color-mix(in oklab, var(--brand) 90%, black 10%);
-  --app-bg: var(--nextui-background, #0b0d12);
-
-  /* Campos (dark) */
-  --field-bg: #121622;
-  --field-border: #1f2937;
-
-  accent-color: var(--brand);
-  color-scheme: dark;
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 
-/* =================== Design Tokens (Tailwind v4) =================== */
-/* Baseline de 4px + degraus usados no grid (gutter 24, margem 32) */
-@theme {
-  --spacing-1: 4px;
-  --spacing-2: 8px;
-  --spacing-3: 12px;
-  --spacing-4: 16px;
-  --spacing-5: 20px;
-  --spacing-6: 24px; /* gutter */
-  --spacing-8: 32px; /* margin container */
-  --spacing-9: 36px;
-  --spacing-10: 40px;
-  --spacing-12: 48px;
-  --spacing-15: 60px;
-  --spacing-18: 72px;
-  --spacing-20: 80px;
-  --spacing-30: 120px;
-  --spacing-40: 160px;
-  --spacing-50: 200px;
-
-  /* Sombras e raios */
-  --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.06);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
-/* ============================== Base =============================== */
-html,
-body {
-  height: 100%;
+
+/* Estilo base da scrollbar */
+::-webkit-scrollbar {
+  width: 4px;               /* largura da barra vertical */
+  height: 4px;              /* altura da barra horizontal */
 }
 
-body {
-  @apply min-h-dvh antialiased bg-content1 text-foreground font-sans;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-tap-highlight-color: transparent;
+/* Trilho (fundo da scrollbar) */
+::-webkit-scrollbar-track {
+  background: transparent;  /* ou use gray-100/dark gray-800 */
 }
 
-img,
-svg,
-video,
-canvas {
-  display: block;
-  max-width: 100%;
-  height: auto;
+/* Parte rolável */
+::-webkit-scrollbar-thumb {
+  background-color: #9ca3af;  /* gray-400 */
+  border-radius: 9999px;      /* deixa arredondada */
 }
 
-::selection {
-  background: color-mix(in oklab, var(--brand) 18%, transparent);
+/* Ao passar o mouse */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;  /* gray-500 */
 }
 
-/* Links em texto corrido */
-a {
-  color: var(--brand);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
-
-/* NÃO pinte âncoras que são botões (HeroUI usa <a class="inline-flex ...">) */
-a.inline-flex,
-[data-slot] a {
-  color: inherit;
-  text-decoration: inherit;
-}
-
-/* Botão de marca: garante branco em TODOS os slots do HeroUI */
-.btn-brand {
-  background: var(--brand);
-  transition: opacity var(--dur-fast) var(--ease-emph);
-}
-.btn-brand [data-slot="label"],
-.btn-brand [data-slot="content"],
-.btn-brand [data-slot="start-content"],
-.btn-brand [data-slot="end-content"],
-.btn-brand span {
-  color: #fff !important;
-}
-.btn-brand[data-hover="true"] {
-  opacity: 0.9;
-}
-.btn-brand[aria-disabled="true"],
-.btn-brand[data-disabled="true"] {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Evita sublinhar link dentro de botões */
-.btn-brand a:hover,
-[data-slot] a:hover {
-  text-decoration: none;
-}
-
-/* Foco: suporta tanto nativo quanto data-focus-visible do HeroUI */
-:where(a, button, [role="button"], summary):focus-visible,
-:where([data-focus-visible="true"]) {
-  outline: 2px solid var(--focus);
-  outline-offset: 3px;
-  border-radius: 6px;
-}
-
-/* Ponteiro/caret em campos nativos (HeroUI já estiliza os dele) */
-input,
-textarea,
-select,
-button {
-  font: inherit;
-}
-input,
-textarea {
-  caret-color: var(--brand);
-}
-::placeholder {
-  color: color-mix(in oklab, currentColor 45%, transparent);
-}
-
-/* Tipografia por tag */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  @apply font-heading;
-}
-h1 {
-  @apply text-2xl md:text-3xl font-semibold;
-}
-h2 {
-  @apply text-xl md:text-2xl font-semibold;
-}
-h3 {
-  @apply text-lg md:text-xl font-semibold;
-}
-p {
-  @apply leading-relaxed;
-}
-small {
-  @apply text-foreground/60;
-}
-
-/* ============================ Utilitários =========================== */
-/* container padrão e container alinhado ao Figma */
-@utility container {
-  @apply mx-auto w-full max-w-7xl px-4;
-}
-@utility container-app {
-  @apply mx-auto w-full max-w-[1280px] px-8 md:px-10;
-}
-
-@layer utilities {
-  /* Grid 12 colunas – gutter 24px, baseline 16px nas linhas */
-  .grid-12 {
-    @apply grid grid-cols-12 gap-x-6 gap-y-4;
+/* Modo dark */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background-color: #4b5563;  /* gray-600 */
   }
-
-  /* stacks verticais previsíveis */
-  .stack-4 > * + * {
-    margin-top: 1rem;
-  } /* 16px */
-  .stack-6 > * + * {
-    margin-top: 1.5rem;
-  } /* 24px */
-  .stack-8 > * + * {
-    margin-top: 2rem;
-  } /* 32px */
-
-  /* Tipografia utilitária */
-  .ty-display {
-    @apply text-[32px] leading-[40px] font-bold tracking-tight;
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;  /* gray-500 */
   }
-  .ty-title {
-    @apply text-[28px] leading-[36px] font-bold tracking-tight;
-  }
-  .ty-h2 {
-    @apply text-[24px] leading-[32px] font-semibold;
-  }
-  .ty-sub {
-    @apply text-[20px] leading-[28px] font-semibold;
-  }
-  .ty-body {
-    @apply text-[16px] leading-[24px] font-normal;
-  }
-  .ty-meta {
-    @apply text-[14px] leading-[20px] font-medium;
-  }
-  .ty-help {
-    @apply text-[12px] leading-[18px] font-normal;
-  }
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Cartão rápido */
-  .bg-card {
-    background: var(--field-bg);
-  }
-  .border-base {
-    border: 1px solid var(--field-border);
-  }
-  .border-card {
-    border-color: var(--field-border);
-  }
-  .text-muted {
-    color: color-mix(in oklab, currentColor 60%, transparent);
-  }
-
-  /* Ring helpers (usados pelos seus botões) */
-  .ring-focus {
-    --tw-ring-color: var(--focus);
-  }
-  .ring-offset-app {
-    --tw-ring-offset-color: var(--app-bg);
-  }
-
-  /* Faixa colorida à esquerda (util genérica) */
-  .accent-left {
-    position: relative;
-    overflow: hidden;
-  }
-  .accent-left::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 6px; /* ajuste p/ 8px se quiser mais “peso” */
-    border-top-left-radius: inherit;
-    border-bottom-left-radius: inherit;
-    background: var(--accent, var(--brand));
-  }
-
-  /* Badge util (ex.: +2 / -1 nos cards de KPI) */
-  .badge {
-    @apply inline-flex items-center h-6 rounded-full px-2 text-[12px] font-medium border;
-  }
-  .badge--up {
-    @apply border-emerald-300 text-emerald-700 bg-emerald-50
-           dark:border-emerald-700 dark:text-emerald-300 dark:bg-emerald-900/20;
-  }
-  .badge--down {
-    @apply border-rose-300 text-rose-700 bg-rose-50
-           dark:border-rose-600 dark:text-rose-300 dark:bg-rose-900/20;
-  }
-
-  /* Paginação util (container + item) */
-  .paginate {
-    @apply flex items-center gap-2;
-  }
-  .paginate-btn {
-    @apply h-8 min-w-8 px-2 rounded-lg border border-divider text-sm hover:bg-content2;
-    transition:
-      background-color var(--dur-fast) var(--ease-emph),
-      color var(--dur-fast) var(--ease-emph);
-  }
-  /* regra direta para estado data-active (mais robusto que @apply com variant) */
-  .paginate-btn[data-active="true"] {
-    background: var(--brand);
-    color: #fff;
-  }
-
-  /* Sombra util usada nos componentes */
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-}
-
-/* ====================== Tabelas & Scrollbar ======================== */
-.table-basic {
-  --row-sep: var(--field-border);
-}
-.table-basic thead {
-  background-color: color-mix(in oklab, currentColor 5%, transparent);
-}
-.table-basic th,
-.table-basic td {
-  @apply p-3 text-sm;
-}
-.table-basic tbody tr + tr {
-  border-top: 1px solid var(--row-sep);
-}
-
-/* Zebra suave + hover */
-.table-zebra tbody tr:nth-child(odd) {
-  background: color-mix(in oklab, currentColor 3.5%, transparent);
-}
-.table-zebra tbody tr:hover {
-  background: color-mix(in oklab, currentColor 7%, transparent);
-}
-
-/* Sticky header opcional */
-.table-sticky thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-/* Célula truncando com reticências */
-.td-ellipsis {
-  max-width: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Scrollbar (WebKit + Firefox) */
-* {
-  scrollbar-width: thin;
-}
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-*::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklab, currentColor 20%, transparent);
-  border-radius: 999px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-* {
-  scrollbar-color: color-mix(in oklab, currentColor 20%, transparent)
-    transparent;
-}
-
-/* ============ Preferência por menos movimento ============ */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* === Skeleton util (server-safe) === */
-@keyframes skeleton-shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@layer utilities {
-  .skeleton {
-    position: relative;
-    overflow: hidden;
-    background-color: color-mix(in oklab, currentColor 8%, transparent);
-  }
-  .skeleton::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background-image: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in oklab, currentColor 14%, transparent),
-      transparent
-    );
-    animation: skeleton-shimmer 1.2s infinite linear;
-  }
-}
-
-/* ===== Acessibilidade extra ===== */
-/* Esconde conteúdo ao usar atributo inert (modais) */
-[inert] {
-  pointer-events: none;
-  user-select: none;
 }

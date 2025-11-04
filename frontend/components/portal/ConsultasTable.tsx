@@ -40,7 +40,7 @@ export function ConsultasTable({
   rows,
   initialPage = 1,
   initialRowsPerPage = 4,
-  className,
+  className
 }: Props) {
   const [page, setPage] = useState(initialPage);
   const rowsPerPage = initialRowsPerPage;
@@ -53,14 +53,14 @@ export function ConsultasTable({
 
   return (
     <div className={className}>
-      <Table aria-label="Tabela de consultas do paciente" removeWrapper>
-        <TableHeader>
-          <TableColumn>Profissional</TableColumn>
-          <TableColumn>Cargo</TableColumn>
-          <TableColumn>Local</TableColumn>
-          <TableColumn>Horário</TableColumn>
-          <TableColumn>Data</TableColumn>
-          <TableColumn className="text-right">Status</TableColumn>
+      <Table aria-label="Tabela de consultas do paciente" removeWrapper className="rounded-md">
+        <TableHeader className="">
+          <TableColumn className="dark:text-white dark:bg-gray-800 ">Profissional</TableColumn>
+          <TableColumn className="dark:text-white dark:bg-gray-800">Cargo</TableColumn>
+          <TableColumn className="dark:text-white dark:bg-gray-800">Local</TableColumn>
+          <TableColumn className="dark:text-white dark:bg-gray-800">Horário</TableColumn>
+          <TableColumn className="dark:text-white dark:bg-gray-800">Data</TableColumn>
+          <TableColumn className="text-right dark:text-white dark:bg-gray-800">Status</TableColumn>
         </TableHeader>
 
         <TableBody emptyContent="Nenhuma consulta encontrada">
@@ -68,7 +68,7 @@ export function ConsultasTable({
             <TableRow
               key={r.id}
               // zebra (como no Figma): linhas ímpares com leve fundo
-              className={idx % 2 === 1 ? "bg-content2/60" : undefined}
+              className={idx % 2 === 1 ? "bg-content2/60 dark:bg-gray-800 dark:text-white" : "dark:bg-gray-900 dark:text-white"}
             >
               <TableCell className="whitespace-nowrap">
                 <span className="inline-flex items-center gap-2">
@@ -102,8 +102,13 @@ export function ConsultasTable({
       </Table>
 
       {/* paginação centralizada, compacta */}
-      <div className="mt-4 flex justify-center">
-        <Pagination
+      <div className="mt-4 flex justify-center ">
+        <Pagination 
+          classNames={{
+            next: "dark:bg-gray-800",
+            prev: "dark:bg-gray-800",
+            item: "dark:bg-gray-800",
+          }}
           isCompact
           showControls
           page={page}
