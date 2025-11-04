@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -131,8 +131,6 @@ const axiosInstance: AxiosInstance = axios.create({
 // request interceptor to attach access token
 axiosInstance.interceptors.request.use((config) => {
   const acc = getAccess();
-  // debug mínimo
-  // console.debug("[API] request:", config.method, config.url, "has token:", !!acc);
   if (acc) {
     config.headers = config.headers ?? {};
     // do not override existing Authorization if already provided
@@ -168,12 +166,23 @@ axiosInstance.interceptors.response.use(
     const requestPath = (originalConfig.url ?? "") as string;
     // do not attempt refresh for auth endpoints
     if (isAuthPath(requestPath) || originalConfig._retry) {
+      // Se falhou na autenticação e não conseguimos renovar, limpar tokens
+      clearTokens();
+      // Disparar evento para atualizar o contexto
+      if (isBrowser()) {
+        window.dispatchEvent(new Event('tokenRefresh'));
+      }
       return Promise.reject(error);
     }
 
     // attempt refresh
     const newAccess = await ensureAccessToken();
     if (!newAccess) {
+      // Se não conseguiu renovar, limpar tokens e disparar evento
+      clearTokens();
+      if (isBrowser()) {
+        window.dispatchEvent(new Event('tokenRefresh'));
+      }
       return Promise.reject(error);
     }
 
@@ -181,6 +190,11 @@ axiosInstance.interceptors.response.use(
     originalConfig._retry = true;
     originalConfig.headers = originalConfig.headers ?? {};
     (originalConfig.headers as any)["Authorization"] = `Bearer ${newAccess}`;
+
+    // Disparar evento para atualizar o contexto com o novo token
+    if (isBrowser()) {
+      window.dispatchEvent(new Event('tokenRefresh'));
+    }
 
     try {
       const retryResp = await axiosInstance.request(originalConfig);

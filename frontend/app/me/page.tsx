@@ -172,21 +172,24 @@ export default function MePage() {
 const { data, isLoading, isError, error } = useQuery({
     queryKey: ["appointments"],
     queryFn: async () => {
-      console.log('Token:', sessionStorage.getItem('access')); // debug temporário
       const resp = await apiGet<any>("/api/v1/appointments/appointments/");
       if (Array.isArray(resp)) return resp;
       if (resp && Array.isArray(resp.results)) return resp.results;
       return [];
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 2, // 2 minutos para evitar muitas requisições
+    retry: (failureCount, error: any) => {
+      // Não tentar novamente se for erro 401 (não autorizado)
+      if (error?.status === 401) return false;
+      return failureCount < 3;
+    },
 });
 
   // transformar resposta da API para o tipo esperado pelo ConsultasTable
   const rows = useMemo<ConsultaRow[]>(() => {
     const source = (data ?? APPTS) as any[];
     return source.map((a) => {
-      console.log(a);
       // mapeamento defensivo com vários fallbacks para evitar erros
       const profissional =
         a.professional?.user?.first_name ?? "—";

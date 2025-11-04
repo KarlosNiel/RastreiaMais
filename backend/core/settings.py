@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 THIRD_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # Para blacklist de tokens
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'corsheaders',
@@ -154,8 +155,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5), 
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1)
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),  # Aumentado para 15 minutos
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,  # Gera novo refresh token a cada renovação
+    "BLACKLIST_AFTER_ROTATION": True,  # Invalida o refresh token anterior
 }
 
 SPECTACULAR_SETTINGS = {

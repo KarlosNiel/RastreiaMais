@@ -91,6 +91,12 @@ export async function loginAndAssertRole(
         : `Esta conta não possui os papéis necessários (${required.join(", ")}).`
     );
   }
+  
+  // Disparar evento para atualizar o contexto
+  if (isBrowser()) {
+    window.dispatchEvent(new Event('tokenRefresh'));
+  }
+  
   return me;
 }
 
