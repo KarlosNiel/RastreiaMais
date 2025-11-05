@@ -1,11 +1,15 @@
-// frontend/schemas/paciente.ts
 import { z } from "zod";
 
 /** ========= Helpers ========= **/
 const emptyToUndef = (v: unknown) =>
   v === "" || v === null || typeof v === "undefined" ? undefined : v;
 
-const StrOpt = z.preprocess(emptyToUndef, z.string());
+// ⬇️ AGORA StrOpt aceita undefined/vazio sem estourar a validação
+const StrOpt = z.preprocess(
+  (v) => (v === "" || v === null || typeof v === "undefined" ? undefined : v),
+  z.string().optional()
+);
+
 const NumOpt = z.preprocess(emptyToUndef, z.coerce.number());
 const IntOpt = z.preprocess(emptyToUndef, z.coerce.number().int());
 const DateOpt = z.preprocess(emptyToUndef, z.coerce.date());

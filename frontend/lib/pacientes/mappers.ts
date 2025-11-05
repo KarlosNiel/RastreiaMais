@@ -6,7 +6,6 @@ import type {
 
 /** ─────────────────────────────────────────────────────────────
  *  Maps de enum (front → back)
- *  Ajuste os valores à direita para bater 100% com patient_choices.*
  *  ──────────────────────────────────────────────────────────── */
 const civilStatusMap: Record<string, string> = {
   solteiro: "SOLTEIRO",
@@ -85,7 +84,8 @@ export type PatientApiPayload = {
     username: string;
     first_name: string;
     last_name: string;
-    email?: string | null;
+    /** opcional; se ausente, backend aceita normalmente */
+    email?: string;
     password: string;
   };
   // SocialdemographicData
@@ -145,6 +145,10 @@ export function formToPatientApi(
   const [first_name, ...rest] = nome.split(/\s+/);
   const last_name = rest.join(" ");
 
+  // e-mail: campo opcional no form
+  const rawEmail = socio?.email?.trim?.();
+  const hasEmail = !!rawEmail;
+
   // montar user apenas no create
   const user =
     mode === "create"
@@ -156,11 +160,18 @@ export function formToPatientApi(
               "paciente"),
           first_name: first_name || "Paciente",
           last_name: last_name || "",
-          email: socio?.email || null,
+          ...(hasEmail ? { email: rawEmail } : {}), // ⬅️ não mandamos email se estiver vazio
           // regra simples: se não tiver senha no form, gera default
-          password: socio?.password || "Mudar123!",
+          password: socio?.password || socio?.senha || "Mudar123!",
         }
       : undefined;
+
+  const renda =
+    typeof socio?.renda_familiar === "number"
+      ? socio.renda_familiar.toFixed(2)
+      : socio?.renda_familiar != null
+        ? String(socio.renda_familiar)
+        : null;
 
   const payload: PatientApiPayload = {
     ...(user ? { user } : {}),
@@ -179,12 +190,7 @@ export function formToPatientApi(
       : null,
     people_per_household: socio?.n_pessoas_domicilio ?? null,
     family_responsability: socio?.responsavel_familiar || null,
-    family_income:
-      typeof socio?.renda_familiar === "number"
-        ? socio.renda_familiar.toFixed(2)
-        : socio?.renda_familiar != null
-          ? String(socio.renda_familiar)
-          : null,
+    family_income: renda,
     bolsa_familia:
       typeof socio?.bolsa_familia === "boolean" ? socio.bolsa_familia : null,
     // micro_area/address ainda não existem no form – mantemos null por enquanto

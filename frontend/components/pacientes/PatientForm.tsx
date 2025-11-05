@@ -139,8 +139,10 @@ export default function PatientForm(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreate, reset]);
 
-  // foco no primeiro erro "profundo"
   function onInvalid() {
+    // DEBUG: ver exatamente o que o RHF/Zod está reclamando
+    console.log("[PatientForm] onInvalid disparado. Errors:", errors);
+
     const findFirstPath = (obj: any, prefix = ""): string | null => {
       for (const k of Object.keys(obj ?? {})) {
         const path = prefix ? `${prefix}.${k}` : k;
@@ -154,27 +156,43 @@ export default function PatientForm(props: Props) {
       }
       return null;
     };
+
     const first = findFirstPath(errors as any);
-    if (first) setFocus(first as any, { shouldSelect: true });
+    if (first) {
+      console.log("[PatientForm] Primeiro campo com erro:", first);
+      setFocus(first as any, { shouldSelect: true });
+    }
     notifyWarn("Revise os campos destacados antes de continuar.");
   }
 
   async function onValid(rawData: CreateFormInput | EditFormInput) {
+    console.log(
+      "[PatientForm] onValid disparado. Dados crus do form:",
+      rawData
+    );
+
     try {
       // o resolver já validou, então podemos confiar em rawData;
-      // ainda assim, se quiser garantir coerções extras:
+      // ainda assim, garantimos coerções extras com Zod
       const parsed = schema.parse(rawData);
+      console.log("[PatientForm] Dados após Zod.parse:", parsed);
 
       // converte o objeto do form no payload que o backend espera para PatientUser
       const apiPayload = formToPatientApi(
         parsed as RegistroPacienteCreate | RegistroPacienteEdit,
         isCreate ? "create" : "edit"
       );
+      console.log("[PatientForm] Payload para API (Paciente):", apiPayload);
 
       if (isCreate) {
+        console.log("[PatientForm] Modo CREATE: criando paciente…");
+
         // 1) cria o paciente
         const created = await createPaciente<{ id: number }>(apiPayload);
+        console.log("[PatientForm] Resposta createPaciente:", created);
+
         const patientId = (created as any).id;
+        console.log("[PatientForm] ID do paciente criado:", patientId);
 
         // 2) cria registros de HAS/DM se marcados
         const createData = parsed as RegistroPacienteCreate;
@@ -182,10 +200,15 @@ export default function PatientForm(props: Props) {
         const hasPayload = formToHasApi(createData, patientId);
         const dmPayload = formToDmApi(createData, patientId);
 
+        console.log("[PatientForm] Payload HAS:", hasPayload);
+        console.log("[PatientForm] Payload DM:", dmPayload);
+
         if (hasPayload) {
+          console.log("[PatientForm] Enviando createHAS…");
           await createHAS(hasPayload);
         }
         if (dmPayload) {
+          console.log("[PatientForm] Enviando createDM…");
           await createDM(dmPayload);
         }
 
@@ -196,18 +219,30 @@ export default function PatientForm(props: Props) {
 
         notifySuccess("Paciente cadastrado com sucesso.");
       } else {
-        // EDIT: paciente + HAS/DM (PATCH)
+        console.log("[PatientForm] Modo EDIT: atualizando paciente…");
+
         const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;
+        console.log(
+          "[PatientForm] IDs -> paciente:",
+          id,
+          "HAS:",
+          hasId,
+          "DM:",
+          dmId
+        );
 
         // 1) atualiza dados do paciente
         await updatePaciente(id, apiPayload);
+        console.log("[PatientForm] updatePaciente concluído.");
 
         const editData = parsed as RegistroPacienteEdit;
 
         // 2) atualiza HAS, se existir registro
         if (hasId) {
           const hasPayload = formToHasApi(editData as any, id);
+          console.log("[PatientForm] Payload HAS (edit):", hasPayload);
           if (hasPayload) {
+            console.log("[PatientForm] Enviando updateHAS…");
             await updateHAS(hasId, hasPayload);
           }
         }
@@ -215,7 +250,9 @@ export default function PatientForm(props: Props) {
         // 3) atualiza DM, se existir registro
         if (dmId) {
           const dmPayload = formToDmApi(editData as any, id);
+          console.log("[PatientForm] Payload DM (edit):", dmPayload);
           if (dmPayload) {
+            console.log("[PatientForm] Enviando updateDM…");
             await updateDM(dmId, dmPayload);
           }
         }

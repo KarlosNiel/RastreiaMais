@@ -1,68 +1,32 @@
 // lib/api/pacientes.ts
+import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import type { PatientApiPayload } from "@/lib/pacientes/mappers";
 
-const RAW_BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL ?? "";
-const API_BASE = RAW_BASE.replace(/\/$/, "");
-
-if (!API_BASE) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    "[lib/api/pacientes] API_BASE ausente. Defina NEXT_PUBLIC_API_URL ou API_URL."
-  );
-}
-
-type FetchOpts = RequestInit & { json?: boolean };
-
-async function http<T = unknown>(
-  path: string,
-  opts: FetchOpts = {}
+/**
+ * Criação de paciente.
+ * O payload já vem pronto no formato da API via formToPatientApi.
+ */
+export async function createPaciente<T = unknown>(
+  payload: PatientApiPayload
 ): Promise<T> {
-  const url = `${API_BASE}${path}`;
-  const { json = true, headers, ...rest } = opts;
-
-  const res = await fetch(url, {
-    ...rest,
-    headers: {
-      ...(json
-        ? {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          }
-        : {}),
-      ...(headers || {}),
-    },
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${res.statusText} — ${text}`);
-  }
-
-  return (json ? res.json() : (res as unknown as T)) as T;
+  return apiPost<T>("/api/v1/accounts/patients/", payload);
 }
 
-// Criação de paciente (payload já vem no formato da API via formToPatientApi)
-export async function createPaciente<T = unknown>(payload: PatientApiPayload) {
-  return http<T>("/api/v1/accounts/patients/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-// Atualização parcial (PATCH) – também usa PatientApiPayload, mas sem user no modo edit
+/**
+ * Atualização parcial (PATCH) de paciente.
+ * No modo edit, o payload normalmente não inclui o objeto `user`.
+ */
 export async function updatePaciente<T = unknown>(
   id: number,
   payload: PatientApiPayload
-) {
-  return http<T>(`/api/v1/accounts/patients/${id}/`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+): Promise<T> {
+  return apiPatch<T>(`/api/v1/accounts/patients/${id}/`, payload);
 }
 
-// Opcional (client-side). Para server-side na page de edição você já usa fetchPaciente com cookies().
-export async function getPaciente<T = unknown>(id: number) {
-  return http<T>(`/api/v1/accounts/patients/${id}/`);
+/**
+ * Busca de paciente (uso client-side).
+ * Para server-side, você já tem helpers específicos usando cookies().
+ */
+export async function getPaciente<T = unknown>(id: number): Promise<T> {
+  return apiGet<T>(`/api/v1/accounts/patients/${id}/`);
 }

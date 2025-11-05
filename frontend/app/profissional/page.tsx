@@ -7,8 +7,14 @@ import {
 } from "@/components/profissional/AgendaTable";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { getProfissionalKpis, KPI_ICONS } from "@/lib/profissional-kpis";
-import { UserIcon, BellAlertIcon, ChartBarIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import {
+  BellAlertIcon,
+  ChartBarIcon,
+  ClipboardDocumentListIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type RiskTone = "safe" | "moderate" | "critical";
@@ -24,10 +30,42 @@ export default function ProfissionalPage() {
   }, []);
 
   const AGENDA_ROWS: AgendaRow[] = [
-    { id: "a1", paciente: "João S.", docMasked: "****1234", condicao: "HAS", hora: "08:30", local: "UBS", risco: "safe" },
-    { id: "a2", paciente: "Maria C.", docMasked: "****4321", condicao: "DM", hora: "10:00", local: "UBS", risco: "safe" },
-    { id: "a3", paciente: "Charles O.", docMasked: "****5678", condicao: "HAS/DM", hora: "14:00", local: "Visita", risco: "moderate" },
-    { id: "a4", paciente: "Carlos P.", docMasked: "****8765", condicao: "HAS", hora: "16:30", local: "Visita", risco: "critical" },
+    {
+      id: "a1",
+      paciente: "João S.",
+      docMasked: "****1234",
+      condicao: "HAS",
+      hora: "08:30",
+      local: "UBS",
+      risco: "safe",
+    },
+    {
+      id: "a2",
+      paciente: "Maria C.",
+      docMasked: "****4321",
+      condicao: "DM",
+      hora: "10:00",
+      local: "UBS",
+      risco: "safe",
+    },
+    {
+      id: "a3",
+      paciente: "Charles O.",
+      docMasked: "****5678",
+      condicao: "HAS/DM",
+      hora: "14:00",
+      local: "Visita",
+      risco: "moderate",
+    },
+    {
+      id: "a4",
+      paciente: "Carlos P.",
+      docMasked: "****8765",
+      condicao: "HAS",
+      hora: "16:30",
+      local: "Visita",
+      risco: "critical",
+    },
   ];
 
   return (
@@ -43,6 +81,33 @@ export default function ProfissionalPage() {
             <span className="font-medium">Microárea: Jardim Magnólia</span>
           </p>
         </div>
+        <div>
+          <nav aria-label="Ações" className="flex items-center gap-2">
+            <Button
+              as={Link}
+              href="/pacientes"
+              color="primary"
+              variant="solid"
+              radius="lg"
+              size="md"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+            >
+              Lista de Pacientes
+            </Button>
+
+            <Button
+              as={Link}
+              href="/pacientes/novo"
+              color="primary"
+              variant="solid"
+              radius="lg"
+              size="md"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+            >
+              Novo Registro
+            </Button>
+          </nav>
+        </div>
       </header>
 
       {/* ===== Linha 1: KPIs + Alertas ===== */}
@@ -56,7 +121,11 @@ export default function ProfissionalPage() {
               value={kpi.value}
               delta={kpi.delta}
               accent={kpi.accent}
-              icon={(KPI_ICONS as Record<string, import("react").ReactNode>)[kpi.key]}
+              icon={
+                (KPI_ICONS as Record<string, import("react").ReactNode>)[
+                  kpi.key
+                ]
+              }
             />
           ))}
         </section>
@@ -83,10 +152,34 @@ export default function ProfissionalPage() {
 
           <ul className="space-y-3">
             {[
-              { nome: "Maria C.", id: "****4321", cond: "HAS", quando: "30 min", tone: "critical" as RiskTone },
-              { nome: "José A.", id: "****1234", cond: "HAS", quando: "1 h", tone: "safe" as RiskTone },
-              { nome: "Ana L.", id: "****5678", cond: "HAS/DM", quando: "2 h", tone: "moderate" as RiskTone },
-              { nome: "Clara M.", id: "****4312", cond: "HAS", quando: "4 h", tone: "safe" as RiskTone },
+              {
+                nome: "Maria C.",
+                id: "****4321",
+                cond: "HAS",
+                quando: "30 min",
+                tone: "critical" as RiskTone,
+              },
+              {
+                nome: "José A.",
+                id: "****1234",
+                cond: "HAS",
+                quando: "1 h",
+                tone: "safe" as RiskTone,
+              },
+              {
+                nome: "Ana L.",
+                id: "****5678",
+                cond: "HAS/DM",
+                quando: "2 h",
+                tone: "moderate" as RiskTone,
+              },
+              {
+                nome: "Clara M.",
+                id: "****4312",
+                cond: "HAS",
+                quando: "4 h",
+                tone: "safe" as RiskTone,
+              },
             ].map((a, i) => (
               <li
                 key={i}
@@ -94,8 +187,8 @@ export default function ProfissionalPage() {
                   a.tone === "critical"
                     ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
                     : a.tone === "moderate"
-                    ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
-                    : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
+                      ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
+                      : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -104,8 +197,8 @@ export default function ProfissionalPage() {
                       a.tone === "critical"
                         ? "ring-rose-300"
                         : a.tone === "moderate"
-                        ? "ring-amber-300"
-                        : "ring-emerald-300"
+                          ? "ring-amber-300"
+                          : "ring-emerald-300"
                     } bg-white dark:bg-gray-800`}
                   >
                     <ChartBarIcon
@@ -113,8 +206,8 @@ export default function ProfissionalPage() {
                         a.tone === "critical"
                           ? "text-rose-600 dark:text-rose-400"
                           : a.tone === "moderate"
-                          ? "text-amber-600 dark:text-amber-400"
-                          : "text-emerald-600 dark:text-emerald-400"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-emerald-600 dark:text-emerald-400"
                       }`}
                     />
                   </div>
@@ -134,8 +227,8 @@ export default function ProfissionalPage() {
                   {a.tone === "critical"
                     ? "Crítico"
                     : a.tone === "moderate"
-                    ? "Atenção"
-                    : "Seguro"}
+                      ? "Atenção"
+                      : "Seguro"}
                 </StatusChip>
               </li>
             ))}
@@ -155,11 +248,27 @@ export default function ProfissionalPage() {
         <div className="max-h-[360px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
           <ul className="space-y-3">
             {[
-              { n: "Maria C.", id: "****4321", pend: "Dados incompletos · Endereço, cidade, UF..." },
+              {
+                n: "Maria C.",
+                id: "****4321",
+                pend: "Dados incompletos · Endereço, cidade, UF...",
+              },
               { n: "João S.", id: "****1234", pend: "PA · HDL, LDL" },
-              { n: "José A.", id: "****9765", pend: "Dados · Idade e telefone" },
-              { n: "Carlos D.", id: "****3399", pend: "Informações clínicas incompletas" },
-              { n: "Laura P.", id: "****2288", pend: "Dados incompletos · Cidade e telefone" }, // exemplo extra p/ ver o scroll
+              {
+                n: "José A.",
+                id: "****9765",
+                pend: "Dados · Idade e telefone",
+              },
+              {
+                n: "Carlos D.",
+                id: "****3399",
+                pend: "Informações clínicas incompletas",
+              },
+              {
+                n: "Laura P.",
+                id: "****2288",
+                pend: "Dados incompletos · Cidade e telefone",
+              }, // exemplo extra p/ ver o scroll
             ].map((r, i) => (
               <li
                 key={i}
@@ -172,7 +281,9 @@ export default function ProfissionalPage() {
                   <div className="min-w-0">
                     <div className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
                       {r.n}{" "}
-                      <span className="text-gray-500 dark:text-gray-400">{r.id}</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {r.id}
+                      </span>
                     </div>
                     <div className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">
                       {r.pend}
@@ -194,7 +305,6 @@ export default function ProfissionalPage() {
           </ul>
         </div>
       </section>
-
 
       {/* ===== Linha 3: Agenda ===== */}
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all">
