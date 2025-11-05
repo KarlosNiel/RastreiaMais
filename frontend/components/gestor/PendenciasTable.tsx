@@ -197,7 +197,7 @@ export function PendenciasTable({
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-gray-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
+                    "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
                   input:
                     "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}

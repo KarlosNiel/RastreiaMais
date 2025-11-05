@@ -45,6 +45,7 @@ export default function LoginPacientePage() {
     <AuthCard
       imageSrc="/auth/paciente.jpg"
       heading="Seja Bem-Vindo(a), Paciente!"
+      className=""
     >
       <form
         className="stack-6"
@@ -53,6 +54,7 @@ export default function LoginPacientePage() {
         aria-label="Formulário de login do paciente"
       >
         <TextField
+          className="pb-6"
           label="E-mail"
           type="email"
           name="email"
@@ -65,9 +67,14 @@ export default function LoginPacientePage() {
           autoCapitalize="none"
           spellCheck="false"
           enterKeyHint="next"
+          classNames={{
+            input: "",
+            inputWrapper: "border border-orange-600 transition"
+          }}
         />
 
         <TextField
+          className="pb-6"
           label="Senha"
           type="password"
           name="password"
@@ -77,9 +84,13 @@ export default function LoginPacientePage() {
           isRequired
           autoComplete="current-password"
           enterKeyHint="done"
+          classNames={{
+            input: "",
+            inputWrapper: "border border-orange-600 hover:shadow-sm transition"
+          }}
         />
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <label className="flex items-center gap-2 text-sm cursor-pointer pb-6">
           <input
             type="checkbox"
             checked={rememberMe}

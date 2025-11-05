@@ -99,6 +99,7 @@ export default function GestorPage() {
               variant="flat"                
               size="sm"
               aria-label="Adicionar alerta"
+              radius="lg"
               className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
             >
               +
@@ -132,7 +133,15 @@ export default function GestorPage() {
                         : "ring-emerald-300"
                     } bg-white dark:bg-gray-800`}
                   >
-                    <UserGroupIcon className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                    <UserGroupIcon
+                      className={`h-5 w-5 ${
+                        a.tone === "critical"
+                          ? "text-rose-600 dark:text-rose-400"
+                          : a.tone === "moderate"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-emerald-600 dark:text-emerald-400"
+                      }`}
+                    />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
