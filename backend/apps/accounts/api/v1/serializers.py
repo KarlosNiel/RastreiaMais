@@ -19,11 +19,23 @@ class UserSerializer(BaseSerializer):
         return user
 
 class PatientUserSerializer(BaseSerializer):
-    user = UserSerializer() 
+    user = UserSerializer()
+    conditions = serializers.SerializerMethodField() 
 
     class Meta(BaseSerializer.Meta):
         model = PatientUser
         fields = '__all__'
+
+    def get_conditions(self, obj):
+        conditions = []
+        if hasattr(obj, "has") and obj.has is not None:
+            conditions.append("HAS")
+        if hasattr(obj, "dm") and obj.dm is not None:
+            conditions.append("DM")
+        if hasattr(obj, "otherdcnt") and obj.otherdcn is not None:
+            conditions.append("OUTRAS DCNTs")
+
+        return " / ".join(conditions) if conditions else None
 
     def create(self, validated_data):
         user_data = validated_data.pop("user")

@@ -6,8 +6,6 @@ from apps.accounts.utils.utils import get_creator_profile, SingleProfileMixin
 
 from apps.accounts.data.patient import LifeStyle, SocialdemographicData, PsychosocialRisks, EnvironmentalRisks, PhysicalMotorRisks, ClassificationConducmMultiProfessional
 
-
-
 # Create your models here.
 
 ROLE_CHOICES = [

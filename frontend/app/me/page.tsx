@@ -54,7 +54,7 @@ export default function MePage() {
       if (error?.status === 401) return false;
       return failureCount < 3;
     },
-});
+  });
 
   const rows = useMemo<ConsultaRow[]>(() => {
     const source = (data ?? APPTS) as any[];

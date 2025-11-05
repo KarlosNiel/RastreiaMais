@@ -1,21 +1,60 @@
 "use client";
 
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import {
-  AgendaTable,
-  type AgendaRow,
-} from "@/components/profissional/AgendaTable";
-import { StatusChip } from "@/components/ui/StatusChip";
-import { getProfissionalKpis, KPI_ICONS } from "@/lib/profissional-kpis";
-import { UserIcon, BellAlertIcon, ChartBarIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
-import { Button } from "@heroui/button";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@heroui/button";
+import { BellAlertIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 
+import { apiGet } from "@/lib/api";
+import { getProfissionalKpis, KPI_ICONS } from "@/lib/profissional-kpis";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { AgendaTable, type AgendaRow } from "@/components/profissional/AgendaTable";
+import { StatusChip } from "@/components/ui/StatusChip";
+
+/* ======================
+   🔹 Tipos e Funções Auxiliares
+====================== */
 type RiskTone = "safe" | "moderate" | "critical";
 type ChipTone = "safe" | "attention" | "critical" | "neutral";
+
+interface AppointmentResponse {
+  id: number;
+  patient: {
+    id: number;
+    conditions: string;
+    user: {
+      first_name: string;
+      last_name: string;
+    };
+  };
+  professional: number;
+  scheduled_datetime: string;
+  local?: {
+    name?: string;
+  } | null;
+  risk_level: "Seguro" | "Moderado" | "Crítico";
+  description?: string;
+  type: string;
+  status?: string;
+}
+
+function mapRiskLevel(level: string): RiskTone {
+  switch (level) {
+    case "Moderado":
+      return "moderate";
+    case "Crítico":
+      return "critical";
+    default:
+      return "safe";
+  }
+}
+
 const mapRiskToChip = (t: RiskTone): ChipTone =>
   t === "moderate" ? "attention" : t;
 
+/* ======================
+   🔹 Página Principal
+====================== */
 export default function ProfissionalPage() {
   const [KPIS, setKPIS] = useState<any[]>([]);
 
@@ -23,16 +62,51 @@ export default function ProfissionalPage() {
     getProfissionalKpis().then(setKPIS);
   }, []);
 
-  const AGENDA_ROWS: AgendaRow[] = [
-    { id: "a1", paciente: "João S.", docMasked: "****1234", condicao: "HAS", hora: "08:30", local: "UBS", risco: "safe" },
-    { id: "a2", paciente: "Maria C.", docMasked: "****4321", condicao: "DM", hora: "10:00", local: "UBS", risco: "safe" },
-    { id: "a3", paciente: "Charles O.", docMasked: "****5678", condicao: "HAS/DM", hora: "14:00", local: "Visita", risco: "moderate" },
-    { id: "a4", paciente: "Carlos P.", docMasked: "****8765", condicao: "HAS", hora: "16:30", local: "Visita", risco: "critical" },
-  ];
+  /* ========== Busca dos agendamentos ========== */
+  const {
+    data: appointments,
+    isLoading,
+    isError,
+  } = useQuery<AppointmentResponse[]>({
+    queryKey: ["appointments"],
+    queryFn: async () => {
+      const resp = await apiGet<AppointmentResponse[]>("/api/v1/appointments/appointments/");
+      if (Array.isArray(resp)) return resp;
+      // Handle paginated responses that contain a `results` array
+      if (resp && typeof resp === "object" && "results" in resp && Array.isArray((resp as any).results)) {
+        return (resp as any).results as AppointmentResponse[];
+      }
+      return [];
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401) return false; // evita retry em erro 401
+      return failureCount < 3;
+    },
+  });
 
+  /* ========== Mapeamento p/ tabela ========== */
+  const AGENDA_ROWS: AgendaRow[] =
+    appointments?.map((a) => ({
+      id: String(a.id),
+      paciente:
+        `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
+        "Desconhecido",
+      hora: new Date(a.scheduled_datetime).toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }),
+      local: a.local?.name ?? "UBS",
+      risco: mapRiskLevel(a.risk_level),
+      condicao: a.patient.conditions ?? "—",
+      docMasked: "",
+    })) ?? [];
+
+  /* ========== Renderização ========== */
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-      {/* Header */}
+      {/* Cabeçalho */}
       <header className="flex flex-col gap-2 pt-8 pb-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold md:text-3xl dark:text-white">
@@ -45,7 +119,7 @@ export default function ProfissionalPage() {
         </div>
       </header>
 
-      {/* ===== Linha 1: KPIs + Alertas ===== */}
+      {/* KPIs e Alertas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* KPIs */}
         <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -56,7 +130,7 @@ export default function ProfissionalPage() {
               value={kpi.value}
               delta={kpi.delta}
               accent={kpi.accent}
-              icon={(KPI_ICONS as Record<string, import("react").ReactNode>)[kpi.key]}
+              icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
             />
           ))}
         </section>
@@ -73,7 +147,6 @@ export default function ProfissionalPage() {
             <Button
               variant="flat"
               size="sm"
-              aria-label="Adicionar alerta"
               radius="lg"
               className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
             >
@@ -121,9 +194,7 @@ export default function ProfissionalPage() {
                   <div>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                       {a.nome}{" "}
-                      <span className="text-gray-500 dark:text-gray-400">
-                        {a.id}
-                      </span>
+                      <span className="text-gray-500 dark:text-gray-400">{a.id}</span>
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       Condição: {a.cond} · Atualizado: {a.quando}
@@ -143,60 +214,7 @@ export default function ProfissionalPage() {
         </section>
       </div>
 
-      {/* ===== Linha 2: Registros Pendentes ===== */}
-      <section className="mt-6 rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all">
-        <div className="flex items-center gap-2 mb-4">
-          <ClipboardDocumentListIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Registros Pendentes
-          </h2>
-        </div>
-
-        <div className="max-h-[360px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
-          <ul className="space-y-3">
-            {[
-              { n: "Maria C.", id: "****4321", pend: "Dados incompletos · Endereço, cidade, UF..." },
-              { n: "João S.", id: "****1234", pend: "PA · HDL, LDL" },
-              { n: "José A.", id: "****9765", pend: "Dados · Idade e telefone" },
-              { n: "Carlos D.", id: "****3399", pend: "Informações clínicas incompletas" },
-              { n: "Laura P.", id: "****2288", pend: "Dados incompletos · Cidade e telefone" }, // exemplo extra p/ ver o scroll
-            ].map((r, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between gap-4 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-4 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-divider dark:border-orange-600 bg-transparent">
-                    <UserIcon className="size-5 text-gray-700 dark:text-gray-200 stroke-orange-600" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
-                      {r.n}{" "}
-                      <span className="text-gray-500 dark:text-gray-400">{r.id}</span>
-                    </div>
-                    <div className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">
-                      {r.pend}
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  variant="flat"
-                  size="sm"
-                  aria-label="Adicionar alerta"
-                  radius="lg"
-                  className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
-                >
-                  +
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-
-      {/* ===== Linha 3: Agenda ===== */}
+      {/* Agenda */}
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all">
         <div className="flex items-center gap-2 mb-4">
           <ChartBarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -205,12 +223,22 @@ export default function ProfissionalPage() {
           </h2>
         </div>
 
-        <AgendaTable
-          rows={AGENDA_ROWS}
-          enableToolbar
-          initialPage={1}
-          initialRowsPerPage={8}
-        />
+        {isLoading ? (
+          <div className="p-6 text-gray-500 dark:text-gray-400">
+            Carregando agendamentos...
+          </div>
+        ) : isError ? (
+          <div className="p-6 text-red-600 dark:text-red-400">
+            Erro ao carregar agendamentos.
+          </div>
+        ) : (
+          <AgendaTable
+            rows={AGENDA_ROWS}
+            enableToolbar
+            initialPage={1}
+            initialRowsPerPage={8}
+          />
+        )}
       </section>
     </div>
   );

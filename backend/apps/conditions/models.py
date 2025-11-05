@@ -39,7 +39,7 @@ class HAS(DCNT, ClinicalEvaluationHAS, ClassificationConductHAS):
         max_length=30, null=True, blank=True,
         choices=has_choices.HypertensionComplicationsChoices.choices
     )
-
+    
 
 class DM(DCNT, ClinicalEvaluationDM, RiskFactorsDM, ClassificationConductDM):
     class Meta:
