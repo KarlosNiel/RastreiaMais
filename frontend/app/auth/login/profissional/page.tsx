@@ -77,6 +77,11 @@ export default function LoginProfissionalPage() {
           autoCapitalize="none"
           spellCheck="false"
           enterKeyHint="next"
+          className="pb-6"
+          classNames={{
+            input: "",
+            inputWrapper: "border border-orange-600 transition"
+          }}
         />
 
         <TextField
@@ -89,6 +94,11 @@ export default function LoginProfissionalPage() {
           isRequired
           autoComplete="current-password"
           enterKeyHint="done"
+          className="pb-6"
+          classNames={{
+            input: "",
+            inputWrapper: "border border-orange-600 transition"
+          }}
           endContent={
             <button
               type="button"
@@ -106,7 +116,7 @@ export default function LoginProfissionalPage() {
           }
         />
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <label className="flex items-center gap-2 text-sm cursor-pointer mb-6">
           <input
             type="checkbox"
             checked={rememberMe}

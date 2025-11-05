@@ -308,7 +308,7 @@ export function AgendaTable({
     const totalFiltered = filteredItems.length;
 
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-1">
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
@@ -316,9 +316,12 @@ export function AgendaTable({
             variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
-              inputWrapper: "h-11 bg-content2",
-              input: "text-[0.95rem]",
-            }}
+                inputWrapper:
+                  "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-50 dark:hover:bg-gray-800",
+                input:
+                  "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+              }
+            }
             placeholder="Buscar por paciente, condição ou local…"
             startContent={
               <svg
@@ -345,7 +348,7 @@ export function AgendaTable({
 
           <div className="flex items-center gap-3">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
+              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
                 <Button variant="flat" radius="full">
                   Risco
                 </Button>
@@ -373,7 +376,7 @@ export function AgendaTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline-0 text-small"
+                className="bg-transparent outline-0 text-small border rounded"
                 aria-label="Linhas por página"
                 value={pageSize}
                 onChange={(e) => {
@@ -409,7 +412,12 @@ export function AgendaTable({
           page={page}
           total={totalPages}
           onChange={setPage}
-          classNames={{ cursor: "bg-[var(--brand)] text-white" }}
+          classNames={{
+              next: "dark:bg-gray-800",
+              prev: "dark:bg-gray-800",
+              item: "dark:bg-gray-800",
+            }
+          }
         />
       </div>
     );
@@ -430,18 +438,18 @@ export function AgendaTable({
       sortIcon={SortGlyph}
       onSortChange={setSortDescriptor}
       classNames={{
-        wrapper:
-          "rounded-2xl border border-divider bg-content1 p-1 shadow-soft",
-        thead: "bg-content2",
         th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-4",
+        td: "px-6 py-3",
         base: "min-h-[320px]",
+        table: "dark:bg-gray-900",
+        wrapper: "bg-transparent border-none shadow-none px-2"
       }}
     >
       {/* use um array mutável aqui para evitar erro de readonly */}
       <TableHeader columns={[...COLUMNS]}>
         {(column: Column) => (
           <TableColumn
+            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
@@ -456,7 +464,7 @@ export function AgendaTable({
         items={sortedItems}
       >
         {(item: AgendaRow) => (
-          <TableRow key={item.id} className="even:bg-content2/60">
+          <TableRow key={item.id} className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900">
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

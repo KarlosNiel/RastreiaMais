@@ -202,7 +202,7 @@ export function ProfissionaisTable({
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-900",
+                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
                   input:
                     "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}

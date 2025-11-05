@@ -22,13 +22,13 @@ export default async function LoginIndex() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/auth/login/paciente"
-            className="rounded-2xl border border-foreground/10 px-4 py-3 hover:border-foreground/30 transition"
+            className="rounded-2xl border border-foreground/10 bg-orange-600 dark:bg-transparent text-white dark:border-orange-600 dark:text-orange-600 dark:hover:bg-gray-900 hover:shadow-sm px-4 py-3 hover:border-foreground/30 transition"
           >
             Sou Paciente
           </Link>
           <Link
             href="/auth/login/profissional"
-            className="rounded-2xl border border-foreground/10 px-4 py-3 hover:border-foreground/30 transition"
+            className="rounded-2xl border border-foreground/10 bg-orange-600 dark:bg-transparent text-white dark:border-orange-600 dark:text-orange-600 dark:hover:bg-gray-900 hover:shadow-sm px-4 py-3 hover:border-foreground/30 transition"
           >
             Sou Profissional
           </Link>
