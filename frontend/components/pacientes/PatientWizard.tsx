@@ -31,8 +31,8 @@ const DEFAULT_FIELDS: string[][] = [
   [], // s1 validado por STEP1_FIELDS (override abaixo)
   [], // s2 validado por STEP2_REQUIRED (override abaixo)
   [], // s3 dinâmico (override abaixo)
-  [], // s4: tudo opcional → não bloquear
-  [], // s5: opcional → não bloquear aqui (valide no submit se quiser)
+  [], // s4: tudo opcional
+  [], // s5: tudo opcional
 ];
 
 export default function PatientWizard({
@@ -45,6 +45,7 @@ export default function PatientWizard({
     trigger,
     setFocus,
     watch,
+    getFieldState,
     formState: { errors, isSubmitting },
   } = useFormContext();
 
@@ -56,7 +57,7 @@ export default function PatientWizard({
   // Campos OBRIGATÓRIOS do Step 2 (removendo os opcionais)
   const STEP2_REQUIRED = useMemo(
     () =>
-      Array.from(STEP2_FIELDS).filter(
+      STEP2_FIELDS.filter(
         (f) =>
           f !== "condicoes.outras_dcnts" &&
           f !== "condicoes.outras_em_acompanhamento"
@@ -70,14 +71,14 @@ export default function PatientWizard({
   /** devolve os targets de validação por step (s2/s3 dinâmicos) */
   const getTargetsForStep = useCallback(
     (idx: number): string[] => {
-      if (idx === 0) return Array.from(STEP1_FIELDS);
+      if (idx === 0) return Array.from(STEP1_FIELDS); // <- cópia mutável
       if (idx === 1) return STEP2_REQUIRED;
       if (idx === 2) {
         if (!step3Enabled) return []; // não valida nada se step3 desabilitado
         return getStep3FieldsDynamic({ has: !!has, dm: !!dm }).map(String);
       }
-      if (idx === 3) return []; // Step 4 opcional → nunca bloquear
-      if (idx === 4) return []; // (opcional) Step 5 opcional → nunca bloquear
+      if (idx === 3) return []; // Step 4 opcional → não bloquear
+      if (idx === 4) return []; // Step 5 opcional → não bloquear
       return fieldsByStep[idx] ?? [];
     },
     [fieldsByStep, has, dm, step3Enabled, STEP2_REQUIRED]
@@ -85,6 +86,7 @@ export default function PatientWizard({
 
   const [step, setStep] = useState(0);
   const total = STEPS_META.length;
+
   // Se o Step 3 ficar desabilitado enquanto o usuário está nele, salta para o próximo
   useEffect(() => {
     if (step === 2 && !step3Enabled) {
@@ -142,8 +144,6 @@ export default function PatientWizard({
     [errors, getTargetsForStep]
   );
 
-  const { getFieldState } = useFormContext();
-
   const validateCurrent = useCallback(async () => {
     if (!validateOnNext) return true;
     const targets = getTargetsForStep(step);
@@ -179,6 +179,7 @@ export default function PatientWizard({
     errors,
     setFocus,
   ]);
+
   /** rolar o cartão para o título do step */
   const smoothToContentTop = useCallback(() => {
     requestAnimationFrame(() => {
@@ -195,7 +196,7 @@ export default function PatientWizard({
   /** próxima etapa, pulando o step3 quando ele estiver desabilitado */
   const computeNextIndex = useCallback(
     (curr: number) => {
-      if (curr === 1 && !step3Enabled) return 3; // 2 -> pula 3 -> vai p/ 4
+      if (curr === 1 && !step3Enabled) return 3; // 1 -> pula 2 -> vai p/ 3
       return Math.min(curr + 1, total - 1);
     },
     [step3Enabled, total]
@@ -204,7 +205,7 @@ export default function PatientWizard({
   /** etapa anterior, voltando por cima do step3 desabilitado */
   const computePrevIndex = useCallback(
     (curr: number) => {
-      if (curr === 4 && !step3Enabled) return 2; // 4 -> volta p/ 2 se 3 off
+      if (curr === 3 && !step3Enabled) return 1; // 3 -> volta p/ 1 se 2 (clínica) estiver off
       return Math.max(curr - 1, 0);
     },
     [step3Enabled]

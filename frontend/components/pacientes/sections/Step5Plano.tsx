@@ -8,6 +8,7 @@ import { useFormContext } from "react-hook-form";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { RHFSelect } from "@/components/form/RHFSelect";
+import { notifySuccess } from "@/components/ui/notify";
 
 /** Util: abrevia "João Silva Santos" -> "João S." */
 function shortName(full?: string) {
@@ -93,10 +94,26 @@ export default function Step5Plano() {
     try {
       const data = getValues();
       localStorage.setItem("rastreia:paciente:draft", JSON.stringify(data));
+      notifySuccess("Rascunho salvo no navegador.");
     } catch (e) {
       console.error("Falha ao salvar rascunho", e);
     }
   }, [getValues]);
+
+  // Ouve o evento global disparado pelo layout (botão de salvar rascunho no header)
+  useEffect(() => {
+    const handler = () => salvarRascunho();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("paciente:salvar-rascunho", handler);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("paciente:salvar-rascunho", handler);
+      }
+    };
+  }, [salvarRascunho]);
 
   /** Atalhos de datas (define um dos campos de data conforme botão) */
   const quickSetDate = useCallback(

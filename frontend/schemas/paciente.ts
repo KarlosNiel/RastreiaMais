@@ -1,11 +1,15 @@
-// frontend/schemas/paciente.ts
 import { z } from "zod";
 
 /** ========= Helpers ========= **/
 const emptyToUndef = (v: unknown) =>
   v === "" || v === null || typeof v === "undefined" ? undefined : v;
 
-const StrOpt = z.preprocess(emptyToUndef, z.string());
+// ⬇️ AGORA StrOpt aceita undefined/vazio sem estourar a validação
+const StrOpt = z.preprocess(
+  (v) => (v === "" || v === null || typeof v === "undefined" ? undefined : v),
+  z.string().optional()
+);
+
 const NumOpt = z.preprocess(emptyToUndef, z.coerce.number());
 const IntOpt = z.preprocess(emptyToUndef, z.coerce.number().int());
 const DateOpt = z.preprocess(emptyToUndef, z.coerce.date());
@@ -71,6 +75,16 @@ export const EscolaridadeZ = z.enum([
 /* ########################
  * STEP 1 — SOCIODEMOGRÁFICOS
  * ######################## */
+
+/** Telefone: permite vazio, mas se preencher, valida 10–11 dígitos */
+const TelefoneZ = z
+  .preprocess(emptyToUndef, z.string().optional())
+  .transform((s) => (s ?? "").replace(/\D+/g, ""))
+  .refine(
+    (s) => !s || (s.length >= 10 && s.length <= 11),
+    "Informe telefone válido"
+  );
+
 export const SocioZ = z
   .object({
     nome: z.string().min(3, "Informe o nome completo"),
@@ -98,13 +112,7 @@ export const SocioZ = z
       .preprocess(emptyToUndef, z.coerce.number().int())
       .optional(),
 
-    telefone: z
-      .string()
-      .transform((s) => s.replace(/\D+/g, ""))
-      .refine(
-        (s) => s.length >= 10 && s.length <= 11,
-        "Informe telefone válido"
-      ),
+    telefone: TelefoneZ,
     whatsapp: z.boolean().default(false),
 
     endereco: z.object({
@@ -140,17 +148,17 @@ export const SocioZ = z
 /* ########################
  * STEP 2 — CONDIÇÕES CRÔNICAS
  * ######################## */
-export const CondicoesZ = z
-  .object({
-    has: z.boolean().default(false),
-    dm: z.boolean().default(false),
-    outras_dcnts: StrOpt.optional(),
-    outras_em_acompanhamento: SimNaoNsaZ.optional(),
-  })
-  .refine((v) => v.has || v.dm || (v.outras_dcnts?.trim().length ?? 0) > 0, {
-    message: "Selecione HAS/DM ou informe outras DCNTs.",
-    path: ["has"],
-  });
+/**
+ * Antes havia um refine obrigando marcar HAS/DM ou outras_dcnts.
+ * Isso podia bloquear o submit quando o usuário queria apenas cadastrar o básico.
+ * Como o backend aceita paciente sem condições, removemos essa exigência.
+ */
+export const CondicoesZ = z.object({
+  has: z.boolean().default(false),
+  dm: z.boolean().default(false),
+  outras_dcnts: StrOpt.optional(),
+  outras_em_acompanhamento: SimNaoNsaZ.optional(),
+});
 
 /* ########################
  * STEP 3 — CLÍNICA (HAS / DM condicionais)

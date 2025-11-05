@@ -29,10 +29,14 @@ function getRefresh(): string | null {
   }
 }
 
-export function setTokens(access: string, refresh: string, persistent: boolean = true) {
+export function setTokens(
+  access: string,
+  refresh: string,
+  persistent: boolean = true
+) {
   try {
     if (!isBrowser()) return;
-    
+
     if (persistent) {
       // Armazena no localStorage para persistir entre sessões
       localStorage.setItem("access", access);
@@ -93,17 +97,27 @@ function readErrorMessageFromAxios(errResp: any) {
 // ─────────────────────────────────────────────────────────────
 let refreshInFlight: Promise<string | null> | null = null;
 
-async function ensureAccessToken(): Promise<string | null> {
-  const current = getAccess();
-  if (current) return current;
+// ⬇️ AGORA aceita forceRefresh para obrigar usar o refresh token
+async function ensureAccessToken(
+  forceRefresh: boolean = false
+): Promise<string | null> {
+  // Se não estamos forçando, usamos o access atual se existir
+  if (!forceRefresh) {
+    const current = getAccess();
+    if (current) return current;
+  }
 
   if (!refreshInFlight) {
     const ref = getRefresh();
     refreshInFlight = (async () => {
       if (!ref) return null;
       try {
-        const r = await axios.post(`${API}/api/token/refresh/`, { refresh: ref }, { headers: { "Content-Type": "application/json" } });
-        const access = r.data?.access;
+        const r = await axios.post(
+          `${API}/api/token/refresh/`,
+          { refresh: ref },
+          { headers: { "Content-Type": "application/json" } }
+        );
+        const access = (r.data as any)?.access;
         if (access) setTokens(access, ref);
         return access ?? null;
       } catch {
@@ -134,12 +148,16 @@ axiosInstance.interceptors.request.use((config) => {
   if (acc) {
     config.headers = config.headers ?? {};
     // do not override existing Authorization if already provided
-    if (!((config.headers as any)["Authorization"]) && !((config.headers as any)["authorization"])) {
+    if (
+      !(config.headers as any)["Authorization"] &&
+      !(config.headers as any)["authorization"]
+    ) {
       (config.headers as any)["Authorization"] = `Bearer ${acc}`;
     }
   }
   // if body is FormData, let the browser set Content-Type
-  const isFormData = typeof FormData !== "undefined" && (config as any).data instanceof FormData;
+  const isFormData =
+    typeof FormData !== "undefined" && (config as any).data instanceof FormData;
   if (isFormData && config.headers) {
     delete (config.headers as any)["Content-Type"];
   }
@@ -155,7 +173,9 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalConfig = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalConfig = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
     const status = error.response?.status;
 
     // if no response or not 401, just reject
@@ -170,18 +190,18 @@ axiosInstance.interceptors.response.use(
       clearTokens();
       // Disparar evento para atualizar o contexto
       if (isBrowser()) {
-        window.dispatchEvent(new Event('tokenRefresh'));
+        window.dispatchEvent(new Event("tokenRefresh"));
       }
       return Promise.reject(error);
     }
 
-    // attempt refresh
-    const newAccess = await ensureAccessToken();
+    // attempt refresh (forçando renovar o access depois de 401)
+    const newAccess = await ensureAccessToken(true);
     if (!newAccess) {
       // Se não conseguiu renovar, limpar tokens e disparar evento
       clearTokens();
       if (isBrowser()) {
-        window.dispatchEvent(new Event('tokenRefresh'));
+        window.dispatchEvent(new Event("tokenRefresh"));
       }
       return Promise.reject(error);
     }
@@ -193,7 +213,7 @@ axiosInstance.interceptors.response.use(
 
     // Disparar evento para atualizar o contexto com o novo token
     if (isBrowser()) {
-      window.dispatchEvent(new Event('tokenRefresh'));
+      window.dispatchEvent(new Event("tokenRefresh"));
     }
 
     try {
@@ -266,33 +286,60 @@ export function apiGet<T = any>(path: string, init: RequestInit = {}) {
   return apiJSON<T>(path, { ...init, method: "GET" });
 }
 
-export function apiPost<T = any>(path: string, body?: any, init: RequestInit = {}) {
+export function apiPost<T = any>(
+  path: string,
+  body?: any,
+  init: RequestInit = {}
+) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "POST",
     body: isFD ? body : body === undefined ? undefined : body,
-    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
+    headers: isFD
+      ? { ...(init.headers as Record<string, string>) }
+      : {
+          "Content-Type": "application/json",
+          ...(init.headers as Record<string, string>),
+        },
   });
 }
 
-export function apiPut<T = any>(path: string, body?: any, init: RequestInit = {}) {
+export function apiPut<T = any>(
+  path: string,
+  body?: any,
+  init: RequestInit = {}
+) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "PUT",
     body: isFD ? body : body === undefined ? undefined : body,
-    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
+    headers: isFD
+      ? { ...(init.headers as Record<string, string>) }
+      : {
+          "Content-Type": "application/json",
+          ...(init.headers as Record<string, string>),
+        },
   });
 }
 
-export function apiPatch<T = any>(path: string, body?: any, init: RequestInit = {}) {
+export function apiPatch<T = any>(
+  path: string,
+  body?: any,
+  init: RequestInit = {}
+) {
   const isFD = body instanceof FormData;
   return apiJSON<T>(path, {
     ...init,
     method: "PATCH",
     body: isFD ? body : body === undefined ? undefined : body,
-    headers: isFD ? { ...(init.headers as Record<string, string>) } : { "Content-Type": "application/json", ...(init.headers as Record<string, string>) },
+    headers: isFD
+      ? { ...(init.headers as Record<string, string>) }
+      : {
+          "Content-Type": "application/json",
+          ...(init.headers as Record<string, string>),
+        },
   });
 }
 
