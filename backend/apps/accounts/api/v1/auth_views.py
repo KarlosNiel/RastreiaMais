@@ -1,4 +1,4 @@
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.accounts.api.v1.serializers import UserSerializer
@@ -17,7 +17,7 @@ def _roles_for(user):
     if PatientUser.objects.filter(user=user).exists(): roles.append("PATIENT")
     return roles
 
-class MeView(APIView):
+class MeView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
         return Response({

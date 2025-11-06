@@ -178,11 +178,8 @@ export function ProfissionaisTable({
       case "actions":
         return (
           <div className="flex items-center justify-start gap-2">
-            <RMButton look="outline" tone="danger" size="sm">
-              Agenda
-            </RMButton>
-            <RMButton look="outline" tone="neutral" size="sm">
-              Gerenciar
+            <RMButton look="outline" tone="neutral" size="sm" className="border">
+              Editar
             </RMButton>
           </div>
         );

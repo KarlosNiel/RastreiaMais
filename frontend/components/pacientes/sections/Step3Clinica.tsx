@@ -1,11 +1,10 @@
-// frontend/components/pacientes/sections/Step3Clinica.tsx
 "use client";
 
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 
 /** ───────── helpers ───────── */
@@ -85,7 +84,7 @@ export default function Step3Clinica() {
  * BLOCO — HIPERTENSÃO (HAS)
  * =========================== */
 function BlocoHAS() {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const complicacoes = watch("clinica.has.complicacoes") as
     | string[]
     | undefined;
@@ -93,6 +92,48 @@ function BlocoHAS() {
     () => complicacoes?.includes("outra"),
     [complicacoes]
   );
+
+  // ===== Cálculo automático do IMC (HAS) =====
+  const pesoHas = watch("clinica.has.peso");
+  const alturaHas = watch("clinica.has.altura");
+
+  useEffect(() => {
+    try {
+      const peso = typeof pesoHas === "string" ? parseDecimal(pesoHas) : pesoHas;
+      const alturaRaw =
+        typeof alturaHas === "string" ? parseDecimal(alturaHas) : alturaHas;
+
+      const pesoNum = Number(peso);
+      const alturaNum = Number(alturaRaw);
+
+      if (!pesoNum || !alturaNum) {
+        setValue("clinica.has.imc", undefined, {
+          shouldDirty: true,
+          shouldTouch: false,
+        });
+        return;
+      }
+
+      // se altura em cm (>3), converter para metros
+      const alturaM = alturaNum > 3 ? alturaNum / 100 : alturaNum;
+      if (alturaM <= 0) {
+        setValue("clinica.has.imc", undefined, {
+          shouldDirty: true,
+          shouldTouch: false,
+        });
+        return;
+      }
+
+      const imc = pesoNum / (alturaM * alturaM);
+      const imcRounded = Math.round(imc * 10) / 10;
+      setValue("clinica.has.imc", imcRounded, {
+        shouldDirty: true,
+        shouldTouch: false,
+      });
+    } catch {
+      // silencioso
+    }
+  }, [pesoHas, alturaHas, setValue]);
 
   return (
     <section className="space-y-6">
