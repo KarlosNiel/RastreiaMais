@@ -11,7 +11,8 @@ import {
 } from "@/schemas/paciente";
 import { Card, CardBody } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -83,11 +84,49 @@ const CREATE_DEFAULTS: CreateFormInput = {
 };
 
 /* ===========================
+   Rascunho por usuário
+   =========================== */
+
+const BASE_DRAFT_KEY = "rastreia:paciente:draft";
+
+function decodeJwtPayload(token: string): any | null {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gera uma chave de rascunho por usuário logado, para evitar
+ * que usuários diferentes, no mesmo navegador, vejam o mesmo rascunho.
+ */
+function getUserScopedDraftKey(): string {
+  if (typeof window === "undefined") return `${BASE_DRAFT_KEY}:anon`;
+
+  try {
+    const token =
+      localStorage.getItem("access") || sessionStorage.getItem("access");
+    if (!token) return `${BASE_DRAFT_KEY}:anon`;
+
+    const payload = decodeJwtPayload(token) ?? {};
+    const uid = payload.user_id ?? payload.sub ?? payload.username ?? "anon";
+    return `${BASE_DRAFT_KEY}:${uid}`;
+  } catch {
+    return `${BASE_DRAFT_KEY}:anon`;
+  }
+}
+
+/* ===========================
    Componente
    =========================== */
 export default function PatientForm(props: Props) {
   const isCreate = props.mode === "create";
   const schema = isCreate ? RegistroPacienteCreateZ : RegistroPacienteEditZ;
+  const router = useRouter();
 
   const methods = useForm<CreateFormInput | EditFormInput>({
     resolver: zodResolver(schema),
@@ -107,20 +146,41 @@ export default function PatientForm(props: Props) {
     handleSubmit,
     setFocus,
     reset,
+    watch,
     formState: { isSubmitting, errors, isDirty },
   } = methods;
 
   // handler compartilhado (form + wizard)
   const submitHandler = handleSubmit(onValid, onInvalid);
 
+  // refs para controle de rascunho
+  const hasMountedRef = useRef(false);
+  const autosaveTimeoutRef = useRef<number | null>(null);
+  const draftKeyRef = useRef<string | null>(null);
+
+  // snapshot do formulário (para autosave)
+  const watchAll = watch();
+
+  const getDraftKey = () => {
+    if (!draftKeyRef.current) {
+      draftKeyRef.current = getUserScopedDraftKey();
+    }
+    return draftKeyRef.current;
+  };
+
   // Carrega rascunho salvo no localStorage (apenas no modo create)
   useEffect(() => {
     if (!isCreate) return;
     if (typeof window === "undefined") return;
 
+    const draftKey = getDraftKey();
+
     try {
-      const raw = window.localStorage.getItem("rastreia:paciente:draft");
-      if (!raw) return;
+      const raw = window.localStorage.getItem(draftKey);
+      if (!raw) {
+        hasMountedRef.current = true;
+        return;
+      }
 
       const draft = JSON.parse(raw);
 
@@ -135,14 +195,41 @@ export default function PatientForm(props: Props) {
       reset((parsed.success ? parsed.data : merged) as any);
     } catch (e) {
       console.error("Falha ao carregar rascunho", e);
+    } finally {
+      hasMountedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreate, reset]);
 
-  function onInvalid() {
-    // DEBUG: ver exatamente o que o RHF/Zod está reclamando
-    console.log("[PatientForm] onInvalid disparado. Errors:", errors);
+  // Autosave de rascunho (apenas create, escopado por usuário)
+  useEffect(() => {
+    if (!isCreate) return;
+    if (typeof window === "undefined") return;
+    if (!hasMountedRef.current) return;
 
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    autosaveTimeoutRef.current = window.setTimeout(() => {
+      try {
+        const draftKey = getDraftKey();
+        window.localStorage.setItem(draftKey, JSON.stringify(watchAll));
+        notifySuccess("Rascunho salvo.");
+      } catch (e) {
+        console.error("Falha ao salvar rascunho", e);
+      }
+    }, 1000);
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchAll, isCreate]);
+
+  function onInvalid() {
     const findFirstPath = (obj: any, prefix = ""): string | null => {
       for (const k of Object.keys(obj ?? {})) {
         const path = prefix ? `${prefix}.${k}` : k;
@@ -159,40 +246,25 @@ export default function PatientForm(props: Props) {
 
     const first = findFirstPath(errors as any);
     if (first) {
-      console.log("[PatientForm] Primeiro campo com erro:", first);
       setFocus(first as any, { shouldSelect: true });
     }
     notifyWarn("Revise os campos destacados antes de continuar.");
   }
 
   async function onValid(rawData: CreateFormInput | EditFormInput) {
-    console.log(
-      "[PatientForm] onValid disparado. Dados crus do form:",
-      rawData
-    );
-
     try {
-      // o resolver já validou, então podemos confiar em rawData;
-      // ainda assim, garantimos coerções extras com Zod
       const parsed = schema.parse(rawData);
-      console.log("[PatientForm] Dados após Zod.parse:", parsed);
 
       // converte o objeto do form no payload que o backend espera para PatientUser
       const apiPayload = formToPatientApi(
         parsed as RegistroPacienteCreate | RegistroPacienteEdit,
         isCreate ? "create" : "edit"
       );
-      console.log("[PatientForm] Payload para API (Paciente):", apiPayload);
 
       if (isCreate) {
-        console.log("[PatientForm] Modo CREATE: criando paciente…");
-
         // 1) cria o paciente
         const created = await createPaciente<{ id: number }>(apiPayload);
-        console.log("[PatientForm] Resposta createPaciente:", created);
-
         const patientId = (created as any).id;
-        console.log("[PatientForm] ID do paciente criado:", patientId);
 
         // 2) cria registros de HAS/DM se marcados
         const createData = parsed as RegistroPacienteCreate;
@@ -200,49 +272,34 @@ export default function PatientForm(props: Props) {
         const hasPayload = formToHasApi(createData, patientId);
         const dmPayload = formToDmApi(createData, patientId);
 
-        console.log("[PatientForm] Payload HAS:", hasPayload);
-        console.log("[PatientForm] Payload DM:", dmPayload);
-
         if (hasPayload) {
-          console.log("[PatientForm] Enviando createHAS…");
           await createHAS(hasPayload);
         }
         if (dmPayload) {
-          console.log("[PatientForm] Enviando createDM…");
           await createDM(dmPayload);
         }
 
-        // 3) limpamos o rascunho, já que o registro foi salvo
+        // 3) limpamos o rascunho do usuário atual, já que o registro foi salvo
         if (typeof window !== "undefined") {
-          window.localStorage.removeItem("rastreia:paciente:draft");
+          const draftKey = getDraftKey();
+          window.localStorage.removeItem(draftKey);
         }
 
         notifySuccess("Paciente cadastrado com sucesso.");
+        // ajuste essa rota se a lista de pacientes estiver em outro caminho
+        router.push("/pacientes");
       } else {
-        console.log("[PatientForm] Modo EDIT: atualizando paciente…");
-
         const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;
-        console.log(
-          "[PatientForm] IDs -> paciente:",
-          id,
-          "HAS:",
-          hasId,
-          "DM:",
-          dmId
-        );
 
         // 1) atualiza dados do paciente
         await updatePaciente(id, apiPayload);
-        console.log("[PatientForm] updatePaciente concluído.");
 
         const editData = parsed as RegistroPacienteEdit;
 
         // 2) atualiza HAS, se existir registro
         if (hasId) {
           const hasPayload = formToHasApi(editData as any, id);
-          console.log("[PatientForm] Payload HAS (edit):", hasPayload);
           if (hasPayload) {
-            console.log("[PatientForm] Enviando updateHAS…");
             await updateHAS(hasId, hasPayload);
           }
         }
@@ -250,14 +307,13 @@ export default function PatientForm(props: Props) {
         // 3) atualiza DM, se existir registro
         if (dmId) {
           const dmPayload = formToDmApi(editData as any, id);
-          console.log("[PatientForm] Payload DM (edit):", dmPayload);
           if (dmPayload) {
-            console.log("[PatientForm] Enviando updateDM…");
             await updateDM(dmId, dmPayload);
           }
         }
 
         notifySuccess("Dados do paciente atualizados.");
+        router.push("/pacientes");
       }
     } catch (err: any) {
       console.error("ERRO AO SALVAR PACIENTE", err);

@@ -1,13 +1,13 @@
 "use client";
 
-import { StatusChip } from "@/components/ui/StatusChip";
 import { apiGet } from "@/lib/api";
 import {
+  EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import {
   Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
   Input,
   Pagination,
   Table,
@@ -19,12 +19,8 @@ import {
 } from "@heroui/react";
 import type { Key, SortDescriptor } from "@react-types/shared";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import * as React from "react";
-import {
-  EyeIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
@@ -101,7 +97,8 @@ export function PacientesTable({
     const q = filterValue.toLowerCase().trim();
     if (q) {
       data = data.filter((r) => {
-        const nome = `${r.user?.first_name ?? ""} ${r.user?.last_name ?? ""}`.toLowerCase();
+        const nome =
+          `${r.user?.first_name ?? ""} ${r.user?.last_name ?? ""}`.toLowerCase();
         const cpf = r.cpf ?? "";
         const micro = r.microarea?.toLowerCase() ?? "";
 
@@ -111,7 +108,6 @@ export function PacientesTable({
 
     return data;
   }, [rows, filterValue]);
-
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
 
@@ -275,11 +271,10 @@ export function PacientesTable({
           total={totalPages}
           onChange={setPage}
           classNames={{
-              next: "dark:bg-gray-800",
-              prev: "dark:bg-gray-800",
-              item: "dark:bg-gray-800",
-            }
-          }
+            next: "dark:bg-gray-800",
+            prev: "dark:bg-gray-800",
+            item: "dark:bg-gray-800",
+          }}
         />
       </div>
     </div>
@@ -288,7 +283,13 @@ export function PacientesTable({
 
 /* ===== Página (/pacientes) ===== */
 export default function Page() {
-  const { data: patients = [], isLoading, isError } = useQuery<PatientRow[]>({
+  const router = useRouter();
+
+  const {
+    data: patients = [],
+    isLoading,
+    isError,
+  } = useQuery<PatientRow[]>({
     queryKey: ["patients"],
     queryFn: async () => {
       const resp = await apiGet<PatientRow[]>("/api/v1/accounts/patients/");
@@ -312,7 +313,20 @@ export default function Page() {
             Erro ao carregar pacientes.
           </div>
         ) : (
-          <PacientesTable rows={patients} />
+          <PacientesTable
+            rows={patients}
+            onAction={(action, row) => {
+              if (action === "edit") {
+                // redireciona para a página de edição do paciente
+                router.push(`/pacientes/${row.id}/editar`);
+              }
+              // se quiser, pode reaproveitar "open" para a mesma página:
+              if (action === "open") {
+                router.push(`/pacientes/${row.id}/editar`);
+              }
+              // "delete" fica pra implementar depois
+            }}
+          />
         )}
       </div>
     </main>

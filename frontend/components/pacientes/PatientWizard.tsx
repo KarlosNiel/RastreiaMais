@@ -1,7 +1,7 @@
 // frontend/components/pacientes/PatientWizard.tsx
 "use client";
 
-import { notifyWarn } from "@/components/ui/notify";
+import { notifySuccess, notifyWarn } from "@/components/ui/notify";
 import { Button } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -12,12 +12,20 @@ import Step3, { getStep3FieldsDynamic } from "./sections/Step3Clinica";
 import Step4 from "./sections/Step4Multiprof";
 import Step5 from "./sections/Step5Plano";
 
+/* ===========================
+   Props
+   =========================== */
+
 type Props = {
   onSubmit: () => void;
   validateOnNext?: boolean;
   stepFields?: string[][];
   freePillNavigation?: boolean;
 };
+
+/* ===========================
+   Steps meta
+   =========================== */
 
 const STEPS_META = [
   { key: "s1", label: "Sociodemo" },
@@ -28,12 +36,48 @@ const STEPS_META = [
 ] as const;
 
 const DEFAULT_FIELDS: string[][] = [
-  [], // s1 validado por STEP1_FIELDS (override abaixo)
-  [], // s2 validado por STEP2_REQUIRED (override abaixo)
-  [], // s3 dinâmico (override abaixo)
-  [], // s4: tudo opcional
-  [], // s5: tudo opcional
+  [], // s1 validado por STEP1_FIELDS
+  [], // s2 validado por STEP2_REQUIRED
+  [], // s3 dinâmico
+  [], // s4 opcional
+  [], // s5 opcional
 ];
+
+/* ===========================
+   Helpers de rascunho por usuário
+   =========================== */
+
+const BASE_DRAFT_KEY = "rastreia:paciente:draft";
+
+function decodeJwtPayload(token: string): any | null {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function getUserScopedDraftKey(): string {
+  if (typeof window === "undefined") return `${BASE_DRAFT_KEY}:anon`;
+
+  try {
+    const token =
+      localStorage.getItem("access") || sessionStorage.getItem("access");
+    if (!token) return `${BASE_DRAFT_KEY}:anon`;
+    const payload = decodeJwtPayload(token) ?? {};
+    const uid = payload.user_id ?? payload.sub ?? payload.username ?? "anon";
+    return `${BASE_DRAFT_KEY}:${uid}`;
+  } catch {
+    return `${BASE_DRAFT_KEY}:anon`;
+  }
+}
+
+/* ===========================
+   Componente
+   =========================== */
 
 export default function PatientWizard({
   onSubmit,
@@ -46,6 +90,7 @@ export default function PatientWizard({
     setFocus,
     watch,
     getFieldState,
+    getValues,
     formState: { errors, isSubmitting },
   } = useFormContext();
 
@@ -205,7 +250,7 @@ export default function PatientWizard({
   /** etapa anterior, voltando por cima do step3 desabilitado */
   const computePrevIndex = useCallback(
     (curr: number) => {
-      if (curr === 3 && !step3Enabled) return 1; // 3 -> volta p/ 1 se 2 (clínica) estiver off
+      if (curr === 3 && !step3Enabled) return 1; // 3 -> volta p/ 1 se 2 estiver off
       return Math.max(curr - 1, 0);
     },
     [step3Enabled]
@@ -264,67 +309,149 @@ export default function PatientWizard({
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
+  /* ===========================
+     Ações: salvar rascunho / cancelar / finalizar
+     =========================== */
+
+  const handleSaveDraft = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const draftKey = getUserScopedDraftKey();
+      const values = getValues();
+      window.localStorage.setItem(draftKey, JSON.stringify(values));
+      notifySuccess("Rascunho salvo.");
+    } catch (e) {
+      console.error("Falha ao salvar rascunho", e);
+      notifyWarn("Não foi possível salvar o rascunho.");
+    }
+  }, [getValues]);
+
+  const handleCancel = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const confirm = window.confirm(
+      "Cancelar o preenchimento? As informações não salvas serão perdidas."
+    );
+    if (!confirm) return;
+
+    try {
+      const draftKey = getUserScopedDraftKey();
+      window.localStorage.removeItem(draftKey);
+    } catch (e) {
+      console.error("Falha ao limpar rascunho ao cancelar", e);
+    }
+
+    // Deixa o redirecionamento a critério da página pai via history
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // fallback: recarrega a página
+      window.location.href = "/";
+    }
+  }, []);
+
+  const handleSubmitClick = useCallback(() => {
+    if (isSubmitting) return;
+    onSubmit();
+  }, [isSubmitting, onSubmit]);
+
+  /* ===========================
+     Render
+     =========================== */
+
   return (
     <section className="overflow-hidden rounded-lg border border-card bg-content1 shadow-soft">
-      {/* Cabeçalho: pílulas + barra de progresso */}
+      {/* Cabeçalho: pílulas + ações + barra de progresso */}
       <header className="px-6 md:px-8 pt-6 pb-4 bg-content1/80">
-        <ol
-          aria-label="Passos do cadastro"
-          className="flex flex-wrap gap-3"
-          role="list"
-        >
-          {STEPS_META.map((s, i) => {
-            const active = i === step;
-            const hasErr = stepHasError(i);
-            const disabled = i === 2 && !step3Enabled;
-            return (
-              <li key={s.key}>
-                <button
-                  type="button"
-                  onClick={() => goTo(i)}
-                  disabled={disabled}
-                  className={[
-                    "inline-flex items-center gap-2 h-10 rounded-full border px-4 text-sm transition-colors ring-offset-app focus-visible:outline-none focus-visible:ring-2 ring-focus",
-                    active
-                      ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                      : "bg-white/70 dark:bg-transparent border-default-200 text-foreground/75 hover:text-foreground",
-                    hasErr && !active ? "border-danger text-danger" : "",
-                    disabled ? "opacity-60 cursor-not-allowed" : "",
-                  ].join(" ")}
-                  aria-current={active ? "step" : undefined}
-                  aria-disabled={disabled || undefined}
-                  title={
-                    disabled
-                      ? "Habilite marcando HAS e/ou DM no passo 2"
-                      : undefined
-                  }
-                >
-                  <span className="sr-only">
-                    Etapa {i + 1} de {total}:
-                  </span>
-                  <span
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <ol
+            aria-label="Passos do cadastro"
+            className="flex flex-wrap gap-3"
+            role="list"
+          >
+            {STEPS_META.map((s, i) => {
+              const active = i === step;
+              const hasErr = stepHasError(i);
+              const disabled = i === 2 && !step3Enabled;
+              return (
+                <li key={s.key}>
+                  <button
+                    type="button"
+                    onClick={() => goTo(i)}
+                    disabled={disabled}
                     className={[
-                      "grid place-items-center size-6 rounded-full border text-[12px] font-semibold",
+                      "inline-flex items-center gap-2 h-10 rounded-full border px-4 text-sm transition-colors ring-offset-app focus-visible:outline-none focus-visible:ring-2 ring-focus",
                       active
-                        ? "border-white/70 bg-white/15 text-white"
-                        : "border-default-200 text-foreground/70",
+                        ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                        : "bg-white/70 dark:bg-transparent border-default-200 text-foreground/75 hover:text-foreground",
+                      hasErr && !active ? "border-danger text-danger" : "",
+                      disabled ? "opacity-60 cursor-not-allowed" : "",
                     ].join(" ")}
-                    aria-hidden
+                    aria-current={active ? "step" : undefined}
+                    aria-disabled={disabled || undefined}
+                    title={
+                      disabled
+                        ? "Habilite marcando HAS e/ou DM no passo 2"
+                        : undefined
+                    }
                   >
-                    {i + 1}
-                  </span>
-                  {s.label}
-                  {hasErr && !active && (
+                    <span className="sr-only">
+                      Etapa {i + 1} de {total}:
+                    </span>
                     <span
-                      aria-label="há erros nesta etapa"
-                      className="ml-1 inline-block size-2 rounded-full bg-danger"
-                    />
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+                      className={[
+                        "grid place-items-center size-6 rounded-full border text-[12px] font-semibold",
+                        active
+                          ? "border-white/70 bg-white/15 text-white"
+                          : "border-default-200 text-foreground/70",
+                      ].join(" ")}
+                      aria-hidden
+                    >
+                      {i + 1}
+                    </span>
+                    {s.label}
+                    {hasErr && !active && (
+                      <span
+                        aria-label="há erros nesta etapa"
+                        className="ml-1 inline-block size-2 rounded-full bg-danger"
+                      />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+
+          {/* Ações globais do wizard */}
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            <Button
+              type="button"
+              variant="light"
+              radius="full"
+              onClick={handleCancel}
+              isDisabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="flat"
+              radius="full"
+              onClick={handleSaveDraft}
+              isDisabled={isSubmitting}
+            >
+              Salvar rascunho
+            </Button>
+            <Button
+              type="button"
+              className="btn-brand"
+              radius="full"
+              onClick={handleSubmitClick}
+              isDisabled={isSubmitting}
+            >
+              {isSubmitting ? "Enviando…" : "Finalizar registro"}
+            </Button>
+          </div>
+        </div>
 
         {/* Progresso sutil */}
         <div className="mt-4 h-1 w-full rounded-full bg-content2" aria-hidden>
@@ -347,7 +474,7 @@ export default function PatientWizard({
         {step === 4 && <Step5 />}
       </div>
 
-      {/* Rodapé de ações */}
+      {/* Rodapé de navegação (voltar / próximo / finalizar) */}
       <footer className="border-t border-divider px-6 md:px-8 py-4 bg-content1/90">
         <div className="flex items-center justify-between">
           <Button
@@ -375,7 +502,7 @@ export default function PatientWizard({
             <Button
               type="button"
               className="btn-brand min-w-[200px]"
-              onClick={onSubmit}
+              onClick={handleSubmitClick}
               radius="full"
               isDisabled={isSubmitting}
             >
