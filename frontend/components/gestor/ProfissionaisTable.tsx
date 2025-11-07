@@ -20,6 +20,11 @@ import {
 } from "@heroui/react";
 import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
+import {
+  EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
 type Status = "Ativo" | "Licença" | "Afastado";
 
@@ -84,12 +89,14 @@ type Props = {
   rows: ProfRow[];
   initialPage?: number;
   initialRowsPerPage?: number;
+  onAction?: (action: "open" | "edit", row: ProfRow) => void;
 };
 
 export function ProfissionaisTable({
   rows,
   initialPage = 1,
   initialRowsPerPage = 6,
+  onAction,
 }: Props) {
   const [filterValue, setFilterValue] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
@@ -178,9 +185,20 @@ export function ProfissionaisTable({
       case "actions":
         return (
           <div className="flex items-center justify-start gap-2">
-            <RMButton look="outline" tone="neutral" size="sm" className="border">
-              Editar
-            </RMButton>
+            <Button
+              onPress={() => onAction?.("open", row)}
+              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+              isIconOnly
+            >
+              <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            </Button>
+            <Button
+              onPress={() => onAction?.("edit", row)}
+              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+              isIconOnly
+            >
+              <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </Button>
           </div>
         );
       default:
@@ -199,7 +217,7 @@ export function ProfissionaisTable({
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-gray-100 dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
+                    "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
                   input:
                     "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}

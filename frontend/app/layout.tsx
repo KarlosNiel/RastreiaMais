@@ -37,7 +37,7 @@ export default function RootLayout({
     >
       <body
         suppressHydrationWarning
-        className="min-h-svh md:min-h-dvh font-sans antialiased overflow-y-scroll scrollbar-none bg-gray-100 dark:bg-slate-950"
+        className="min-h-svh md:min-h-dvh font-sans antialiased overflow-y-scroll scrollbar-none dark:bg-slate-950"
       >
         <Providers>
           <div className="relative z-50">

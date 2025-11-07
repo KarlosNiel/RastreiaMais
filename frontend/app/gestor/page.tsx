@@ -65,7 +65,19 @@ export default function GestorPage() {
               size="md"
               className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
             >
-              Novo Cadastro
+              Novo Profissional
+            </Button>
+
+            <Button
+              as={Link}
+              href="/pacientes/novo"
+              color="primary"
+              variant="solid"
+              radius="lg"
+              size="md"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+            >
+              Novo Paciente
             </Button>
           </nav>
         </div>

@@ -160,24 +160,27 @@ export function PacientesTable({
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => onAction?.("open", row)}
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition"
+              <Button
+                onPress={() => onAction?.("open", row)}
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                isIconOnly
               >
                 <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-              </button>
-              <button
-                onClick={() => onAction?.("edit", row)}
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition"
+              </Button>
+              <Button
+                onPress={() => onAction?.("edit", row)}
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                isIconOnly
               >
                 <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </button>
-              <button
-                onClick={() => onAction?.("delete", row)}
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition"
+              </Button>
+              <Button
+                onPress={() => onAction?.("delete", row)}
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                isIconOnly
               >
                 <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </button>
+              </Button>
             </div>
           );
         default:
@@ -271,6 +274,12 @@ export function PacientesTable({
           page={page}
           total={totalPages}
           onChange={setPage}
+          classNames={{
+              next: "dark:bg-gray-800",
+              prev: "dark:bg-gray-800",
+              item: "dark:bg-gray-800",
+            }
+          }
         />
       </div>
     </div>
