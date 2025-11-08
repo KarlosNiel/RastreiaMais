@@ -16,6 +16,9 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Button } from "@heroui/button";
+import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
+import CreateAlertModal from "@/components/gestor/CreateAlertModal";
+import { Spinner } from "@heroui/spinner";
 
 type RiskTone = "safe" | "moderate" | "critical";
 
@@ -23,6 +26,8 @@ const mapRiskToChip = (t: RiskTone): "safe" | "attention" | "critical" =>
   t === "moderate" ? "attention" : t;
 
 export default function GestorPage() {
+  const [open, setOpen] = useState(false);
+  const { data: alerts, isLoading } = useAlertsQuery();
   const [KPIS, setKPIS] = useState<any[]>([]);
 
   useEffect(() => {
@@ -108,6 +113,7 @@ export default function GestorPage() {
               </h2>
             </div>
             <Button
+              onPress={() => setOpen(true)}
               variant="flat"                
               size="sm"
               aria-label="Adicionar alerta"
@@ -118,65 +124,72 @@ export default function GestorPage() {
             </Button>
           </div>
 
-          <ul className="space-y-3">
-            {[
-              { nome: "Maria C.", id: "****4321", cond: "HAS", quando: "30 min", tone: "critical" as RiskTone },
-              { nome: "José A.", id: "****1234", cond: "HAS", quando: "30 min", tone: "safe" as RiskTone },
-              { nome: "Ana L.", id: "****5678", cond: "HAS/DM", quando: "2 hr", tone: "moderate" as RiskTone },
-              { nome: "Clara M.", id: "****4312", cond: "HAS", quando: "4 hr", tone: "safe" as RiskTone },
-            ].map((a, i) => (
-              <li
-                key={i}
-                className={`flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
-                  a.tone === "critical"
-                    ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
-                    : a.tone === "moderate"
-                    ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
-                    : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`grid size-10 place-items-center rounded-full ring-2 ${
-                      a.tone === "critical"
-                        ? "ring-rose-300"
-                        : a.tone === "moderate"
-                        ? "ring-amber-300"
-                        : "ring-emerald-300"
-                    } bg-white dark:bg-gray-800`}
-                  >
-                    <UserGroupIcon
-                      className={`h-5 w-5 ${
-                        a.tone === "critical"
-                          ? "text-rose-600 dark:text-rose-400"
-                          : a.tone === "moderate"
-                          ? "text-amber-600 dark:text-amber-400"
-                          : "text-emerald-600 dark:text-emerald-400"
-                      }`}
-                    />
+          <CreateAlertModal open={open} onOpenChange={setOpen} />
+
+{isLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner color="warning" />
+            </div>
+          ) : alerts?.length ? (
+            <ul className="space-y-3">
+              {alerts.map((a, i) => (
+                <li
+                  key={i}
+                  className={`flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
+                    a.risk_level === "critical"
+                      ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
+                      : a.risk_level === "moderate"
+                      ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
+                      : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`grid size-10 place-items-center rounded-full ring-2 ${
+                        a.risk_level === "critical"
+                          ? "ring-rose-300"
+                          : a.risk_level === "moderate"
+                          ? "ring-amber-300"
+                          : "ring-emerald-300"
+                      } bg-white dark:bg-gray-800`}
+                    >
+                      <UserGroupIcon
+                        className={`h-5 w-5 ${
+                          a.risk_level === "critical"
+                            ? "text-rose-600 dark:text-rose-400"
+                            : a.risk_level === "moderate"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        {a.patient?.user?.first_name ?? "—"} {a.patient?.user?.last_name ?? "—"}{" "}
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {a.patient?.cpf ?? "—"}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {a.title} — {a.description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                      {a.nome}{" "}
-                      <span className="text-gray-500 dark:text-gray-400">
-                        {a.id}
-                      </span>
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Condição: {a.cond} · Atualizado: {a.quando}
-                    </p>
-                  </div>
-                </div>
-                <StatusChip size="sm" tone={mapRiskToChip(a.tone)}>
-                  {a.tone === "critical"
-                    ? "Crítico"
-                    : a.tone === "moderate"
-                    ? "Atenção"
-                    : "Seguro"}
-                </StatusChip>
-              </li>
-            ))}
-          </ul>
+                  <StatusChip size="sm" tone={mapRiskToChip(a.risk_level)}>
+                    {a.risk_level === "critical"
+                      ? "Crítico"
+                      : a.risk_level === "moderate"
+                      ? "Atenção"
+                      : "Seguro"}
+                  </StatusChip>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-6">
+              Nenhum alerta encontrado.
+            </p>
+          )}
         </section>
       </div>
 

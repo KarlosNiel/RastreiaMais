@@ -5,6 +5,7 @@ from apps.alerts.models import Alert
 from apps.commons.api.v1.viewsets import BaseModelViewSet
 from .serializers import AlertSerializer
 from .permissions import AlertDataPermission
+from apps.accounts.utils.utils import get_user_profile
 
 @extend_schema(tags=['Alerts'])
 class AlertViewset(BaseModelViewSet):
@@ -14,15 +15,23 @@ class AlertViewset(BaseModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        role, profile = get_user_profile(self.request.user)
 
-        if not self.request.user.is_authenticated:
+        user = getattr(self.request, "user", None)
+        if not user or not user.is_authenticated:
             return queryset.none()
 
-        if role == 'professional':
-            return queryset.filter(professional=profile)
+        try:
+            role, profile = get_user_profile(user)
+        except Exception:
+            role, profile = (None, None)
 
-        if role in ['manager', 'superuser']:
+        if user.is_superuser or hasattr(user, "manageruser"):
             return queryset
 
-        return queryset.none()   
+        if hasattr(user, "professionaluser"):
+            return queryset.filter(professional=getattr(user, "professionaluser"))
+
+        if hasattr(user, "patientuser"):
+            return queryset.filter(patient=getattr(user, "patientuser"))
+
+        return queryset.none()
