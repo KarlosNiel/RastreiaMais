@@ -30,6 +30,7 @@ from apps.accounts.api.v1.auth_views import (
     EmailOrUsernameOrCpfTokenObtainPairView,
     MeView,
 )
+from apps.accounts.api.v1.logout_view import LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,6 +48,7 @@ urlpatterns = [
         name='token_refresh'
     ),
     path("api/auth/me", MeView.as_view(), name="auth_me"),
+    path("api/auth/logout", LogoutView.as_view(), name="auth_logout"),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(
         'api/docs/',

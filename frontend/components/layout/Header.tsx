@@ -4,6 +4,7 @@ import { Button } from "@heroui/button";
 import { SunIcon, MoonIcon, BellIcon, UserIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { UserMenu } from "@/components/navbar/UserMenu";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -76,15 +77,8 @@ export const Header = () => {
                   <BellIcon className="size-5 dark:text-white" strokeWidth={2} />
                 </Button>
 
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label="Perfil"
-                  className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <UserIcon className="size-5 dark:text-white" strokeWidth={2} />
-                </Button>
+                {/* Menu do usuário com perfil e logout */}
+                <UserMenu />
               </>
             )}
             

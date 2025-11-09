@@ -29,5 +29,12 @@ export function useAuth() {
     return () => window.removeEventListener("tokenRefresh", handleRefresh);
   }, []);
 
-  return { user, loading, logout };
+  return { 
+    user, 
+    loading, 
+    logout: async () => {
+      await logout();
+      setUser(null);
+    }
+  };
 }
