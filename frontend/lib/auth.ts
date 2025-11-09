@@ -110,11 +110,38 @@ export async function meFetch(): Promise<MeResponse> {
   }
 }
 
-export function logout() {
-  clearTokens();
-  clearRoleCookie();
-  if (isBrowser()) {
-    localStorage.removeItem("role");
+function getRefreshToken(): string | null {
+  try {
+    if (!isBrowser()) return null;
+    return localStorage.getItem("refresh") || sessionStorage.getItem("refresh");
+  } catch {
+    return null;
+  }
+}
+
+export async function logout() {
+  try {
+    // Tenta fazer logout no servidor (blacklist do token)
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      await fetch(`${API}/api/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+    }
+  } catch (error) {
+    // Se falhar no servidor, continua com logout local
+    console.warn("Erro ao fazer logout no servidor:", error);
+  } finally {
+    // Sempre limpa os dados locais
+    clearTokens();
+    clearRoleCookie();
+    if (isBrowser()) {
+      localStorage.removeItem("role");
+      // Disparar evento para atualizar o contexto
+      window.dispatchEvent(new Event('tokenRefresh'));
+    }
   }
 }
 
