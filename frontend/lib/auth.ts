@@ -141,6 +141,11 @@ export async function logout() {
       localStorage.removeItem("role");
       // Disparar evento para atualizar o contexto
       window.dispatchEvent(new Event('tokenRefresh'));
+      // Redirecionar apenas se não estivermos já na página de login
+      const currentPath = window.location.pathname;
+      if (!currentPath.startsWith("/auth/login")) {
+        window.location.href = "/auth/login";
+      }
     }
   }
 }

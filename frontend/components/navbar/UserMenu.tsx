@@ -13,12 +13,15 @@ import {
   Cog6ToothIcon, 
   ArrowRightOnRectangleIcon 
 } from "@heroicons/react/24/outline";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { MeResponse } from "@/lib/auth";
 
-export function UserMenu() {
-  const { user, loading } = useAuth();
+interface UserMenuProps {
+  user: MeResponse["user"] | null;
+}
+
+export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -29,12 +32,6 @@ export function UserMenu() {
       console.error("Erro durante logout:", error);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
-    );
-  }
 
   if (!user) {
     return null;
