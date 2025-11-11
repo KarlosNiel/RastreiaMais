@@ -29,6 +29,25 @@ function getRefresh(): string | null {
   }
 }
 
+function getTokenTimestamp(): number | null {
+  try {
+    if (!isBrowser()) return null;
+    const timestamp = localStorage.getItem("token_timestamp") || sessionStorage.getItem("token_timestamp");
+    return timestamp ? parseInt(timestamp, 10) : null;
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpired(): boolean {
+  const timestamp = getTokenTimestamp();
+  if (!timestamp) return true;
+  
+  // 5 minutos = 5 * 60 * 1000 = 300000 ms
+  const EXPIRY_TIME = 5 * 60 * 1000;
+  return Date.now() - timestamp > EXPIRY_TIME;
+}
+
 export function setTokens(
   access: string,
   refresh: string,
@@ -37,20 +56,27 @@ export function setTokens(
   try {
     if (!isBrowser()) return;
 
+    // Armazena timestamp de quando o token foi criado
+    const tokenTimestamp = Date.now().toString();
+
     if (persistent) {
       // Armazena no localStorage para persistir entre sessões
       localStorage.setItem("access", access);
       localStorage.setItem("refresh", refresh);
+      localStorage.setItem("token_timestamp", tokenTimestamp);
       // Remove do sessionStorage se existir
       sessionStorage.removeItem("access");
       sessionStorage.removeItem("refresh");
+      sessionStorage.removeItem("token_timestamp");
     } else {
       // Armazena apenas no sessionStorage (sessão atual)
       sessionStorage.setItem("access", access);
       sessionStorage.setItem("refresh", refresh);
+      sessionStorage.setItem("token_timestamp", tokenTimestamp);
       // Remove do localStorage se existir
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
+      localStorage.removeItem("token_timestamp");
     }
   } catch {}
 }
@@ -61,8 +87,10 @@ export function clearTokens() {
     // Limpa de ambos os storages
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
+    localStorage.removeItem("token_timestamp");
     sessionStorage.removeItem("access");
     sessionStorage.removeItem("refresh");
+    sessionStorage.removeItem("token_timestamp");
   } catch {}
 }
 
@@ -191,6 +219,25 @@ axiosInstance.interceptors.response.use(
       // Disparar evento para atualizar o contexto
       if (isBrowser()) {
         window.dispatchEvent(new Event("tokenRefresh"));
+        // Redirecionar apenas se não estivermos já na página de login
+        const currentPath = window.location.pathname;
+        if (!currentPath.startsWith("/auth/login")) {
+          window.location.href = "/auth/login";
+        }
+      }
+      return Promise.reject(error);
+    }
+
+    // Verificar se o token expirou há mais de 5 minutos - se sim, forçar logout
+    if (isTokenExpired()) {
+      clearTokens();
+      if (isBrowser()) {
+        window.dispatchEvent(new Event("tokenRefresh"));
+        // Redirecionar apenas se não estivermos já na página de login
+        const currentPath = window.location.pathname;
+        if (!currentPath.startsWith("/auth/login")) {
+          window.location.href = "/auth/login";
+        }
       }
       return Promise.reject(error);
     }
@@ -202,6 +249,11 @@ axiosInstance.interceptors.response.use(
       clearTokens();
       if (isBrowser()) {
         window.dispatchEvent(new Event("tokenRefresh"));
+        // Redirecionar apenas se não estivermos já na página de login
+        const currentPath = window.location.pathname;
+        if (!currentPath.startsWith("/auth/login")) {
+          window.location.href = "/auth/login";
+        }
       }
       return Promise.reject(error);
     }

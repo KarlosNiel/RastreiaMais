@@ -1,10 +1,12 @@
 "use client";
 
 import { Button, Card, CardBody } from "@heroui/react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {UserCircleIcon, CogIcon} from "@heroicons/react/24/outline";
 
 export const RoleCards = () => {
+  const router = useRouter();
+
   return (
     <section className="py-20  dark:bg-gray-950 transition-colors duration-300" id="entrar">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,10 +49,13 @@ export const RoleCards = () => {
                 ))}
               </ul>
 
-              <Button color="primary" size="lg" className="w-full font-semibold">
-                <Link href="/auth/login/profissional">
-                  Entrar como Profissional
-                </Link>
+              <Button 
+                onPress={() => router.push("/auth/login/profissional")}
+                color="primary" 
+                size="lg" 
+                className="w-full font-semibold"
+              >
+                Entrar como Profissional
               </Button>
             </CardBody>
           </Card>
@@ -84,10 +89,13 @@ export const RoleCards = () => {
                 ))}
               </ul>
 
-              <Button color="secondary" size="lg" className="w-full font-semibold">
-                <Link href="/auth/login/paciente">
-                  Entrar como Paciente
-                </Link>
+              <Button 
+                onPress={() => router.push("/auth/login/paciente")}
+                color="secondary" 
+                size="lg" 
+                className="w-full font-semibold"
+              >
+                Entrar como Paciente
               </Button>
             </CardBody>
           </Card>

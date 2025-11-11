@@ -78,7 +78,7 @@ export const Header = () => {
                 </Button>
 
                 {/* Menu do usuário com perfil e logout */}
-                <UserMenu />
+                <UserMenu user={user} />
               </>
             )}
             
