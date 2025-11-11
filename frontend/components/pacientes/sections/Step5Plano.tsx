@@ -127,7 +127,7 @@ export default function Step5Plano() {
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border border-default-200">
+      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">5. Plano & Agendamentos</h2>
 

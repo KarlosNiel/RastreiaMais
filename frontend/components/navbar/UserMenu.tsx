@@ -42,7 +42,7 @@ export function UserMenu({ user }: UserMenuProps) {
 
   return (
     <Dropdown placement="bottom-end">
-      <DropdownTrigger>
+      <DropdownTrigger className="bg-transparent">
         <Button
           isIconOnly
           size="sm"
@@ -53,14 +53,14 @@ export function UserMenu({ user }: UserMenuProps) {
           <Avatar
             size="sm"
             name={userInitials}
-            className="cursor-pointer w-5 h-5"
+            className="cursor-pointer w-5 h-5 bg-transparent"
             showFallback
-            fallback={<UserIcon className="h-4 w-4 dark:text-white" />}
+            fallback={<UserIcon className="h-5 w-5 dark:text-white stroke-2" />}
           />
         </Button>
       </DropdownTrigger>
       
-      <DropdownMenu aria-label="Menu do usuário" variant="flat">
+      <DropdownMenu aria-label="Menu do usuário" variant="flat" >
         <DropdownItem
           key="profile"
           className="h-14 gap-2"

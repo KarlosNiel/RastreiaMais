@@ -335,7 +335,7 @@ export default function PatientForm(props: Props) {
       >
         <Card
           shadow="none"
-          className="border border-default-200 shadow-soft"
+          className="border-none shadow-soft bg-transparent"
           classNames={{ base: "overflow-visible" }}
         >
           <CardBody className="p-0">

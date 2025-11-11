@@ -48,6 +48,11 @@ export function RHFSwitch<T extends FieldValues>({
         <div>
           <Switch
             {...rest}
+            classNames={
+              {
+                wrapper: "dark:bg-gray-800"
+              }
+            }
             isSelected={!!field.value}
             onValueChange={(v) => {
               field.onChange(v);

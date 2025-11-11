@@ -87,6 +87,11 @@ export function RHFSelect<T extends FieldValues>({
         return (
           <Select
             {...rest}
+            classNames={
+              {
+                trigger: "dark:bg-gray-800"
+              }
+            }
             selectionMode={selectionMode}
             selectedKeys={selectedKeys as Iterable<Key>}
             onSelectionChange={handleSelection}

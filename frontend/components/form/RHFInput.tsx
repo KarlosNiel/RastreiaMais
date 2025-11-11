@@ -80,6 +80,11 @@ export function RHFInput<T extends FieldValues>({
 
         return (
           <Input
+            classNames={
+              {
+                inputWrapper: "dark:bg-gray-800"
+              }
+            }
             // RHF injeta { name, onBlur, ref } — mantemos.
             name={field.name}
             onBlur={field.onBlur}

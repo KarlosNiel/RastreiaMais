@@ -20,7 +20,7 @@ export default function Step2Condicoes() {
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border border-default-200">
+      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
         <CardBody className="space-y-6">
           <h2 className="text-xl font-semibold">2. Condições Crônicas</h2>
 
@@ -31,7 +31,7 @@ export default function Step2Condicoes() {
             </h3>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-              <div className="md:col-span-12 flex flex-wrap gap-3">
+              <div className="md:col-span-12 flex flex-wrap gap-7 py-2">
                 <Controller
                   name="condicoes.has"
                   control={control}
@@ -40,8 +40,9 @@ export default function Step2Condicoes() {
                       isSelected={!!field.value}
                       onValueChange={field.onChange}
                       classNames={{
-                        base: "px-3 py-2 rounded-xl border border-default-200 bg-content1 hover:bg-content2 transition-colors",
+                        base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
+                        wrapper: "bg-gray-100 dark:bg-gray-800"
                       }}
                     >
                       Hipertensão Arterial
@@ -56,10 +57,11 @@ export default function Step2Condicoes() {
                       isSelected={!!field.value}
                       onValueChange={field.onChange}
                       classNames={{
-                        base: "px-3 py-2 rounded-xl border border-default-200 bg-content1 hover:bg-content2 transition-colors",
+                        base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
+                        wrapper: "bg-gray-100 dark:bg-gray-800"
                       }}
-                    >
+                    > 
                       Diabetes Mellitus
                     </Checkbox>
                   )}
@@ -88,6 +90,11 @@ export default function Step2Condicoes() {
                 render={({ field, fieldState }) => (
                   <Input
                     className="md:col-span-8"
+                    classNames={
+                      {
+                        inputWrapper: "dark:bg-gray-800"
+                      }
+                    }
                     label="Descrever (opcional)"
                     placeholder="Ex.: Asma, DPOC, Doença renal crônica"
                     description={

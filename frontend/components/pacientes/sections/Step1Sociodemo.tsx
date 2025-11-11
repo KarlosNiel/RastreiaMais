@@ -112,7 +112,7 @@ export default function Step1Sociodemo() {
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border border-default-200">
+      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
         <CardBody className="space-y-6">
           <h2 className="text-xl font-semibold">1. Dados Sociodemográficos</h2>
 
@@ -156,6 +156,7 @@ export default function Step1Sociodemo() {
                   classNames={{
                     label: "text-sm mb-1", // opcional: ajusta tamanho/espaço do rótulo
                     input: "text-right tabular-nums",
+                    inputWrapper: "dark:bg-gray-800"
                   }}
                 />
               </div>
@@ -289,9 +290,6 @@ export default function Step1Sociodemo() {
 
           {/* 3) ACS responsável — texto livre */}
           <section className="space-y-3">
-            <h3 className="text-sm font-medium text-foreground/80">
-              ACS responsável
-            </h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               <RHFInput
                 className="md:col-span-6"

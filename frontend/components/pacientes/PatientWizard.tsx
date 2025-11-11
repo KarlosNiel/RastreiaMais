@@ -2,7 +2,7 @@
 "use client";
 
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
-import { Button } from "@heroui/react";
+import { Button, Divider } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -359,10 +359,11 @@ export default function PatientWizard({
      =========================== */
 
   return (
-    <section className="overflow-hidden rounded-lg border border-card bg-content1 shadow-soft">
+    <section className="overflow-hidden rounded-lg border-none bg-transparent backdrop-blur-sm container mx-auto px-4 sm:px-6 lg:px-8 my-8 transition-colors">
       {/* Cabeçalho: pílulas + ações + barra de progresso */}
-      <header className="px-6 md:px-8 pt-6 pb-4 bg-content1/80">
+      <header className="pt-6 pb-4 bg-transparent backdrop-blur-sm rounded-t-lg border-gray-800 transition-colors">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Etapas */}
           <ol
             aria-label="Passos do cadastro"
             className="flex flex-wrap gap-3"
@@ -379,12 +380,12 @@ export default function PatientWizard({
                     onClick={() => goTo(i)}
                     disabled={disabled}
                     className={[
-                      "inline-flex items-center gap-2 h-10 rounded-full border px-4 text-sm transition-colors ring-offset-app focus-visible:outline-none focus-visible:ring-2 ring-focus",
+                      "inline-flex items-center gap-2 h-10 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ring-offset-app ring-orange-600",
                       active
-                        ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                        : "bg-white/70 dark:bg-transparent border-default-200 text-foreground/75 hover:text-foreground",
-                      hasErr && !active ? "border-danger text-danger" : "",
-                      disabled ? "opacity-60 cursor-not-allowed" : "",
+                        ? "bg-orange-600 text-white border-orange-600"
+                        : "dark:bg-gray-800 bg-white border-orange-600 dark:border-none text-black dark:text-white hover:bg-gray-100 hover:text-black",
+                      hasErr && !active ? "border-red-600 text-red-500" : "",
+                      disabled ? "opacity-50 cursor-not-allowed" : "",
                     ].join(" ")}
                     aria-current={active ? "step" : undefined}
                     aria-disabled={disabled || undefined}
@@ -401,8 +402,8 @@ export default function PatientWizard({
                       className={[
                         "grid place-items-center size-6 rounded-full border text-[12px] font-semibold",
                         active
-                          ? "border-white/70 bg-white/15 text-white"
-                          : "border-default-200 text-foreground/70",
+                          ? "border-white/70 bg-white/20 text-white"
+                          : "border-gray-600 text-gray-400",
                       ].join(" ")}
                       aria-hidden
                     >
@@ -412,7 +413,7 @@ export default function PatientWizard({
                     {hasErr && !active && (
                       <span
                         aria-label="há erros nesta etapa"
-                        className="ml-1 inline-block size-2 rounded-full bg-danger"
+                        className="ml-1 inline-block size-2 rounded-full bg-red-600"
                       />
                     )}
                   </button>
@@ -421,7 +422,7 @@ export default function PatientWizard({
             })}
           </ol>
 
-          {/* Ações globais do wizard */}
+          {/* Ações globais */}
           <div className="flex flex-wrap gap-2 md:justify-end">
             <Button
               type="button"
@@ -429,6 +430,7 @@ export default function PatientWizard({
               radius="full"
               onClick={handleCancel}
               isDisabled={isSubmitting}
+              className="border border-orange-600 text-black bg-transparent hover:bg-red-600 dark:bg-gray-800 dark:border-none dark:text-white dark:hover:bg-red-600 transition"
             >
               Cancelar
             </Button>
@@ -438,35 +440,36 @@ export default function PatientWizard({
               radius="full"
               onClick={handleSaveDraft}
               isDisabled={isSubmitting}
+              className="border border-orange-600 hover:bg-gray-200 text-black bg-transparent dark:bg-gray-800 dark:border-none dark:hover:bg-blue-600 dark:text-white transition"
             >
-              Salvar rascunho
+              Salvar Rascunho
             </Button>
             <Button
               type="button"
-              className="btn-brand"
+              className="bg-orange-600 hover:bg-orange-500 text-white radius-full transition"
               radius="full"
               onClick={handleSubmitClick}
               isDisabled={isSubmitting}
             >
-              {isSubmitting ? "Enviando…" : "Finalizar registro"}
+              {isSubmitting ? "Enviando…" : "Finalizar Registro"}
             </Button>
           </div>
         </div>
 
-        {/* Progresso sutil */}
-        <div className="mt-4 h-1 w-full rounded-full bg-content2" aria-hidden>
+        {/* Barra de progresso */}
+        <div
+          className="mt-4 h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800 transition-colors"
+          aria-hidden
+        >
           <div
-            className="h-1 rounded-full bg-[var(--brand)] transition-[width] duration-300 ease-out"
+            className="h-1 rounded-full bg-orange-600 transition-[width] duration-300 ease-out"
             style={{ width: `${percent}%` }}
           />
         </div>
       </header>
 
-      {/* Âncora para manter rolagem estável ao trocar de passo */}
-      <div ref={scrollAnchorRef} />
-
       {/* Conteúdo dos steps */}
-      <div className="px-6 md:px-8 py-6 md:py-8 space-y-8">
+      <div className="py-6 md:py-8 space-y-8 transition-colors">
         {step === 0 && <Step1 />}
         {step === 1 && <Step2 />}
         {step === 2 && <Step3 />}
@@ -474,16 +477,16 @@ export default function PatientWizard({
         {step === 4 && <Step5 />}
       </div>
 
-      {/* Rodapé de navegação (voltar / próximo / finalizar) */}
-      <footer className="border-t border-divider px-6 md:px-8 py-4 bg-content1/90">
-        <div className="flex items-center justify-between">
+      {/* Rodapé */}
+      <footer className="border-none border-gray-800 bg-transparent px-4 sm:px-6 lg:px-8 py-0 rounded-b-lg transition-colors">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
             type="button"
             variant="flat"
             onClick={prev}
             isDisabled={step === 0 || isSubmitting}
             radius="full"
-            className="min-w-[120px]"
+            className="min-w-[120px] border border-orange-600 text-gray-black bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800 transition"
           >
             Voltar
           </Button>
@@ -491,7 +494,7 @@ export default function PatientWizard({
           {step < total - 1 ? (
             <Button
               type="button"
-              className="btn-brand min-w-[160px]"
+              className="bg-orange-600 hover:bg-orange-500 text-white radius-full min-w-[160px] transition"
               onClick={next}
               radius="full"
               isDisabled={isSubmitting}
@@ -501,7 +504,7 @@ export default function PatientWizard({
           ) : (
             <Button
               type="button"
-              className="btn-brand min-w-[200px]"
+              className="bg-orange-600 hover:bg-orange-500 text-white radius-full min-w-[200px] transition"
               onClick={handleSubmitClick}
               radius="full"
               isDisabled={isSubmitting}
@@ -513,4 +516,5 @@ export default function PatientWizard({
       </footer>
     </section>
   );
+
 }

@@ -86,6 +86,11 @@ export function RHFDate({
             {...restField}
             ref={ref}
             className={className}
+            classNames={
+              {
+                inputWrapper: "dark:bg-gray-800"
+              }
+            }
             label={label}
             isRequired={isRequired}
             // granularity default = "day" (suficiente para cadastro)

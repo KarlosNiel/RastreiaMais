@@ -25,28 +25,6 @@ export const Header = () => {
             </span>
           </div>
 
-          {/* Navegação */}
-          <nav className="hidden md:flex items-center gap-6">
-            <a
-              href="#recursos"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Recursos
-            </a>
-            <a
-              href="#acesso"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Acesso
-            </a>
-            <a
-              href="#sobre"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Sobre
-            </a>
-          </nav>
-
           <div className="flex items-center gap-3">
             {/* Botão toggle dark mode */}
             <Button
