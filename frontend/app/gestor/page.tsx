@@ -1,24 +1,25 @@
 // frontend/app/gestor/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import { KpiCard } from "@/components/dashboard/KpiCard";
+import CreateAlertModal from "@/components/gestor/CreateAlertModal";
 import { PendenciasTable } from "@/components/gestor/PendenciasTable";
 import { ProfissionaisTable } from "@/components/gestor/ProfissionaisTable";
-import { RMButton } from "@/components/ui/RMButton";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { apiGet } from "@/lib/api";
 import { getGestorKpis, KPI_ICONS } from "@/lib/gestor-kpis";
+import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
 import {
-  ChartBarIcon,
   BellAlertIcon,
   ClipboardDocumentListIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { Button } from "@heroui/button";
-import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
-import CreateAlertModal from "@/components/gestor/CreateAlertModal";
 import { Spinner } from "@heroui/spinner";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type RiskTone = "safe" | "moderate" | "critical";
 
@@ -29,10 +30,46 @@ export default function GestorPage() {
   const [open, setOpen] = useState(false);
   const { data: alerts, isLoading } = useAlertsQuery();
   const [KPIS, setKPIS] = useState<any[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     getGestorKpis().then(setKPIS);
   }, []);
+
+  const {
+    data: profissionais = [],
+    isLoading: isLoadingProfissionais,
+    isError: isErrorProfissionais,
+  } = useQuery<ProfRow[]>({
+    queryKey: ["professionals"],
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+
+      const list = Array.isArray(resp)
+        ? resp
+        : resp && "results" in resp && Array.isArray((resp as any).results)
+          ? (resp as any).results
+          : [];
+
+      // mapeia para o formato esperado pela ProfissionaisTable
+      const mapped: ProfRow[] = list.map((p: any) => {
+        const first = p.user?.first_name ?? "";
+        const last = p.user?.last_name ?? "";
+        const nome = `${first} ${last}`.trim() || p.user?.username || "—";
+
+        return {
+          id: String(p.id),
+          profissional: nome,
+          cargo: p.role ?? "—",
+          // por enquanto valores fixos/placeholder até existir no backend
+          local: "USF Maria Madalena",
+          status: "Ativo",
+        };
+      });
+
+      return mapped;
+    },
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
@@ -98,7 +135,11 @@ export default function GestorPage() {
               value={kpi.value}
               delta={kpi.delta}
               accent={kpi.accent}
-              icon={(KPI_ICONS as Record<string, import("react").ReactNode>)[kpi.key]}
+              icon={
+                (KPI_ICONS as Record<string, import("react").ReactNode>)[
+                  kpi.key
+                ]
+              }
             />
           ))}
         </section>
@@ -114,7 +155,7 @@ export default function GestorPage() {
             </div>
             <Button
               onPress={() => setOpen(true)}
-              variant="flat"                
+              variant="flat"
               size="sm"
               aria-label="Adicionar alerta"
               radius="lg"
@@ -126,7 +167,7 @@ export default function GestorPage() {
 
           <CreateAlertModal open={open} onOpenChange={setOpen} />
 
-{isLoading ? (
+          {isLoading ? (
             <div className="flex justify-center py-8">
               <Spinner color="warning" />
             </div>
@@ -139,8 +180,8 @@ export default function GestorPage() {
                     a.risk_level === "critical"
                       ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
                       : a.risk_level === "moderate"
-                      ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
-                      : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
+                        ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
+                        : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -149,8 +190,8 @@ export default function GestorPage() {
                         a.risk_level === "critical"
                           ? "ring-rose-300"
                           : a.risk_level === "moderate"
-                          ? "ring-amber-300"
-                          : "ring-emerald-300"
+                            ? "ring-amber-300"
+                            : "ring-emerald-300"
                       } bg-white dark:bg-gray-800`}
                     >
                       <UserGroupIcon
@@ -158,14 +199,15 @@ export default function GestorPage() {
                           a.risk_level === "critical"
                             ? "text-rose-600 dark:text-rose-400"
                             : a.risk_level === "moderate"
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-emerald-600 dark:text-emerald-400"
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-emerald-600 dark:text-emerald-400"
                         }`}
                       />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        {a.patient?.user?.first_name ?? "—"} {a.patient?.user?.last_name ?? "—"}{" "}
+                        {a.patient?.user?.first_name ?? "—"}{" "}
+                        {a.patient?.user?.last_name ?? "—"}{" "}
                         <span className="text-gray-500 dark:text-gray-400">
                           {a.patient?.cpf ?? "—"}
                         </span>
@@ -179,8 +221,8 @@ export default function GestorPage() {
                     {a.risk_level === "critical"
                       ? "Crítico"
                       : a.risk_level === "moderate"
-                      ? "Atenção"
-                      : "Seguro"}
+                        ? "Atenção"
+                        : "Seguro"}
                   </StatusChip>
                 </li>
               ))}
@@ -201,16 +243,44 @@ export default function GestorPage() {
             Pendências
           </h2>
         </div>
-          <PendenciasTable
-            rows={[
-              { id: "1", paciente: "Fernanda", pendencias: "Medição PA", dias: 64, microarea: "Jardim Magnólia", risco: "safe" },
-              { id: "2", paciente: "José", pendencias: "Enfermeira", dias: 55, microarea: "Jardim Magnólia", risco: "safe" },
-              { id: "3", paciente: "Ana", pendencias: "Consulta médica", dias: 43, microarea: "Jardim Magnólia", risco: "moderate" },
-              { id: "4", paciente: "Clara", pendencias: "Avaliação", dias: 42, microarea: "Jardim Magnólia", risco: "critical" },
-            ]}
-            initialPage={1}
-            initialRowsPerPage={6}
-          />
+        <PendenciasTable
+          rows={[
+            {
+              id: "1",
+              paciente: "Fernanda",
+              pendencias: "Medição PA",
+              dias: 64,
+              microarea: "Jardim Magnólia",
+              risco: "safe",
+            },
+            {
+              id: "2",
+              paciente: "José",
+              pendencias: "Enfermeira",
+              dias: 55,
+              microarea: "Jardim Magnólia",
+              risco: "safe",
+            },
+            {
+              id: "3",
+              paciente: "Ana",
+              pendencias: "Consulta médica",
+              dias: 43,
+              microarea: "Jardim Magnólia",
+              risco: "moderate",
+            },
+            {
+              id: "4",
+              paciente: "Clara",
+              pendencias: "Avaliação",
+              dias: 42,
+              microarea: "Jardim Magnólia",
+              risco: "critical",
+            },
+          ]}
+          initialPage={1}
+          initialRowsPerPage={6}
+        />
       </section>
 
       {/* Profissionais */}
@@ -221,16 +291,26 @@ export default function GestorPage() {
             Profissionais
           </h2>
         </div>
+        {isLoadingProfissionais ? (
+          <div className="text-gray-500 dark:text-gray-400">
+            Carregando profissionais...
+          </div>
+        ) : isErrorProfissionais ? (
+          <div className="text-red-600 dark:text-red-400">
+            Erro ao carregar profissionais.
+          </div>
+        ) : (
           <ProfissionaisTable
-            rows={[
-              { id: "p1", profissional: "Fernanda", cargo: "Enfermeira", local: "USF Maria Madalena", status: "Ativo" },
-              { id: "p2", profissional: "Marcos", cargo: "Médico", local: "USF Maria Madalena", status: "Ativo" },
-              { id: "p3", profissional: "Carla", cargo: "Téc. Enfermagem", local: "USF Maria Madalena", status: "Licença" },
-              { id: "p4", profissional: "Rafael", cargo: "ACS", local: "USF Maria Madalena", status: "Afastado" },
-            ]}
+            rows={profissionais}
             initialPage={1}
             initialRowsPerPage={6}
+            onAction={(action, row) => {
+              if (action === "edit" || action === "open") {
+                router.push(`/cadastros/${row.id}/editar`);
+              }
+            }}
           />
+        )}
       </section>
     </div>
   );

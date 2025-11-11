@@ -39,7 +39,7 @@ export default function Error({
 
           <details className="text-xs text-foreground-500">
             <summary>Detalhes técnicos</summary>
-            <pre className="mt-2 whitespace-pre-wrap break-words">
+            <pre className="mt-2 whitespace-pre-wrap wrap-break-word">
               {error?.message}
               {error?.digest ? `\nDigest: ${error.digest}` : ""}
             </pre>
