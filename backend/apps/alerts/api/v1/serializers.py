@@ -17,8 +17,12 @@ class AlertSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "created_at",
+            "created_by",
+            "deleted_by",
+            "deleted_at",
+            "is_deleted"
         ]
-        read_only_fields = ["patient", "created_at"]
+        read_only_fields = ["patient", "created_at", "created_by", "deleted_by", "deleted_at", "is_deleted"]
 
     def create(self, validated_data):
         cpf = validated_data.pop("cpf")

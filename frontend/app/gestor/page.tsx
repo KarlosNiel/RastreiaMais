@@ -4,7 +4,7 @@
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import CreateAlertModal from "@/components/gestor/CreateAlertModal";
 import { PendenciasTable } from "@/components/gestor/PendenciasTable";
-import { ProfissionaisTable } from "@/components/gestor/ProfissionaisTable";
+import { ProfissionaisTable, ProfRow } from "@/components/gestor/ProfissionaisTable";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { apiGet } from "@/lib/api";
 import { getGestorKpis, KPI_ICONS } from "@/lib/gestor-kpis";
@@ -23,14 +23,22 @@ import { useEffect, useState } from "react";
 
 type RiskTone = "safe" | "moderate" | "critical";
 
-const mapRiskToChip = (t: RiskTone): "safe" | "attention" | "critical" =>
-  t === "moderate" ? "attention" : t;
+
+const mapRiskToChip = (t?: RiskTone): "safe" | "attention" | "critical" =>
+  t === "moderate" ? "attention" : (t ?? "safe");
 
 export default function GestorPage() {
+  const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
   const { data: alerts, isLoading } = useAlertsQuery();
   const [KPIS, setKPIS] = useState<any[]>([]);
   const router = useRouter();
+  const formatCpf = (cpf?: string) => {
+    if (!cpf) return "—";
+      const digits = cpf.replace(/\D/g, "");
+    if (digits.length !== 11) return cpf; 
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
 
   useEffect(() => {
     getGestorKpis().then(setKPIS);
@@ -154,7 +162,11 @@ export default function GestorPage() {
               </h2>
             </div>
             <Button
-              onPress={() => setOpen(true)}
+              onPress={() => {
+                setSelectedAlert(null);
+                setOpen(true);
+                }
+              }
               variant="flat"
               size="sm"
               aria-label="Adicionar alerta"
@@ -165,68 +177,74 @@ export default function GestorPage() {
             </Button>
           </div>
 
-          <CreateAlertModal open={open} onOpenChange={setOpen} />
+          <CreateAlertModal open={open} onOpenChange={setOpen} alertData={selectedAlert} />
 
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Spinner color="warning" />
             </div>
           ) : alerts?.length ? (
-            <ul className="space-y-3">
-              {alerts.map((a, i) => (
-                <li
-                  key={i}
-                  className={`flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
-                    a.risk_level === "critical"
-                      ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
-                      : a.risk_level === "moderate"
-                        ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
-                        : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`grid size-10 place-items-center rounded-full ring-2 ${
-                        a.risk_level === "critical"
-                          ? "ring-rose-300"
-                          : a.risk_level === "moderate"
-                            ? "ring-amber-300"
-                            : "ring-emerald-300"
-                      } bg-white dark:bg-gray-800`}
-                    >
-                      <UserGroupIcon
-                        className={`h-5 w-5 ${
+            <div className="max-h-70 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+              <ul className="space-y-3">
+                {alerts.map((a, i) => (
+                  <li
+                    onClick={() => {
+                      setSelectedAlert(a);
+                      setOpen(true);
+                    }}
+                    key={i}
+                    className={`flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
+                      a.risk_level === "critical"
+                        ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
+                        : a.risk_level === "moderate"
+                          ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
+                          : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`grid size-10 place-items-center rounded-full ring-2 ${
                           a.risk_level === "critical"
-                            ? "text-rose-600 dark:text-rose-400"
+                            ? "ring-rose-300"
                             : a.risk_level === "moderate"
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-emerald-600 dark:text-emerald-400"
-                        }`}
-                      />
+                              ? "ring-amber-300"
+                              : "ring-emerald-300"
+                        } bg-white dark:bg-gray-800`}
+                      >
+                        <UserGroupIcon
+                          className={`h-5 w-5 ${
+                            a.risk_level === "critical"
+                              ? "text-rose-600 dark:text-rose-400"
+                              : a.risk_level === "moderate"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {a.patient?.user?.first_name ?? "—"}{" "}
+                          {a.patient?.user?.last_name ?? "—"}{" "}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {formatCpf(a.patient?.cpf)}
+                          </span>
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 ">
+                          {a.title} — {a.description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        {a.patient?.user?.first_name ?? "—"}{" "}
-                        {a.patient?.user?.last_name ?? "—"}{" "}
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {a.patient?.cpf ?? "—"}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {a.title} — {a.description}
-                      </p>
-                    </div>
-                  </div>
-                  <StatusChip size="sm" tone={mapRiskToChip(a.risk_level)}>
-                    {a.risk_level === "critical"
-                      ? "Crítico"
-                      : a.risk_level === "moderate"
-                        ? "Atenção"
-                        : "Seguro"}
-                  </StatusChip>
-                </li>
-              ))}
-            </ul>
+                    <StatusChip size="sm" tone={mapRiskToChip(a.risk_level)}>
+                      {a.risk_level === "critical"
+                        ? "Crítico"
+                        : a.risk_level === "moderate"
+                          ? "Atenção"
+                          : "Seguro"}
+                    </StatusChip>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <p className="text-sm text-gray-500 text-center py-6">
               Nenhum alerta encontrado.
@@ -234,54 +252,6 @@ export default function GestorPage() {
           )}
         </section>
       </div>
-
-      {/* Pendências */}
-      <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 transition-all">
-        <div className="flex items-center gap-2 mb-4">
-          <ClipboardDocumentListIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Pendências
-          </h2>
-        </div>
-        <PendenciasTable
-          rows={[
-            {
-              id: "1",
-              paciente: "Fernanda",
-              pendencias: "Medição PA",
-              dias: 64,
-              microarea: "Jardim Magnólia",
-              risco: "safe",
-            },
-            {
-              id: "2",
-              paciente: "José",
-              pendencias: "Enfermeira",
-              dias: 55,
-              microarea: "Jardim Magnólia",
-              risco: "safe",
-            },
-            {
-              id: "3",
-              paciente: "Ana",
-              pendencias: "Consulta médica",
-              dias: 43,
-              microarea: "Jardim Magnólia",
-              risco: "moderate",
-            },
-            {
-              id: "4",
-              paciente: "Clara",
-              pendencias: "Avaliação",
-              dias: 42,
-              microarea: "Jardim Magnólia",
-              risco: "critical",
-            },
-          ]}
-          initialPage={1}
-          initialRowsPerPage={6}
-        />
-      </section>
 
       {/* Profissionais */}
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 transition-all">

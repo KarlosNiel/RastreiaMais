@@ -186,13 +186,6 @@ export function ProfissionaisTable({
         return (
           <div className="flex items-center justify-start gap-2">
             <Button
-              onPress={() => onAction?.("open", row)}
-              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-              isIconOnly
-            >
-              <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            </Button>
-            <Button
               onPress={() => onAction?.("edit", row)}
               className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
               isIconOnly

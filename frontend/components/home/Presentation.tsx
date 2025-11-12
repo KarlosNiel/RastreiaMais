@@ -34,7 +34,7 @@ export const Presentation = () => {
               variant="flat"
               className="text-base font-semibold"
             >
-              <Link href="/auth/login/profissional">
+              <Link href="/auth/login/paciente">
                   Acessar como Paciente
               </Link>
             </Button>
