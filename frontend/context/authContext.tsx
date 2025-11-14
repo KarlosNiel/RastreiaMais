@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
@@ -24,38 +24,50 @@ function getAccess(): string | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = getAccess();
-    if (storedToken) setToken(storedToken);
+    if (storedToken) setTokenState(storedToken);
     setLoading(false);
 
     // Escuta mudanças no localStorage para sincronizar entre abas
     const handleStorageChange = () => {
       const currentToken = getAccess();
-      setToken(currentToken);
+      setTokenState(currentToken);
     };
 
     if (isBrowser()) {
-      window.addEventListener('storage', handleStorageChange);
-      window.addEventListener('tokenRefresh', handleStorageChange);
-      
+      window.addEventListener("storage", handleStorageChange);
+      window.addEventListener("tokenRefresh", handleStorageChange);
+
       return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('tokenRefresh', handleStorageChange);
+        window.removeEventListener("storage", handleStorageChange);
+        window.removeEventListener("tokenRefresh", handleStorageChange);
       };
     }
   }, []);
 
+  const setToken = (newToken: string | null) => {
+    // Atualiza o estado do React
+    setTokenState(newToken);
+
+    // Atualiza o storage
+    if (newToken) {
+      localStorage.setItem("access", newToken);
+    } else {
+      localStorage.removeItem("access");
+    }
+
+    // Dispara evento para avisar toda a aplicação
+    window.dispatchEvent(new Event("tokenRefresh"));
+  };
+
   const contextValue = {
     token,
-    setToken: (newToken: string | null) => {
-      setToken(newToken);
-      // Não gerenciamos o localStorage aqui - isso é feito pela lib/api.ts
-    },
-    isAuthenticated: !!token
+    setToken,
+    isAuthenticated: !!token,
   };
 
   if (loading) return null;

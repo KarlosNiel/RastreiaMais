@@ -95,7 +95,7 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
             <ModalBody className="space-y-3">
               <Input
                 label="CPF"
-                placeholder="Ex: 123.456.789-00"
+                placeholder="Ex: 12345678900"
                 variant="bordered"
                 value={cpf}
                 onChange={(e) => {
