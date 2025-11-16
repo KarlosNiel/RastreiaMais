@@ -25,11 +25,8 @@ class AlertViewset(BaseModelViewSet):
         except Exception:
             role, profile = (None, None)
 
-        if user.is_superuser or hasattr(user, "manageruser"):
+        if user.is_superuser or hasattr(user, "manageruser") or hasattr(user, "professionaluser"):
             return queryset
-
-        if hasattr(user, "professionaluser"):
-            return queryset.filter(professional=getattr(user, "professionaluser"))
 
         if hasattr(user, "patientuser"):
             return queryset.filter(patient=getattr(user, "patientuser"))

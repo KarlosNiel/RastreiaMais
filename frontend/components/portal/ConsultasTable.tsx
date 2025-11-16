@@ -10,18 +10,18 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  Button,
 } from "@heroui/react";
+import { EyeIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-
-/* ===== Tipos ===== */
 
 export type ConsultaRow = {
   id: string;
   profissional: string;
   cargo: string;
   local: string;
-  hora: string; // "16:00"
-  data: string; // "11/09/25"
+  hora: string;
+  data: string;
   status: string;
 };
 
@@ -30,17 +30,15 @@ type Props = {
   initialPage?: number;
   initialRowsPerPage?: number;
   className?: string;
+  onView?: (row: ConsultaRow) => void; 
 };
 
-/* ===== Helpers ===== */
-
-
-/* ===== Componente ===== */
 export function ConsultasTable({
   rows,
   initialPage = 1,
   initialRowsPerPage = 4,
-  className
+  className,
+  onView,
 }: Props) {
   const [page, setPage] = useState(initialPage);
   const rowsPerPage = initialRowsPerPage;
@@ -54,21 +52,27 @@ export function ConsultasTable({
   return (
     <div className={className}>
       <Table aria-label="Tabela de consultas do paciente" removeWrapper className="overflow-x-auto">
-        <TableHeader className="">
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800 ">Profissional</TableColumn>
+        <TableHeader>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Profissional</TableColumn>
           <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Cargo</TableColumn>
           <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Local</TableColumn>
           <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Horário</TableColumn>
           <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Data</TableColumn>
-          <TableColumn className="text-sm text-right dark:text-white dark:bg-gray-800">Status</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Status</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800 w-[110px]">
+            Ações
+          </TableColumn>
         </TableHeader>
 
         <TableBody emptyContent="Nenhuma consulta encontrada">
           {visible.map((r, idx) => (
             <TableRow
               key={r.id}
-              // zebra (como no Figma): linhas ímpares com leve fundo
-              className={idx % 2 === 1 ? "bg-content2/60 dark:bg-gray-800 dark:text-white" : "dark:bg-gray-900 dark:text-white"}
+              className={
+                idx % 2 === 1
+                  ? "bg-content2/60 dark:bg-gray-800 dark:text-white"
+                  : "dark:bg-gray-900 dark:text-white"
+              }
             >
               <TableCell className="whitespace-nowrap">
                 <span className="inline-flex items-center gap-2">
@@ -85,30 +89,39 @@ export function ConsultasTable({
               </TableCell>
 
               <TableCell>{r.cargo}</TableCell>
-              <TableCell className="max-w-[260px] truncate">
-                {r.local}
-              </TableCell>
+              <TableCell className="max-w-[260px] truncate">{r.local}</TableCell>
               <TableCell>{r.hora}</TableCell>
               <TableCell>{r.data}</TableCell>
 
-              <TableCell className="text-right">
-                <StatusChip size="sm"     
+              <TableCell className="">
+                <StatusChip
+                  size="sm"
                   className={`
                     ${r.status === "ativo" ? "bg-green-500/15 text-green-700 dark:text-green-300" : ""}
                     ${r.status === "finalizado" ? "bg-gray-500/15 text-gray-600 dark:text-gray-400" : ""}
                     ${r.status === "cancelado" ? "bg-red-500/15 text-red-600 dark:text-red-400" : ""}
-                  `}>
+                  `}
+                >
                   {r.status}
                 </StatusChip>
+              </TableCell>
+
+              <TableCell className="">
+                <Button
+                  className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                  isIconOnly
+                  onPress={() => onView?.(r)}
+                >
+                  <EyeIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      {/* paginação centralizada, compacta */}
-      <div className="mt-4 flex justify-center ">
-        <Pagination 
+      <div className="mt-4 flex justify-center">
+        <Pagination
           classNames={{
             next: "dark:bg-gray-800",
             prev: "dark:bg-gray-800",
