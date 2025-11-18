@@ -164,7 +164,6 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 → tentar refresh → se falhar → logout
 axiosInstance.interceptors.response.use(
   (resp) => resp,
   async (error: AxiosError) => {
@@ -172,8 +171,6 @@ axiosInstance.interceptors.response.use(
 
     const original = error.config as AxiosRequestConfig & { _retry?: boolean };
     const status = error.response.status;
-
-    // Não tentar refresh nestas rotas
     const path = original.url ?? "";
     if (status !== 401 || isAuthPath(path) || original._retry) {
       clearTokens();
@@ -181,7 +178,6 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Tentar refresh
     const newAccess = await ensureAccessToken();
 
     if (!newAccess) {
@@ -190,7 +186,6 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Retry
     original._retry = true;
     original.headers = original.headers ?? {};
     original.headers["Authorization"] = `Bearer ${newAccess}`;
@@ -249,7 +244,9 @@ export const apiPost = <T = any>(
     method: "POST",
     body,
     headers: {
-      ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(body instanceof FormData
+        ? {}
+        : { "Content-Type": "application/json" }),
       ...(init.headers as any),
     },
   });
@@ -264,7 +261,9 @@ export const apiPut = <T = any>(
     method: "PUT",
     body,
     headers: {
-      ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(body instanceof FormData
+        ? {}
+        : { "Content-Type": "application/json" }),
       ...(init.headers as any),
     },
   });
@@ -279,7 +278,9 @@ export const apiPatch = <T = any>(
     method: "PATCH",
     body,
     headers: {
-      ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(body instanceof FormData
+        ? {}
+        : { "Content-Type": "application/json" }),
       ...(init.headers as any),
     },
   });

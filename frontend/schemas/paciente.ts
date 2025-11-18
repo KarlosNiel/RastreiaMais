@@ -171,13 +171,7 @@ export const SocioZ = z
       path: ["genero_outro"],
       message: "Descreva o gênero",
     }
-  )
-  // Nascimento ainda obrigatório (login/registro clínico)
-  .refine((v) => !!v.nascimento, {
-    path: ["nascimento"],
-    message: "Informe a data de nascimento",
-  });
-
+  );
 /* ########################
  * STEP 2 — CONDIÇÕES CRÔNICAS
  * ######################## */

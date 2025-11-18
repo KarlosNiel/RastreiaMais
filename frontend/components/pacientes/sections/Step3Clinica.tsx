@@ -4,7 +4,7 @@ import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
-import { useMemo, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
 /** ───────── helpers ───────── */
@@ -54,7 +54,10 @@ export default function Step3Clinica() {
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
+      <Card
+        shadow="none"
+        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+      >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">3. Avaliação Clínica</h2>
 
@@ -158,7 +161,7 @@ function BlocoHAS() {
               ]}
               single
             />
-            <RHFChipGroup 
+            <RHFChipGroup
               className="pb-4"
               name="clinica.has.usa_medicacao"
               label="Usa medicação?"

@@ -69,6 +69,47 @@ function onlyDigits(s?: string | null) {
   return (s ?? "").replace(/\D+/g, "");
 }
 
+// Gera senha no formato: LLDDDDD# (2 letras + 5 dígitos + símbolo)
+// Ex.: "ba27412#", "de59023#", "li83704#", "so19485#"
+const PASSWORD_SYMBOL = "#";
+const PASSWORD_DIGITS = 5;
+
+export function generateSimplePassword(): string {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+
+  // 2 letras + N dígitos
+  const totalRandomSlots = 2 + PASSWORD_DIGITS;
+
+  if (typeof window !== "undefined" && window.crypto?.getRandomValues) {
+    const array = new Uint32Array(totalRandomSlots);
+    window.crypto.getRandomValues(array);
+
+    const l1 = letters[array[0] % letters.length];
+    const l2 = letters[array[1] % letters.length];
+
+    let numPart = "";
+    for (let i = 2; i < totalRandomSlots; i++) {
+      numPart += digits[array[i] % digits.length];
+    }
+
+    return `${l1}${l2}${numPart}${PASSWORD_SYMBOL}`;
+  }
+
+  // fallback: Math.random
+  const randIndex = (max: number) => Math.floor(Math.random() * max);
+
+  const l1 = letters[randIndex(letters.length)];
+  const l2 = letters[randIndex(letters.length)];
+
+  let numPart = "";
+  for (let i = 0; i < PASSWORD_DIGITS; i++) {
+    numPart += digits[randIndex(digits.length)];
+  }
+
+  return `${l1}${l2}${numPart}${PASSWORD_SYMBOL}`;
+}
+
 function toDateISO(d?: Date | string | null) {
   if (!d) return null;
   const dt = typeof d === "string" ? new Date(d) : d;
@@ -214,19 +255,24 @@ export function formToPatientApi(
   // e-mail: campo opcional no form
   const rawEmail = optString(socio?.email);
 
+  let password: string | undefined;
+  if (mode === "create") {
+    // se um dia tiver campo de senha no form, ele tem prioridade
+    password = socio?.password || socio?.senha || generateSimplePassword();
+  }
+
   // LOGIN (crítico) – montamos sempre que for create
+  // Regra: username = CPF (somente dígitos) validado pelo SocioZ
+  const usernameFromCpf = onlyDigits(socio?.sus_cpf);
+
   const user =
-    mode === "create"
+    mode === "create" && usernameFromCpf
       ? {
-          username:
-            socio?.username ??
-            (onlyDigits(socio?.sus_cpf) ||
-              first_name?.toLowerCase() ||
-              "paciente"),
+          username: usernameFromCpf,
           first_name: first_name || "Paciente",
           last_name: last_name || "",
           ...(rawEmail ? { email: rawEmail } : {}),
-          password: socio?.password || socio?.senha || "Mudar123!",
+          password: password as string,
         }
       : undefined;
 

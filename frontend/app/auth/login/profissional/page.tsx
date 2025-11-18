@@ -12,7 +12,7 @@ export default function LoginProfissionalPage() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true); 
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -31,10 +31,12 @@ export default function LoginProfissionalPage() {
     try {
       const username = email.trim().toLowerCase();
 
-      const me = await loginAndAssertRole(username, pwd, [
-        "MANAGER",
-        "PROFESSIONAL",
-      ], rememberMe);
+      const me = await loginAndAssertRole(
+        username,
+        pwd,
+        ["MANAGER", "PROFESSIONAL"],
+        rememberMe
+      );
 
       // 2) Define cookie leve para o middleware (prioridade MANAGER > PROFESSIONAL)
       const role = me.roles.includes("MANAGER") ? "MANAGER" : "PROFESSIONAL";
@@ -80,7 +82,7 @@ export default function LoginProfissionalPage() {
           className="pb-6"
           classNames={{
             input: "",
-            inputWrapper: "border border-orange-600 transition"
+            inputWrapper: "border border-orange-600 transition",
           }}
         />
 
@@ -97,7 +99,7 @@ export default function LoginProfissionalPage() {
           className="pb-6"
           classNames={{
             input: "",
-            inputWrapper: "border border-orange-600 transition"
+            inputWrapper: "border border-orange-600 transition",
           }}
           endContent={
             <button

@@ -14,10 +14,19 @@ import {
   type RegistroPacienteCreate,
   type RegistroPacienteEdit,
 } from "@/schemas/paciente";
-import { Card, CardBody } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -44,7 +53,7 @@ type Props =
   | {
       mode: "edit";
       id: number;
-      defaultValues: CreateFormInput;
+      defaultValues: EditFormInput;
       hasId?: number | null;
       dmId?: number | null;
       addressId?: number | null;
@@ -161,6 +170,14 @@ export default function PatientForm(props: Props) {
   const schema = isCreate ? RegistroPacienteCreateZ : RegistroPacienteEditZ;
   const router = useRouter();
 
+  const [passwordModal, setPasswordModal] = useState<{
+    open: boolean;
+    password: string | null;
+  }>({
+    open: false,
+    password: null,
+  });
+
   const methods = useForm<CreateFormInput | EditFormInput>({
     resolver: zodResolver(schema),
     defaultValues: isCreate
@@ -248,7 +265,6 @@ export default function PatientForm(props: Props) {
       try {
         const draftKey = getDraftKey();
         window.localStorage.setItem(draftKey, JSON.stringify(watchAll));
-        notifySuccess("Rascunho salvo.");
       } catch (e) {
         console.error("Falha ao salvar rascunho", e);
       }
@@ -346,6 +362,15 @@ export default function PatientForm(props: Props) {
         isCreate ? "create" : "edit"
       );
 
+      // 🔐 captura a senha gerada (se for create)
+      let generatedPassword: string | null = null;
+      if (isCreate) {
+        const userPayload = (apiPayload as any).user;
+        if (userPayload && typeof userPayload.password === "string") {
+          generatedPassword = userPayload.password;
+        }
+      }
+
       // Injeta o id do endereço (ou null se limpou)
       (apiPayload as any).address = addressId;
 
@@ -374,7 +399,16 @@ export default function PatientForm(props: Props) {
         }
 
         notifySuccess("Paciente cadastrado com sucesso.");
-        router.push("/pacientes");
+
+        // Se uma senha inicial foi gerada, exibe modal para o profissional
+        if (generatedPassword) {
+          setPasswordModal({
+            open: true,
+            password: generatedPassword,
+          });
+        } else {
+          router.push("/pacientes");
+        }
       } else {
         const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;
 
@@ -404,10 +438,31 @@ export default function PatientForm(props: Props) {
       }
     } catch (err: any) {
       console.error("ERRO AO SALVAR PACIENTE", err);
-      const msg =
-        err?.message ??
-        err?.response?.data?.detail ??
-        "Não foi possível salvar. Tente novamente.";
+
+      let msg = "Não foi possível salvar. Tente novamente.";
+
+      const data = err?.response;
+
+      if (data && typeof data === "object") {
+        // erro de username duplicado (CPF já usado)
+        const userErrors = (data as any).user;
+        const usernameErr =
+          userErrors && Array.isArray(userErrors.username)
+            ? userErrors.username[0]
+            : null;
+
+        if (usernameErr) {
+          msg =
+            "Já existe um paciente/usuário com esse CPF. Verifique se ele já está cadastrado antes de criar um novo registro.";
+        } else if ((data as any).detail) {
+          msg = String((data as any).detail);
+        } else if (typeof err.message === "string") {
+          msg = err.message;
+        }
+      } else if (typeof err.message === "string") {
+        msg = err.message;
+      }
+
       notifyError("Erro ao salvar", msg);
     }
   }
@@ -442,6 +497,69 @@ export default function PatientForm(props: Props) {
               : "Sem alterações."}
         </span>
       </form>
+
+      {/* Modal para exibir a senha inicial do paciente */}
+      <Modal
+        isOpen={passwordModal.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPasswordModal({ open: false, password: null });
+            router.push("/pacientes");
+          }
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 text-base font-semibold">
+                Senha inicial do paciente
+              </ModalHeader>
+
+              <ModalBody className="space-y-3 text-sm">
+                <p>
+                  Entregue esta senha ao paciente para o primeiro acesso ao
+                  portal. Ela poderá ser alterada depois do login.
+                </p>
+
+                <div className="mt-2 mb-1 rounded-lg bg-black/10 px-4 py-3 text-center font-mono text-lg">
+                  {passwordModal.password ?? "Senha não disponível"}
+                </div>
+
+                <p className="text-xs opacity-80">
+                  Por segurança, esta senha não será exibida novamente após
+                  fechar esta janela.
+                </p>
+              </ModalBody>
+
+              <ModalFooter className="flex justify-between">
+                <Button
+                  variant="light"
+                  onPress={() => {
+                    if (
+                      typeof navigator !== "undefined" &&
+                      passwordModal.password
+                    ) {
+                      navigator.clipboard
+                        ?.writeText(passwordModal.password)
+                        .catch(() => {});
+                    }
+                  }}
+                >
+                  Copiar senha
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={() => {
+                    onClose(); // fechar modal → dispara onOpenChange(false) → push("/pacientes")
+                  }}
+                >
+                  Fechar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </FormProvider>
   );
 }
