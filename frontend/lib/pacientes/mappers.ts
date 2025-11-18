@@ -77,6 +77,36 @@ function toDateISO(d?: Date | string | null) {
   return dt.toISOString().slice(0, 10);
 }
 
+function calcAgeFromBirth(d?: Date | string | null): number | null {
+  if (!d) return null;
+
+  const dt = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(dt.getTime())) return null;
+
+  const now = new Date();
+  let years = now.getFullYear() - dt.getFullYear();
+  const m = now.getMonth() - dt.getMonth();
+
+  if (m < 0 || (m === 0 && now.getDate() < dt.getDate())) {
+    years--;
+  }
+
+  return years >= 0 ? years : 0;
+}
+
+/** ─────────────────────────────────────────────────────────────
+ * Helpers para campos opcionais (evitar "valores inventados")
+ * ───────────────────────────────────────────────────────────── */
+function optString(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const s = v.trim();
+  return s === "" ? undefined : s;
+}
+
+function nullableBool(v: unknown): boolean | null {
+  return typeof v === "boolean" ? v : null;
+}
+
 /** Tipo do payload que o back espera (mínimo para paciente) */
 export type PatientApiPayload = {
   // nested user - SOMENTE no create
@@ -91,6 +121,7 @@ export type PatientApiPayload = {
   // SocialdemographicData
   cpf?: string | null;
   birth_date?: string | null; // "YYYY-MM-DD"
+  age?: number | null;
   gender?: string | null;
   race_ethnicity?: string | null;
   scholarity?: string | null; // enum
@@ -104,6 +135,39 @@ export type PatientApiPayload = {
   address?: number | null; // OneToOne id
   phone?: string | null;
   whatsapp?: boolean | null;
+
+  // PsychosocialRisks
+  use_psychotropic_medication?: boolean | null;
+  use_psychotropic_medication_answer?: string | null;
+  any_psychological_psychiatric_diagnosis?: boolean | null;
+  any_psychological_psychiatric_diagnosis_answer?: string | null;
+  everyday_stress_interfere_with_your_BP_BS_control?: boolean | null;
+  economic_factors_interfere_with_your_treatment?: boolean | null;
+  feel_receive_support_from_family_friends_to_maintain_treatment?:
+    | boolean
+    | null;
+  regularly_follow_health_guidelines?: boolean | null;
+
+  // EnvironmentalRisks
+  presence_of_pets_at_home?: boolean | null;
+  presence_of_pets_at_home_answer?: string | null;
+  your_animals_are_vaccinated?: boolean | null;
+  delayed_wound_healing_after_scratches_or_bites?: boolean | null;
+  diagnosed_transmissible_disease_in_household?: string | null;
+  direct_contact_with_animal_bodily_fluids?: string | null;
+  received_guidance_on_zoonoses?: boolean | null;
+
+  // PhysicalMotorRisks
+  performs_physical_activity?: boolean | null;
+  performs_physical_activity_answer?: string | null;
+  has_edema?: boolean | null;
+  has_dyspnea?: boolean | null;
+  has_paresthesia_or_cramps?: boolean | null;
+  has_difficulty_walking_or_activity?: boolean | null;
+
+  // ClassificationConducmMultiProfessional
+  requires_multidisciplinary_referral?: boolean | null;
+  requires_multidisciplinary_referral_choose?: string | null;
 };
 
 /** Payloads mínimos para HAS/DM */
@@ -136,9 +200,11 @@ export type DmApiPayload = {
  */
 export function formToPatientApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
-  mode: "create" | "edit"
+  mode: "create" | "edit",
+  addressId?: number | null
 ): PatientApiPayload {
   const socio: any = (data as any).socio ?? {};
+  const multiprof: any = (data as any).multiprof ?? {};
 
   // nome → quebra simples em first_name / last_name
   const nome: string = socio?.nome?.trim?.() ?? "";
@@ -146,10 +212,9 @@ export function formToPatientApi(
   const last_name = rest.join(" ");
 
   // e-mail: campo opcional no form
-  const rawEmail = socio?.email?.trim?.();
-  const hasEmail = !!rawEmail;
+  const rawEmail = optString(socio?.email);
 
-  // montar user apenas no create
+  // LOGIN (crítico) – montamos sempre que for create
   const user =
     mode === "create"
       ? {
@@ -160,8 +225,7 @@ export function formToPatientApi(
               "paciente"),
           first_name: first_name || "Paciente",
           last_name: last_name || "",
-          ...(hasEmail ? { email: rawEmail } : {}), // ⬅️ não mandamos email se estiver vazio
-          // regra simples: se não tiver senha no form, gera default
+          ...(rawEmail ? { email: rawEmail } : {}),
           password: socio?.password || socio?.senha || "Mudar123!",
         }
       : undefined;
@@ -169,43 +233,155 @@ export function formToPatientApi(
   const renda =
     typeof socio?.renda_familiar === "number"
       ? socio.renda_familiar.toFixed(2)
-      : socio?.renda_familiar != null
+      : socio?.renda_familiar != null && socio.renda_familiar !== ""
         ? String(socio.renda_familiar)
         : null;
+
+  // maps específicos da etapa multiprof
+  const diseaseChoiceMap: Record<string, string> = {
+    chagas: "CHAGAS",
+    leishmaniose: "LEISHMANIOSE",
+    tuberculose: "TUBERCULOSE",
+    toxoplasmose: "TOXOPLASMOSE",
+    esporotricose: "ESPOROTRICOSE",
+    hanseniase: "HANSENIASE",
+  };
+
+  const referralChoiceMap: Record<string, string> = {
+    psicologo: "PSICOLOGO",
+    medico_vet: "MEDICO_VETERINARIO",
+    fisioterapeuta: "FISIOTERAPEUTA",
+    assistente_social: "ASSISTENTE_SOCIAL",
+    enfermeira: "ENFERMEIRA",
+    nutricionista: "NUTRICIONISTA",
+    cirurgia_dentista: "CIRURGIA_DENTISTA",
+    // "outro" não tem campo específico no backend; ignoramos aqui
+  };
 
   const payload: PatientApiPayload = {
     ...(user ? { user } : {}),
 
-    // SocialdemographicData
+    // ───── Sociodemográficos básicos ─────
     cpf: onlyDigits(socio?.sus_cpf) || null,
     birth_date: toDateISO(socio?.nascimento),
-    gender: socio?.genero || null,
-    race_ethnicity: socio?.raca_etnia || null,
+    age: calcAgeFromBirth(socio?.nascimento),
+
+    gender: optString(socio?.genero) ?? null,
+    race_ethnicity: optString(socio?.raca_etnia) ?? null,
+
     scholarity: socio?.escolaridade
       ? (scholarityMap[socio.escolaridade] ?? null)
       : null,
-    occupation: socio?.ocupacao || null,
+
+    occupation: optString(socio?.ocupacao) ?? null,
+
     civil_status: socio?.estado_civil
       ? (civilStatusMap[socio.estado_civil] ?? null)
       : null,
-    people_per_household: socio?.n_pessoas_domicilio ?? null,
-    family_responsability: socio?.responsavel_familiar || null,
+
+    people_per_household:
+      typeof socio?.n_pessoas_domicilio === "number"
+        ? socio.n_pessoas_domicilio
+        : null,
+
+    family_responsability: optString(socio?.responsavel_familiar) ?? null,
     family_income: renda,
-    bolsa_familia:
-      typeof socio?.bolsa_familia === "boolean" ? socio.bolsa_familia : null,
-    // micro_area/address ainda não existem no form – mantemos null por enquanto
-    micro_area: null,
-    address: null,
+    bolsa_familia: nullableBool(socio?.bolsa_familia),
+
+    micro_area:
+      typeof socio?.micro_area_id === "number" ? socio.micro_area_id : null,
+    address:
+      typeof (socio as any)?.address_id === "number"
+        ? (socio as any).address_id
+        : null,
+
     phone: onlyDigits(socio?.telefone) || null,
-    whatsapp: typeof socio?.whatsapp === "boolean" ? socio.whatsapp : null,
+    whatsapp: nullableBool(socio?.whatsapp),
+
+    /** ───────── PsychosocialRisks (psico_*) ───────── */
+    use_psychotropic_medication: yesNoMaybeToBool(
+      multiprof?.psico_uso_psicofarmaco
+    ),
+    use_psychotropic_medication_answer:
+      optString(multiprof?.psico_psicofarmaco_qual) ?? null,
+    any_psychological_psychiatric_diagnosis: yesNoMaybeToBool(
+      multiprof?.psico_diagnostico
+    ),
+    any_psychological_psychiatric_diagnosis_answer:
+      optString(multiprof?.psico_diagnostico_qual) ?? null,
+    everyday_stress_interfere_with_your_BP_BS_control: yesNoMaybeToBool(
+      multiprof?.psico_estresse_interfere
+    ),
+    economic_factors_interfere_with_your_treatment: yesNoMaybeToBool(
+      multiprof?.psico_fatores_economicos
+    ),
+    feel_receive_support_from_family_friends_to_maintain_treatment:
+      yesNoMaybeToBool(multiprof?.psico_apoio_suficiente),
+    regularly_follow_health_guidelines: yesNoMaybeToBool(
+      multiprof?.psico_cumpre_orientacoes
+    ),
+
+    /** ───────── EnvironmentalRisks (ambi_*) ───────── */
+    presence_of_pets_at_home: yesNoMaybeToBool(
+      multiprof?.ambi_animais_domicilio
+    ),
+    presence_of_pets_at_home_answer:
+      optString(multiprof?.ambi_animais_quais) ?? null,
+    your_animals_are_vaccinated: yesNoMaybeToBool(
+      multiprof?.ambi_animais_vacinados
+    ),
+    delayed_wound_healing_after_scratches_or_bites: yesNoMaybeToBool(
+      multiprof?.ambi_feridas_demoram
+    ),
+    diagnosed_transmissible_disease_in_household: (() => {
+      const arr = multiprof?.ambi_doencas_transmissiveis as
+        | string[]
+        | undefined;
+      const first = arr?.[0];
+      if (!first) return null;
+      return diseaseChoiceMap[first] ?? null;
+    })(),
+    direct_contact_with_animal_bodily_fluids:
+      optString(multiprof?.ambi_contato_sangue_fezes_urina) ?? null,
+    received_guidance_on_zoonoses: yesNoMaybeToBool(
+      multiprof?.ambi_orientacao_zoonoses
+    ),
+
+    /** ───────── PhysicalMotorRisks (fisico_*) ───────── */
+    performs_physical_activity: yesNoMaybeToBool(multiprof?.fisico_atividade),
+    performs_physical_activity_answer:
+      multiprof?.fisico_atividade_freq_semana != null &&
+      multiprof.fisico_atividade_freq_semana !== ""
+        ? String(multiprof.fisico_atividade_freq_semana)
+        : null,
+    has_edema: yesNoMaybeToBool(multiprof?.fisico_edemas),
+    has_dyspnea: yesNoMaybeToBool(multiprof?.fisico_dispneia),
+    has_paresthesia_or_cramps: yesNoMaybeToBool(
+      multiprof?.fisico_formigamento_caimbras
+    ),
+    has_difficulty_walking_or_activity: yesNoMaybeToBool(
+      multiprof?.fisico_dificuldade_caminhar
+    ),
+
+    /** ───────── ClassificationConducmMultiProfessional ───────── */
+    requires_multidisciplinary_referral: yesNoMaybeToBool(
+      multiprof?.precisa_enc_multiprof
+    ),
+    requires_multidisciplinary_referral_choose: (() => {
+      const arr = multiprof?.enc_multiprof as string[] | undefined;
+      if (!arr || arr.length === 0) return null;
+
+      const first = arr.find((v) => v !== "outro") ?? arr[0];
+      return referralChoiceMap[first] ?? null;
+    })(),
   };
 
   return payload;
 }
 
 /** BACK (Patient API) → FRONT (form defaultValues)
- *  Preenche apenas o que o step SOCIO usa.
- *  O resto dos steps fica com defaults “em branco”.
+ *  - Se o back não tiver valor, mandamos undefined/"" pro form.
+ *  - Login (nome) continua preenchido pelo user.
  */
 export function patientApiToForm(api: any): RegistroPacienteCreate {
   const socio: any = {};
@@ -218,35 +394,60 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   socio.nome = fullName || "";
   socio.sus_cpf = api?.cpf ?? "";
   socio.nascimento = api?.birth_date ?? null; // string yyyy-mm-dd ou null
-  socio.genero = api?.gender ?? "M";
+
+  // deixamos gênero realmente opcional no form
+  socio.genero = api?.gender ?? undefined;
   socio.genero_outro = "";
-  socio.raca_etnia = api?.race_ethnicity ?? "nao_informado";
+
+  // se race_ethnicity vier nulo, não inventamos "nao_informado"
+  socio.raca_etnia = api?.race_ethnicity ?? undefined;
 
   socio.telefone = api?.phone ?? "";
-  socio.whatsapp = api?.whatsapp ?? false;
+  socio.whatsapp =
+    typeof api?.whatsapp === "boolean" ? api.whatsapp : undefined;
+
+  // ───── Endereço ─────
+  const address: any = api?.address_obj ?? api?.address ?? null;
+  const hasAddress = address && typeof address === "object";
+
+  const logradouro =
+    hasAddress && (address.street || address.number)
+      ? `${address.street ?? ""}${
+          address.number ? `, ${address.number}` : ""
+        }`.trim()
+      : "";
 
   socio.endereco = {
-    logradouro: "",
-    bairro: "",
-    cidade: "",
-    uf: "PB",
-    cep: "",
+    logradouro,
+    bairro: hasAddress ? (address.district ?? "") : "",
+    cidade: hasAddress ? (address.city ?? "") : "",
+    uf: hasAddress ? (address.uf ?? undefined) : undefined,
+    cep: hasAddress ? (address.zipcode ?? "") : "",
   };
 
-  socio.n_pessoas_domicilio = api?.people_per_household ?? undefined;
+  // ───── Demais campos sociodemográficos ─────
+  socio.n_pessoas_domicilio =
+    api?.people_per_household != null ? api.people_per_household : undefined;
+
   socio.responsavel_familiar = api?.family_responsability ?? "";
-  socio.renda_familiar = api?.family_income ?? undefined;
-  socio.bolsa_familia = api?.bolsa_familia ?? false;
+
+  socio.renda_familiar =
+    api?.family_income != null && api.family_income !== ""
+      ? api.family_income
+      : undefined;
+
+  socio.bolsa_familia =
+    typeof api?.bolsa_familia === "boolean" ? api.bolsa_familia : undefined;
 
   socio.escolaridade = api?.scholarity
-    ? (scholarityBackToFront[api.scholarity] ?? "sem_escolaridade")
-    : "sem_escolaridade";
+    ? (scholarityBackToFront[api.scholarity] ?? undefined)
+    : undefined;
 
   socio.ocupacao = api?.occupation ?? "";
 
   socio.estado_civil = api?.civil_status
-    ? (civilStatusBackToFront[api.civil_status] ?? "solteiro")
-    : "solteiro";
+    ? (civilStatusBackToFront[api.civil_status] ?? undefined)
+    : undefined;
 
   // Shape mínimo compatível com RegistroPacienteCreateZ
   return {

@@ -4,6 +4,11 @@
 import PatientWizard from "@/components/pacientes/PatientWizard";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
 import {
+  createAddress,
+  updateAddress,
+  type AddressApiPayload,
+} from "@/lib/api/locations";
+import {
   RegistroPacienteCreateZ,
   RegistroPacienteEditZ,
   type RegistroPacienteCreate,
@@ -42,6 +47,7 @@ type Props =
       defaultValues: CreateFormInput;
       hasId?: number | null;
       dmId?: number | null;
+      addressId?: number | null;
     };
 
 /* ===========================
@@ -118,6 +124,33 @@ function getUserScopedDraftKey(): string {
   } catch {
     return `${BASE_DRAFT_KEY}:anon`;
   }
+}
+
+/**
+ * Tenta separar "Rua Tal, 123" ou "Rua Tal 123" em `street` e `number`.
+ * Se não encontrar número, usa 1 como fallback (campo é obrigatório e positivo).
+ */
+function splitStreetAndNumber(raw: string | undefined | null): {
+  street: string;
+  number: number;
+} {
+  if (!raw) return { street: "", number: 1 };
+
+  const trimmed = raw.trim();
+
+  // Padrões comuns: "Rua X, 123" ou "Rua X 123"
+  const m = trimmed.match(/^(.*?)[,\s]+(\d+)\s*$/);
+  if (m) {
+    const street = m[1].trim();
+    const num = Number(m[2]);
+    return {
+      street: street || trimmed,
+      number: Number.isFinite(num) && num > 0 ? num : 1,
+    };
+  }
+
+  // Se não bater regex, considera tudo rua e número = 1
+  return { street: trimmed, number: 1 };
 }
 
 /* ===========================
@@ -255,11 +288,66 @@ export default function PatientForm(props: Props) {
     try {
       const parsed = schema.parse(rawData);
 
-      // converte o objeto do form no payload que o backend espera para PatientUser
+      const socio: any = (parsed as any).socio ?? {};
+      const endereco = socio?.endereco;
+
+      // id do endereço que veio do backend (via patientApiToForm)
+      const existingAddressId: number | null =
+        socio?.address_id != null && socio.address_id !== ""
+          ? Number(socio.address_id)
+          : null;
+
+      // Verifica se o usuário preencheu um endereço minimamente válido
+      const hasMinimumAddress =
+        endereco &&
+        typeof endereco.logradouro === "string" &&
+        endereco.logradouro.trim() !== "" &&
+        typeof endereco.bairro === "string" &&
+        endereco.bairro.trim() !== "" &&
+        typeof endereco.cidade === "string" &&
+        endereco.cidade.trim() !== "" &&
+        !!endereco.uf;
+
+      let addressId: number | null = existingAddressId;
+
+      // Se tiver endereço preenchido, cria/atualiza na API de locations
+      if (hasMinimumAddress) {
+        const { street, number } = splitStreetAndNumber(endereco.logradouro);
+
+        const addressPayload: AddressApiPayload = {
+          uf: endereco.uf,
+          city: endereco.cidade,
+          district: endereco.bairro,
+          street,
+          number,
+          complement: null,
+          zipcode: endereco.cep || null,
+        };
+
+        if (isCreate || !existingAddressId) {
+          // CREATE ou paciente antigo que ainda não tinha address
+          const createdAddress = await createAddress<{ id: number }>(
+            addressPayload
+          );
+          addressId = (createdAddress as any)?.id ?? null;
+        } else {
+          // EDIT com address já existente → faz UPDATE
+          await updateAddress(existingAddressId, addressPayload);
+          addressId = existingAddressId;
+        }
+      } else {
+        // Usuário apagou tudo do endereço → remove vínculo
+        addressId = null;
+      }
+
+      // Monta payload principal do paciente
       const apiPayload = formToPatientApi(
         parsed as RegistroPacienteCreate | RegistroPacienteEdit,
         isCreate ? "create" : "edit"
       );
+
+      // Injeta o id do endereço (ou null se limpou)
+      (apiPayload as any).address = addressId;
 
       if (isCreate) {
         // 1) cria o paciente
@@ -279,14 +367,13 @@ export default function PatientForm(props: Props) {
           await createDM(dmPayload);
         }
 
-        // 3) limpamos o rascunho do usuário atual, já que o registro foi salvo
+        // 3) limpa rascunho deste usuário
         if (typeof window !== "undefined") {
           const draftKey = getDraftKey();
           window.localStorage.removeItem(draftKey);
         }
 
         notifySuccess("Paciente cadastrado com sucesso.");
-        // ajuste essa rota se a lista de pacientes estiver em outro caminho
         router.push("/pacientes");
       } else {
         const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;

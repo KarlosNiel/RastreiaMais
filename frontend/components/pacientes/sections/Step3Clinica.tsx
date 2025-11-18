@@ -99,7 +99,8 @@ function BlocoHAS() {
 
   useEffect(() => {
     try {
-      const peso = typeof pesoHas === "string" ? parseDecimal(pesoHas) : pesoHas;
+      const peso =
+        typeof pesoHas === "string" ? parseDecimal(pesoHas) : pesoHas;
       const alturaRaw =
         typeof alturaHas === "string" ? parseDecimal(alturaHas) : alturaHas;
 

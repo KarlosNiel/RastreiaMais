@@ -8,7 +8,7 @@ import { useState } from "react";
 
 export default function LoginPacientePage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -19,15 +19,30 @@ export default function LoginPacientePage() {
     if (loading) return; // evita duplo submit
     setError(null);
 
-    const username = email.trim().toLowerCase();
-    if (!username) return setError("Informe o e-mail.");
-    if (!password) return setError("Informe sua senha.");
+    const rawLogin = login.trim();
+    if (!rawLogin) {
+      setError("Informe CPF, e-mail ou usuário.");
+      return;
+    }
+    if (!password) {
+      setError("Informe sua senha.");
+      return;
+    }
+
+    /// Normalização leve:
+    // - se tiver "@", assume e-mail e deixa minúsculo
+    // - caso contrário, envia como veio (CPF com/sem máscara ou username)
+    const identifier = rawLogin.includes("@")
+      ? rawLogin.toLowerCase()
+      : rawLogin;
 
     setLoading(true);
     try {
-      await loginAndAssertRole(username, password, ["PATIENT"], rememberMe);
+      // O backend (EmailOrUsernameOrCpfTokenObtainPairSerializer)
+      // decide se é e-mail / CPF / username.
+      await loginAndAssertRole(identifier, password, ["PATIENT"], rememberMe);
 
-      // 2) Cookie leve p/ middleware e redirect
+      // Cookie leve p/ middleware e redirect
       setRoleCookie("PATIENT");
       router.replace("/me");
     } catch (err: any) {
@@ -55,21 +70,21 @@ export default function LoginPacientePage() {
       >
         <TextField
           className="pb-6"
-          label="E-mail"
-          type="email"
-          name="email"
-          value={email}
-          onValueChange={setEmail}
-          placeholder="nome@exemplo.com"
+          label="CPF ou e-mail"
+          type="text"
+          name="login"
+          value={login}
+          onValueChange={setLogin}
+          placeholder="Digite seu CPF ou e-mail"
           isRequired
           autoFocus
-          autoComplete="email"
+          autoComplete="username"
           autoCapitalize="none"
           spellCheck="false"
           enterKeyHint="next"
           classNames={{
             input: "",
-            inputWrapper: "border border-orange-600 transition"
+            inputWrapper: "border border-orange-600 transition",
           }}
         />
 
@@ -86,7 +101,7 @@ export default function LoginPacientePage() {
           enterKeyHint="done"
           classNames={{
             input: "",
-            inputWrapper: "border border-orange-600 hover:shadow-sm transition"
+            inputWrapper: "border border-orange-600 hover:shadow-sm transition",
           }}
         />
 

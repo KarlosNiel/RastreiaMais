@@ -1,8 +1,8 @@
-// app/pacientes/(form)/[id]/editar/EditPatientClient.tsx
 "use client";
 
 import PatientForm from "@/components/pacientes/PatientForm";
 import { apiGet } from "@/lib/api";
+import { getAddress } from "@/lib/api/locations";
 import {
   dmApiToForm,
   hasApiToForm,
@@ -33,10 +33,27 @@ export default function EditPatientClient({ id }: Props) {
       setError(null);
 
       try {
+        // 1) Dados principais do paciente
         const pacienteApi = await apiGet<any>(
           `/api/v1/accounts/patients/${id}/`
         );
 
+        // 2) Buscar Address completo, se houver ID em paciente.address
+        let addressObj: any = null;
+        if (pacienteApi?.address) {
+          try {
+            addressObj = await getAddress<any>(Number(pacienteApi.address));
+          } catch (e) {
+            console.error("Falha ao carregar endereço do paciente:", e);
+          }
+        }
+
+        const pacienteApiWithAddress = {
+          ...pacienteApi,
+          address_obj: addressObj,
+        };
+
+        // 3) Condições HAS/DM (listas)
         const [hasRaw, dmRaw] = await Promise.all([
           apiGet<any>(
             `/api/v1/conditions/systolic-hypertension-cases/?patient=${id}`
@@ -45,8 +62,6 @@ export default function EditPatientClient({ id }: Props) {
             `/api/v1/conditions/diabetes-mellitus-cases/?patient=${id}`
           ),
         ]);
-
-        const defaultValues = patientApiToForm(pacienteApi);
 
         const normalize = (d: any) =>
           Array.isArray(d) ? d : Array.isArray(d?.results) ? d.results : [];
@@ -61,17 +76,38 @@ export default function EditPatientClient({ id }: Props) {
           dmList.find((item: any) => Number(item.patient) === Number(id)) ??
           null;
 
+        // 4) Mapper principal para o formulário (inclui endereco)
+        const defaultValues = patientApiToForm(pacienteApiWithAddress);
+
+        // 4.1) Descobre o ID do endereço (se existir)
+        const addressId =
+          (addressObj && addressObj.id != null
+            ? Number(addressObj.id)
+            : pacienteApi?.address != null
+              ? Number(pacienteApi.address)
+              : null) ?? null;
+
+        if (!defaultValues.socio) {
+          (defaultValues as any).socio = {};
+        }
+
+        // Anexamos IDs "técnicos" usados apenas no fluxo de edição
+        (defaultValues as any).socio.address_id = addressId;
+        (defaultValues as any).socio.micro_area_id =
+          pacienteApi?.micro_area ?? null;
+
         let hasId: number | null = null;
         let dmId: number | null = null;
 
+        // Preenche flags + dados clínicos no defaultValues
         if (has) {
-          hasId = has.id;
+          hasId = Number(has.id);
           defaultValues.condicoes.has = true;
           defaultValues.clinica.has = hasApiToForm(has) as any;
         }
 
         if (dm) {
-          dmId = dm.id;
+          dmId = Number(dm.id);
           defaultValues.condicoes.dm = true;
           defaultValues.clinica.dm = dmApiToForm(dm) as any;
         }

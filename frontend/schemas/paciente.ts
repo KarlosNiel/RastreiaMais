@@ -4,20 +4,41 @@ import { z } from "zod";
 const emptyToUndef = (v: unknown) =>
   v === "" || v === null || typeof v === "undefined" ? undefined : v;
 
-// ⬇️ AGORA StrOpt aceita undefined/vazio sem estourar a validação
+// string opcional, já tratando "", null, undefined
 const StrOpt = z.preprocess(
   (v) => (v === "" || v === null || typeof v === "undefined" ? undefined : v),
   z.string().optional()
 );
 
-const NumOpt = z.preprocess(emptyToUndef, z.coerce.number());
-const IntOpt = z.preprocess(emptyToUndef, z.coerce.number().int());
-const DateOpt = z.preprocess(emptyToUndef, z.coerce.date());
+// NÚMEROS / DATA OPCIONAIS DE VERDADE
+// - se vier "", null ou undefined => vira undefined e passa sem erro
+// - se vier algo preenchido, faz coerce e valida
+const NumOpt = z.preprocess(
+  emptyToUndef,
+  z.union([z.coerce.number(), z.undefined()])
+);
+
+const IntOpt = z.preprocess(
+  emptyToUndef,
+  z.union([z.coerce.number().int(), z.undefined()])
+);
+
+const DateOpt = z.preprocess(
+  emptyToUndef,
+  z.union([z.coerce.date(), z.undefined()])
+);
 
 const NumPosOpt = (msg = "Valor inválido") =>
-  z.preprocess(emptyToUndef, z.coerce.number().positive(msg));
+  z.preprocess(
+    emptyToUndef,
+    z.union([z.coerce.number().positive(msg), z.undefined()])
+  );
+
 const IntPosOpt = (msg = "Valor inválido") =>
-  z.preprocess(emptyToUndef, z.coerce.number().int().positive(msg));
+  z.preprocess(
+    emptyToUndef,
+    z.union([z.coerce.number().int().positive(msg), z.undefined()])
+  );
 
 /** ========= Enums base ========= **/
 export const UFZ = z.enum([
@@ -50,6 +71,8 @@ export const UFZ = z.enum([
   "TO",
 ]);
 
+const UfOptZ = z.preprocess(emptyToUndef, z.union([UFZ, z.undefined()]));
+
 const YesNoMaybeZ = z.enum(["sim", "nao", "nao_sabe"]);
 const SimNaoZ = z.enum(["sim", "nao"]);
 const SimNaoNsaZ = z.enum(["sim", "nao", "nao_se_aplica"]);
@@ -78,7 +101,7 @@ export const EscolaridadeZ = z.enum([
 
 /** Telefone: permite vazio, mas se preencher, valida 10–11 dígitos */
 const TelefoneZ = z
-  .preprocess(emptyToUndef, z.string().optional())
+  .preprocess(emptyToUndef, z.union([z.string(), z.undefined()]))
   .transform((s) => (s ?? "").replace(/\D+/g, ""))
   .refine(
     (s) => !s || (s.length >= 10 && s.length <= 11),
@@ -87,39 +110,39 @@ const TelefoneZ = z
 
 export const SocioZ = z
   .object({
+    /* ===== CAMPOS LIGADOS AO LOGIN (OBRIGATÓRIOS) ===== */
+
+    // Nome que vira first_name / last_name do usuário
     nome: z.string().min(3, "Informe o nome completo"),
-    nascimento: DateOpt, // exigido via refine abaixo
 
-    genero: z.enum(["M", "F", "O"]),
-    genero_outro: StrOpt.optional(),
-    raca_etnia: StrOpt.optional(),
+    // Usado pra cálculo de idade e registro clínico
+    nascimento: DateOpt, // continua exigido via refine abaixo
 
-    // CPF somente (11 dígitos). Para aceitar CNS também, veja bloco comentado abaixo.
+    // CPF que usamos pra username / identificação
     sus_cpf: z
       .string()
       .transform((s) => s.replace(/\D+/g, ""))
       .refine((s) => /^\d{11}$/.test(s), "CPF inválido"),
 
-    // // CPF (11) OU CNS (15):
-    // sus_cpf: z
-    //   .string()
-    //   .transform((s) => s.replace(/\D+/g, ""))
-    //   .refine((s) => /^\d{11}$|^\d{15}$/.test(s), "Informe CPF (11) ou CNS (15)"),
+    /* ===== DEMAIS SOCIODEMOGRÁFICOS (PODEM SER OPCIONAIS) ===== */
+
+    genero: z.enum(["M", "F", "O"]).optional(),
+    genero_outro: StrOpt.optional(),
+    raca_etnia: StrOpt.optional(),
 
     acs_responsavel: StrOpt.optional(),
     /** @deprecated use 'acs_responsavel' (string) */
-    acs_responsavel_id: z
-      .preprocess(emptyToUndef, z.coerce.number().int())
-      .optional(),
+    acs_responsavel_id: IntOpt.optional(),
 
-    telefone: TelefoneZ,
+    telefone: TelefoneZ, // pode ficar vazio; se preencher, valida
     whatsapp: z.boolean().default(false),
 
+    // ENDEREÇO – todos os campos podem ficar em branco
     endereco: z.object({
-      logradouro: z.string().min(3, "Informe endereço"),
-      bairro: z.string().min(2, "Informe bairro"),
-      cidade: z.string().min(2, "Informe cidade"),
-      uf: UFZ,
+      logradouro: StrOpt, // sem min(), realmente opcional
+      bairro: StrOpt,
+      cidade: StrOpt,
+      uf: UfOptZ,
       cep: StrOpt.optional().refine(
         (v) => !v || /^\d{5}-?\d{3}$/.test(v),
         "CEP inválido"
@@ -131,15 +154,25 @@ export const SocioZ = z
     renda_familiar: NumOpt.optional(),
     bolsa_familia: z.boolean().default(false),
 
-    escolaridade: EscolaridadeZ,
+    // Não impactam login → opcionais
+    escolaridade: EscolaridadeZ.optional(),
     ocupacao: StrOpt.optional(),
+    estado_civil: EstadoCivilZ.optional(),
 
-    estado_civil: EstadoCivilZ,
+    address_id: z.preprocess(emptyToUndef, z.coerce.number().int()).optional(),
+    micro_area_id: z
+      .preprocess(emptyToUndef, z.coerce.number().int())
+      .optional(),
   })
-  .refine((v) => (v.genero !== "O" ? true : !!v.genero_outro?.trim()), {
-    path: ["genero_outro"],
-    message: "Descreva o gênero",
-  })
+  // Se escolheu "Outro", obriga descrever — se não escolheu nada, não reclama
+  .refine(
+    (v) => (!v.genero || v.genero !== "O" ? true : !!v.genero_outro?.trim()),
+    {
+      path: ["genero_outro"],
+      message: "Descreva o gênero",
+    }
+  )
+  // Nascimento ainda obrigatório (login/registro clínico)
   .refine((v) => !!v.nascimento, {
     path: ["nascimento"],
     message: "Informe a data de nascimento",
@@ -148,11 +181,6 @@ export const SocioZ = z
 /* ########################
  * STEP 2 — CONDIÇÕES CRÔNICAS
  * ######################## */
-/**
- * Antes havia um refine obrigando marcar HAS/DM ou outras_dcnts.
- * Isso podia bloquear o submit quando o usuário queria apenas cadastrar o básico.
- * Como o backend aceita paciente sem condições, removemos essa exigência.
- */
 export const CondicoesZ = z.object({
   has: z.boolean().default(false),
   dm: z.boolean().default(false),
@@ -173,13 +201,11 @@ export const ClinicaHASZ = z.object({
     .optional(),
   complicacao_outra: StrOpt.optional(),
 
-  // Pressão arterial (duas aferições)
   pa1_sis: IntPosOpt("Sistólica inválida").optional(),
   pa1_dia: IntPosOpt("Diastólica inválida").optional(),
   pa2_sis: IntPosOpt("Sistólica inválida").optional(),
   pa2_dia: IntPosOpt("Diastólica inválida").optional(),
 
-  // Medidas / estilo de vida / labs
   peso: NumPosOpt("Peso inválido").optional(),
   altura: NumPosOpt("Altura inválida").optional(),
   imc: NumPosOpt("IMC inválido").optional(),
