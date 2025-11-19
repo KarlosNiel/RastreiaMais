@@ -36,15 +36,15 @@ export type PatientRow = {
     last_name: string;
   };
   cpf: string;
-  address: {
-    uf: string;
-    city: string;
-    district: string;
-    street: string;
-    number: number;
+  address?: {
+    uf?: string;
+    city?: string;
+    district?: string;
+    street?: string;
+    number?: number;
     complement?: string;
     zipcode?: string;
-  };
+  } | null;
 };
 
 type Column = {
@@ -170,10 +170,26 @@ export function PacientesTable({
       switch (k) {
         case "user":
           return `${row.user.first_name} ${row.user.last_name}`;
-        case "address":
-          return row.address
-            ? `${row.address.street}, ${row.address.number} - ${row.address.district}, ${row.address.city}/${row.address.uf}`
-            : "—";
+        case "address": {
+          const a = row.address;
+          if (!a) return "—";
+
+          const street = a.street ?? "";
+          const number = a.number ?? "";
+          const district = a.district ?? "";
+          const city = a.city ?? "";
+          const uf = a.uf ?? "";
+
+          // Se tudo vier vazio, mostra traço
+          if (!street && !number && !district && !city && !uf) return "—";
+
+          return `${street || ""}${street && number ? ", " : ""}${number || ""}${
+            (street || number) && (district || city || uf) ? " - " : ""
+          }${district || ""}${district && city ? ", " : ""}${city || ""}${
+            city && uf ? "/" : ""
+          }${uf || ""}`;
+        }
+
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
@@ -313,12 +329,33 @@ export default function Page() {
   } = useQuery<PatientRow[]>({
     queryKey: ["patients"],
     queryFn: async () => {
-      const resp = await apiGet<PatientRow[]>("/api/v1/accounts/patients/");
-      if (Array.isArray(resp)) return resp;
-      if (resp && "results" in resp && Array.isArray((resp as any).results)) {
-        return (resp as any).results;
-      }
-      return [];
+      const resp = await apiGet<any>("/api/v1/accounts/patients/");
+
+      const list = Array.isArray(resp)
+        ? resp
+        : resp && Array.isArray((resp as any).results)
+          ? (resp as any).results
+          : [];
+
+      return list.map((p: any): PatientRow => {
+        // Se address for número (id), ignora como objeto
+        const addrFromAddress =
+          p.address && typeof p.address === "object" ? p.address : null;
+
+        const addrFromObj =
+          p.address_obj && typeof p.address_obj === "object"
+            ? p.address_obj
+            : null;
+
+        const addr = addrFromAddress || addrFromObj;
+
+        return {
+          id: String(p.id),
+          user: p.user ?? { first_name: "", last_name: "" },
+          cpf: p.cpf ?? "",
+          address: addr,
+        };
+      });
     },
   });
 
