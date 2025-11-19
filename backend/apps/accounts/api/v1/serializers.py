@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.accounts.models import *
 from apps.commons.api.v1.serializers import BaseSerializer
+from apps.locations.api.v1.serializers import AddressSerializer
 
 class UserSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
@@ -21,6 +22,7 @@ class UserSerializer(BaseSerializer):
 class PatientUserSerializer(BaseSerializer):
     user = UserSerializer()
     conditions = serializers.SerializerMethodField() 
+    address = AddressSerializer(read_only=True)
 
     class Meta(BaseSerializer.Meta):
         model = PatientUser

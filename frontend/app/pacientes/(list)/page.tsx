@@ -36,7 +36,15 @@ export type PatientRow = {
     last_name: string;
   };
   cpf: string;
-  microarea: string;
+  address: {
+    uf: string;
+    city: string;
+    district: string;
+    street: string;
+    number: number;
+    complement?: string;
+    zipcode?: string;
+  };
 };
 
 type Column = {
@@ -55,7 +63,7 @@ const RISK_OPTIONS = [
 const COLUMNS: Column[] = [
   { name: "Nome", uid: "user", sortable: true, align: "start" },
   { name: "CPF", uid: "cpf", sortable: true, align: "start" },
-  { name: "Micro-área", uid: "microarea", sortable: true, align: "start" },
+  { name: "Endereço", uid: "address", sortable: true, align: "start" },
   { name: "Ações", uid: "actions", align: "end" },
 ];
 
@@ -100,9 +108,11 @@ export function PacientesTable({
         const nome =
           `${r.user?.first_name ?? ""} ${r.user?.last_name ?? ""}`.toLowerCase();
         const cpf = r.cpf ?? "";
-        const micro = r.microarea?.toLowerCase() ?? "";
+        const endereco = r.address
+          ? `${r.address.street ?? ""} ${r.address.number ?? ""} ${r.address.district ?? ""} ${r.address.city ?? ""} ${r.address.uf ?? ""}`.toLowerCase()
+          : "";
 
-        return nome.includes(q) || cpf.includes(q) || micro.includes(q);
+        return nome.includes(q) || cpf.includes(q) || endereco.includes(q);
       });
     }
 
@@ -127,6 +137,13 @@ export function PacientesTable({
       if (key === "user") {
         first = `${a.user.first_name} ${a.user.last_name}`;
         second = `${b.user.first_name} ${b.user.last_name}`;
+      } else if (key === "address") {
+        first = a.address
+          ? `${a.address.street}, ${a.address.number} - ${a.address.district}, ${a.address.city}/${a.address.uf}`
+          : "";
+        second = b.address
+          ? `${b.address.street}, ${b.address.number} - ${b.address.district}, ${b.address.city}/${b.address.uf}`
+          : "";
       } else {
         first = (a as any)[key] ?? "";
         second = (b as any)[key] ?? "";
@@ -153,6 +170,10 @@ export function PacientesTable({
       switch (k) {
         case "user":
           return `${row.user.first_name} ${row.user.last_name}`;
+        case "address":
+          return row.address
+            ? `${row.address.street}, ${row.address.number} - ${row.address.district}, ${row.address.city}/${row.address.uf}`
+            : "—";
         case "actions":
           return (
             <div className="flex items-center justify-end gap-2">
@@ -194,7 +215,7 @@ export function PacientesTable({
           radius="full"
           variant="flat"
           className="w-full sm:max-w-[44%]"
-          placeholder="Buscar paciente, CPF ou micro-área..."
+          placeholder="Buscar paciente, CPF ou endereço..."
           value={filterValue}
           onClear={() => setFilterValue("")}
           onValueChange={(v) => setFilterValue(v)}
@@ -317,14 +338,11 @@ export default function Page() {
             rows={patients}
             onAction={(action, row) => {
               if (action === "edit") {
-                // redireciona para a página de edição do paciente
                 router.push(`/pacientes/${row.id}/editar`);
               }
-              // se quiser, pode reaproveitar "open" para a mesma página:
               if (action === "open") {
                 router.push(`/pacientes/${row.id}/editar`);
               }
-              // "delete" fica pra implementar depois
             }}
           />
         )}

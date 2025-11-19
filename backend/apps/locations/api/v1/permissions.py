@@ -10,12 +10,8 @@ class LocationsDataPermissions(BaseRolePermission):
         if not user.is_authenticated:
             return False
         
-        if user.is_superuser or self.is_manager(request):
+        if user.is_superuser or self.is_manager(request) or self.is_professional(request):
             return True
-        
-        if self.is_professional(request):
-            self.message = "Profissionais não tem permissão para acessar está rota."
-            return False
         
         if self.is_patient(request):
             self.message = "Pacientes não tem permissão para acessar está rota."
