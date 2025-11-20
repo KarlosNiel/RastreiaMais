@@ -4,6 +4,7 @@ import PatientForm from "@/components/pacientes/PatientForm";
 import { apiGet } from "@/lib/api";
 import { getAddress } from "@/lib/api/locations";
 import {
+  applyLifestyleFromPatientApiToClinica,
   dmApiToForm,
   hasApiToForm,
   patientApiToForm,
@@ -19,6 +20,13 @@ type LoadedData = {
   hasId: number | null;
   dmId: number | null;
 };
+
+function normalizeListResponse(raw: any): any[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw?.results)) return raw.results;
+  return [];
+}
 
 export default function EditPatientClient({ id }: Props) {
   const [loading, setLoading] = useState(true);
@@ -63,11 +71,8 @@ export default function EditPatientClient({ id }: Props) {
           ),
         ]);
 
-        const normalize = (d: any) =>
-          Array.isArray(d) ? d : Array.isArray(d?.results) ? d.results : [];
-
-        const hasList = normalize(hasRaw);
-        const dmList = normalize(dmRaw);
+        const hasList = normalizeListResponse(hasRaw);
+        const dmList = normalizeListResponse(dmRaw);
 
         const has =
           hasList.find((item: any) => Number(item.patient) === Number(id)) ??
@@ -79,7 +84,26 @@ export default function EditPatientClient({ id }: Props) {
         // 4) Mapper principal para o formulário (inclui endereco)
         const defaultValues = patientApiToForm(pacienteApiWithAddress);
 
-        // 4.1) Descobre o ID do endereço (se existir)
+        // 4.1) Garante estruturas base (defensivo)
+        if (!defaultValues.socio) {
+          (defaultValues as any).socio = {};
+        }
+        if (!defaultValues.condicoes) {
+          (defaultValues as any).condicoes = {
+            has: false,
+            dm: false,
+            outras_dcnts: "",
+            outras_em_acompanhamento: undefined,
+          };
+        }
+        if (!defaultValues.clinica) {
+          (defaultValues as any).clinica = {
+            has: undefined,
+            dm: undefined,
+          } as any;
+        }
+
+        // 4.2) Descobre o ID do endereço (se existir)
         const addressId =
           (addressObj && addressObj.id != null
             ? Number(addressObj.id)
@@ -87,11 +111,6 @@ export default function EditPatientClient({ id }: Props) {
               ? Number(pacienteApi.address)
               : null) ?? null;
 
-        if (!defaultValues.socio) {
-          (defaultValues as any).socio = {};
-        }
-
-        // Anexamos IDs "técnicos" usados apenas no fluxo de edição
         (defaultValues as any).socio.address_id = addressId;
         (defaultValues as any).socio.micro_area_id =
           pacienteApi?.micro_area ?? null;
@@ -99,18 +118,28 @@ export default function EditPatientClient({ id }: Props) {
         let hasId: number | null = null;
         let dmId: number | null = null;
 
-        // Preenche flags + dados clínicos no defaultValues
+        // 5) Preenche flags + dados clínicos no defaultValues (HAS)
         if (has) {
           hasId = Number(has.id);
           defaultValues.condicoes.has = true;
           defaultValues.clinica.has = hasApiToForm(has) as any;
+        } else {
+          // Garantia: sem registro de HAS no back → começa desmarcado no form
+          defaultValues.condicoes.has = false;
+          defaultValues.clinica.has = undefined as any;
         }
 
+        // 6) Preenche flags + dados clínicos no defaultValues (DM)
         if (dm) {
           dmId = Number(dm.id);
           defaultValues.condicoes.dm = true;
           defaultValues.clinica.dm = dmApiToForm(dm) as any;
+        } else {
+          defaultValues.condicoes.dm = false;
+          defaultValues.clinica.dm = undefined as any;
         }
+
+        applyLifestyleFromPatientApiToClinica(defaultValues, pacienteApi);
 
         if (!cancelled) {
           setData({ defaultValues, hasId, dmId });

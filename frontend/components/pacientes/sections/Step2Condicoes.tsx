@@ -3,24 +3,48 @@
 
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { Card, CardBody, Checkbox, Divider, Input } from "@heroui/react";
+import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-/** Campos validados neste passo (use no PatientWizard.stepFields[1]) */
+/** Campos validados neste passo  */
 export const STEP2_FIELDS = [
   "condicoes.has",
   "condicoes.dm",
-  // Mantemos o outras_dcnts para a regra do Zod (HAS/DM ou outra),
-  // mas ele é opcional; com o Controller abaixo o value nunca vira undefined.
   "condicoes.outras_dcnts",
   "condicoes.outras_em_acompanhamento",
 ] as const;
 
 export default function Step2Condicoes() {
-  const { control } = useFormContext();
+  const { control, watch, setValue } = useFormContext();
+
+  useEffect(() => {
+    const subscription = watch((values, { name }) => {
+      if (name === "condicoes.has" && values?.condicoes?.has === false) {
+        // limpa todos os campos clínicos de HAS
+        setValue("clinica.has", undefined, {
+          shouldDirty: true,
+          shouldValidate: false,
+        });
+      }
+
+      if (name === "condicoes.dm" && values?.condicoes?.dm === false) {
+        // idem para DM
+        setValue("clinica.dm", undefined, {
+          shouldDirty: true,
+          shouldValidate: false,
+        });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
+      <Card
+        shadow="none"
+        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+      >
         <CardBody className="space-y-6">
           <h2 className="text-xl font-semibold">2. Condições Crônicas</h2>
 
@@ -42,7 +66,7 @@ export default function Step2Condicoes() {
                       classNames={{
                         base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
-                        wrapper: "bg-gray-100 dark:bg-gray-800"
+                        wrapper: "bg-gray-100 dark:bg-gray-800",
                       }}
                     >
                       Hipertensão Arterial
@@ -59,9 +83,9 @@ export default function Step2Condicoes() {
                       classNames={{
                         base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
-                        wrapper: "bg-gray-100 dark:bg-gray-800"
+                        wrapper: "bg-gray-100 dark:bg-gray-800",
                       }}
-                    > 
+                    >
                       Diabetes Mellitus
                     </Checkbox>
                   )}
@@ -90,11 +114,9 @@ export default function Step2Condicoes() {
                 render={({ field, fieldState }) => (
                   <Input
                     className="md:col-span-8"
-                    classNames={
-                      {
-                        inputWrapper: "dark:bg-gray-800"
-                      }
-                    }
+                    classNames={{
+                      inputWrapper: "dark:bg-gray-800",
+                    }}
                     label="Descrever (opcional)"
                     placeholder="Ex.: Asma, DPOC, Doença renal crônica"
                     description={

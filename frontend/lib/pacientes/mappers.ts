@@ -49,6 +49,120 @@ const treatmentStatusBackToFront: Record<string, string> = {
   NAO_SE_APLICA: "nao_se_aplica",
 };
 
+/** ─────────────────────────────────────────────────────────────
+ *  HAS — Classificação PA / Framingham / Conduta
+ *  ──────────────────────────────────────────────────────────── */
+
+// front → back (choices do backend)
+const bpClassificationMap: Record<string, string> = {
+  normal: "NORMAL",
+  pre_hipertenso: "PRE_HIPERTENSO",
+  estagio1: "HIPERTENSO_E1",
+  estagio2: "HIPERTENSO_E2",
+  estagio3: "HIPERTENSO_E3",
+};
+
+const bpClassificationBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(bpClassificationMap).map(([front, back]) => [back, front])
+);
+
+const framinghamMap: Record<string, string> = {
+  "<10": "BAIXO",
+  "10-20": "MODERADO",
+  ">20": "ALTO",
+};
+
+const framinghamBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(framinghamMap).map(([front, back]) => [back, front])
+);
+
+// Conduta adotada (HAS)
+const conductHasMap: Record<string, string> = {
+  aps: "ACOMPANHAMENTO_APS",
+  encaminhamento: "ENCAMINHAMENTO_MEDICO",
+  grupo: "ACONSELHAMENTO_GRUPO",
+  // "outro" não tem equivalente no backend (não há campo texto livre)
+};
+
+const conductHasBackToFront: Record<string, string> = {
+  ACOMPANHAMENTO_APS: "aps",
+  ENCAMINHAMENTO_MEDICO: "encaminhamento",
+  ACONSELHAMENTO_GRUPO: "grupo",
+};
+
+const hasComplicationsMap: Record<string, string> = {
+  avc: "AVC",
+  infarto: "INFARTO",
+  renal: "DOENCA_RENAL",
+};
+
+const hasComplicationsBackToFront: Record<string, string> = {
+  AVC: "avc",
+  INFARTO: "infarto",
+  DOENCA_RENAL: "renal",
+};
+
+/** ─────────────────────────────────────────────────────────────
+ *  Estilo de Vida (LifeStyle em PatientUser)
+ *  ──────────────────────────────────────────────────────────── */
+
+const feedingMap: Record<string, string> = {
+  saudavel: "SAUDAVEL",
+  parcial: "PARCIALMENTE",
+  pouco: "POUCO",
+};
+
+const feedingBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(feedingMap).map(([front, back]) => [back, front])
+);
+
+const saltConsumptionMap: Record<string, string> = {
+  adequado: "ADEQUADO",
+  exagerado: "EXAGERADO",
+  nao_sabe: "NAO_SABE",
+};
+
+const saltConsumptionBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(saltConsumptionMap).map(([front, back]) => [back, front])
+);
+
+const alcoholConsumptionMap: Record<string, string> = {
+  nao_bebe: "NAO_BEBE",
+  socialmente: "SOCIALMENTE",
+  frequentemente: "FREQUENTEMENTE",
+};
+
+const alcoholConsumptionBackToFront: Record<string, string> =
+  Object.fromEntries(
+    Object.entries(alcoholConsumptionMap).map(([front, back]) => [back, front])
+  );
+
+const smokingMap: Record<string, string> = {
+  nunca: "NUNCA_FUMOU",
+  ex: "EX_FUMANTE",
+  atual: "FUMANTE_ATUAL",
+};
+
+const smokingBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(smokingMap).map(([front, back]) => [back, front])
+);
+
+// ultima_consulta_has / ultima_consulta_dm → LastCheckChoices
+const lastConsultationMap: Record<string, string> = {
+  "7d": "7_DIAS",
+  "15d": "15_DIAS",
+  "30d": "30_DIAS",
+  "60d": "60_DIAS",
+  "90d": "90_DIAS",
+  "6m": "6_MESES",
+  "1a": "1_ANO",
+  ">1a": "MAIS_DE_1_ANO",
+};
+
+const lastConsultationBackToFront: Record<string, string> = Object.fromEntries(
+  Object.entries(lastConsultationMap).map(([front, back]) => [back, front])
+);
+
 function yesNoMaybeToBool(v?: string | null): boolean | null {
   if (!v) return null;
   if (v === "sim") return true;
@@ -206,6 +320,13 @@ export type PatientApiPayload = {
   has_paresthesia_or_cramps?: boolean | null;
   has_difficulty_walking_or_activity?: boolean | null;
 
+  // LifeStyle (apps.accounts.data.patient.LifeStyle)
+  feed?: string | null;
+  salt_consumption?: string | null;
+  alcohol_consumption?: string | null;
+  smoking?: string | null;
+  last_consultation?: string | null;
+
   // ClassificationConducmMultiProfessional
   requires_multidisciplinary_referral?: boolean | null;
   requires_multidisciplinary_referral_choose?: string | null;
@@ -216,21 +337,30 @@ export type HasApiPayload = {
   patient: number;
   is_diagnosed?: boolean | null;
   uses_medication?: "SIM" | "NAO" | "IRREGULAR" | "NAO_SE_APLICA" | null;
-
+  family_history?: boolean | null;
   BP_assessment1_1?: number | null;
   BP_assessment1_2?: number | null;
   BP_assessment2_1?: number | null;
   BP_assessment2_2?: number | null;
   weight?: string | null;
+  height?: string | null;
   IMC?: string | null;
   abdominal_circumference?: string | null;
+  total_cholesterol?: number | null;
+  cholesterol_data?: string | null; // enviaremos "YYYY-MM-DD"
+  HDL_cholesterol?: number | null;
+  HDL_data?: string | null;
+  BP_classifications?: string | null;
+  framingham_score?: string | null;
+  conduct_adopted?: string | null;
+  any_complications_HBP?: string | null;
 };
 
 export type DmApiPayload = {
   patient: number;
   is_diagnosed?: boolean | null;
   uses_medication?: "SIM" | "NAO" | "IRREGULAR" | "NAO_SE_APLICA" | null;
-
+  family_history?: boolean | null;
   capillary_blood_glucose_random?: string | null;
   fasting_capillary_blood_glucose?: string | null;
   glycated_hemoglobin?: string | null;
@@ -246,6 +376,12 @@ export function formToPatientApi(
 ): PatientApiPayload {
   const socio: any = (data as any).socio ?? {};
   const multiprof: any = (data as any).multiprof ?? {};
+  const clinica: any = (data as any).clinica ?? {};
+  const hasClinica: any = clinica?.has ?? {};
+  const dmClinica: any = clinica?.dm ?? {};
+
+  const lifeSrc: any =
+    hasClinica && Object.keys(hasClinica).length > 0 ? hasClinica : dmClinica;
 
   // nome → quebra simples em first_name / last_name
   const nome: string = socio?.nome?.trim?.() ?? "";
@@ -303,6 +439,43 @@ export function formToPatientApi(
     cirurgia_dentista: "CIRURGIA_DENTISTA",
     // "outro" não tem campo específico no backend; ignoramos aqui
   };
+
+  // ───── Estilo de Vida (LifeStyle no backend) ─────
+  const feed =
+    lifeSrc?.estilo_alimentacao && feedingMap[lifeSrc.estilo_alimentacao]
+      ? feedingMap[lifeSrc.estilo_alimentacao]
+      : null;
+
+  const salt =
+    lifeSrc?.sal && saltConsumptionMap[lifeSrc.sal]
+      ? saltConsumptionMap[lifeSrc.sal]
+      : null;
+
+  const alcohol =
+    lifeSrc?.alcool && alcoholConsumptionMap[lifeSrc.alcool]
+      ? alcoholConsumptionMap[lifeSrc.alcool]
+      : null;
+
+  const smoking =
+    lifeSrc?.tabagismo && smokingMap[lifeSrc.tabagismo]
+      ? smokingMap[lifeSrc.tabagismo]
+      : null;
+
+  const lastConsult = (() => {
+    if (
+      lifeSrc?.ultima_consulta_has &&
+      lastConsultationMap[lifeSrc.ultima_consulta_has]
+    ) {
+      return lastConsultationMap[lifeSrc.ultima_consulta_has];
+    }
+    if (
+      lifeSrc?.ultima_consulta_dm &&
+      lastConsultationMap[lifeSrc.ultima_consulta_dm]
+    ) {
+      return lastConsultationMap[lifeSrc.ultima_consulta_dm];
+    }
+    return null;
+  })();
 
   const payload: PatientApiPayload = {
     ...(user ? { user } : {}),
@@ -420,6 +593,12 @@ export function formToPatientApi(
       const first = arr.find((v) => v !== "outro") ?? arr[0];
       return referralChoiceMap[first] ?? null;
     })(),
+    /** ───────── LifeStyle ───────── */
+    feed,
+    salt_consumption: salt,
+    alcohol_consumption: alcohol,
+    smoking,
+    last_consultation: lastConsult,
   };
 
   return payload;
@@ -513,36 +692,137 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   };
 }
 
-/** FRONT → HAS API (create/edit) */
+function hasClinicaHasData(has: any | undefined | null): boolean {
+  if (!has) return false;
+
+  return (
+    has.diag_has != null ||
+    has.usa_medicacao != null ||
+    has.pa1_sis != null ||
+    has.pa1_dia != null ||
+    has.pa2_sis != null ||
+    has.pa2_dia != null ||
+    has.peso != null ||
+    has.imc != null ||
+    has.circ_abdominal != null ||
+    has.col_total != null ||
+    has.col_total_data != null ||
+    has.hdl != null ||
+    has.hdl_data != null ||
+    has.classificacao_pa != null ||
+    has.framingham != null ||
+    (Array.isArray(has.condutas) && has.condutas.length > 0) ||
+    (Array.isArray(has.complicacoes) && has.complicacoes.length > 0)
+  );
+}
+
 export function formToHasApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
   patientId: number
 ): HasApiPayload | null {
-  const cond: any = (data as any).condicoes;
-  const has: any = (data as any).clinica?.has;
+  const cond = (data as any).condicoes;
+  const has = (data as any).clinica?.has;
+  const familyHistory = yesNoMaybeToBool(has?.historico_familiar);
 
-  // se não marcou HAS e não preencheu bloco, não cria/atualiza registro
-  if (!cond?.has && !has) return null;
+  // 🔒 Regra de ouro:
+  // - se NÃO marcou HAS
+  // - e também NÃO preencheu nada do bloco clínico de HAS
+  //   → não cria/atualiza registro nenhum
+  if (!cond?.has && !hasClinicaHasData(has)) {
+    return null;
+  }
+
+  // normaliza tratamento
+  const usesMedication =
+    has?.usa_medicacao && treatmentStatusMap[has.usa_medicacao]
+      ? (treatmentStatusMap[
+          has.usa_medicacao
+        ] as HasApiPayload["uses_medication"])
+      : null;
+
+  // normaliza campos numéricos (mantendo padrão string com 2 casas para decimais)
+  const weight =
+    has && typeof has.peso === "number"
+      ? has.peso.toFixed(2)
+      : has?.peso != null
+        ? String(has.peso)
+        : null;
+
+  const height =
+    has && typeof has.altura === "number"
+      ? has.altura.toFixed(2)
+      : has?.altura != null
+        ? String(has.altura)
+        : null;
+
+  const imc =
+    has && typeof has.imc === "number"
+      ? has.imc.toFixed(2)
+      : has?.imc != null
+        ? String(has.imc)
+        : null;
+
+  const abdominalCirc =
+    has && typeof has.circ_abdominal === "number"
+      ? has.circ_abdominal.toFixed(2)
+      : has?.circ_abdominal != null
+        ? String(has.circ_abdominal)
+        : null;
+
+  // Colesterol (ClinicalEvaluationHAS)
+  const cholesterolData = has?.col_total_data
+    ? toDateISO(has.col_total_data as any)
+    : null;
+
+  const hdlData = has?.hdl_data ? toDateISO(has.hdl_data as any) : null;
+
+  // Classificação / Escore / Conduta (ClassificationConductHAS)
+  const bpClassification =
+    has?.classificacao_pa && bpClassificationMap[has.classificacao_pa]
+      ? bpClassificationMap[has.classificacao_pa]
+      : null;
+
+  const framinghamScore =
+    has?.framingham && framinghamMap[has.framingham]
+      ? framinghamMap[has.framingham]
+      : null;
+
+  const conductAdopted = (() => {
+    const arr = has?.condutas as string[] | undefined;
+    if (!arr || arr.length === 0) return null;
+    const first = arr.find((v) => v !== "outro") ?? arr[0];
+    return conductHasMap[first] ?? null;
+  })();
+  const complicationEnum = (() => {
+    const arr = has?.complicacoes as string[] | undefined;
+    if (!arr || arr.length === 0) return null;
+
+    const first = arr.find((v) => v !== "outra") ?? arr[0];
+    return hasComplicationsMap[first] ?? null;
+  })();
 
   return {
     patient: patientId,
     is_diagnosed: yesNoMaybeToBool(has?.diag_has),
-    uses_medication: has?.usa_medicacao
-      ? (treatmentStatusMap[
-          has.usa_medicacao
-        ] as HasApiPayload["uses_medication"])
-      : null,
+    uses_medication: usesMedication,
+    family_history: familyHistory,
     BP_assessment1_1: has?.pa1_sis ?? null,
     BP_assessment1_2: has?.pa1_dia ?? null,
     BP_assessment2_1: has?.pa2_sis ?? null,
     BP_assessment2_2: has?.pa2_dia ?? null,
-    weight:
-      typeof has?.peso === "number" ? has.peso.toFixed(2) : (has?.peso ?? null),
-    IMC: typeof has?.imc === "number" ? has.imc.toFixed(2) : (has?.imc ?? null),
-    abdominal_circumference:
-      typeof has?.circ_abdominal === "number"
-        ? has.circ_abdominal.toFixed(2)
-        : (has?.circ_abdominal ?? null),
+    weight: weight,
+    height: height,
+    IMC: imc,
+    abdominal_circumference: abdominalCirc,
+    total_cholesterol: has?.col_total != null ? Number(has.col_total) : null,
+    cholesterol_data: cholesterolData,
+    HDL_cholesterol: has?.hdl != null ? Number(has.hdl) : null,
+    HDL_data: hdlData,
+
+    BP_classifications: bpClassification,
+    framingham_score: framinghamScore,
+    conduct_adopted: conductAdopted,
+    any_complications_HBP: complicationEnum,
   };
 }
 
@@ -564,6 +844,7 @@ export function formToDmApi(
           dm.usa_medicacao
         ] as DmApiPayload["uses_medication"])
       : null,
+    family_history: yesNoMaybeToBool(dm?.historico_familiar),
     capillary_blood_glucose_random: dm?.glicemia_aleatoria
       ? String(dm.glicemia_aleatoria)
       : null,
@@ -583,17 +864,43 @@ export function hasApiToForm(api: any): any {
     usa_medicacao: api.uses_medication
       ? (treatmentStatusBackToFront[api.uses_medication] ?? "nao_se_aplica")
       : "nao_se_aplica",
+    historico_familiar: boolToYesNoMaybe(api.family_history),
     pa1_sis: api.BP_assessment1_1 ?? undefined,
     pa1_dia: api.BP_assessment1_2 ?? undefined,
     pa2_sis: api.BP_assessment2_1 ?? undefined,
     pa2_dia: api.BP_assessment2_2 ?? undefined,
     peso:
       api.weight != null && api.weight !== "" ? Number(api.weight) : undefined,
+    altura:
+      api.height != null && api.height !== "" ? Number(api.height) : undefined,
     imc: api.IMC != null && api.IMC !== "" ? Number(api.IMC) : undefined,
     circ_abdominal:
       api.abdominal_circumference != null && api.abdominal_circumference !== ""
         ? Number(api.abdominal_circumference)
         : undefined,
+    col_total:
+      api.total_cholesterol != null ? Number(api.total_cholesterol) : undefined,
+    col_total_data: api.cholesterol_data ?? undefined,
+    hdl: api.HDL_cholesterol != null ? Number(api.HDL_cholesterol) : undefined,
+    hdl_data: api.HDL_data ?? undefined,
+    classificacao_pa: api.BP_classifications
+      ? (bpClassificationBackToFront[api.BP_classifications] ?? undefined)
+      : undefined,
+    framingham: api.framingham_score
+      ? (framinghamBackToFront[api.framingham_score] ?? undefined)
+      : undefined,
+    condutas: (() => {
+      if (!api.conduct_adopted) return [];
+      const front = conductHasBackToFront[api.conduct_adopted];
+      return front ? [front] : [];
+    })(),
+    conduta_outro: undefined,
+    complicacoes: (() => {
+      if (!api.any_complications_HBP) return [];
+      const front = hasComplicationsBackToFront[api.any_complications_HBP];
+      return front ? [front] : [];
+    })(),
+    complicacao_outra: undefined,
   };
 }
 
@@ -621,4 +928,62 @@ export function dmApiToForm(api: any): any {
         ? Number(api.glycated_hemoglobin)
         : undefined,
   };
+}
+
+// Aplica LifeStyle (PatientUser) nos blocos clínicos HAS/DM do form
+export function applyLifestyleFromPatientApiToClinica(
+  defaultValues: any,
+  patientApi: any
+) {
+  if (!defaultValues || !patientApi) return;
+
+  const feedBack = patientApi.feed as string | null;
+  const saltBack = patientApi.salt_consumption as string | null;
+  const alcoholBack = patientApi.alcohol_consumption as string | null;
+  const smokingBack = patientApi.smoking as string | null;
+  const lastBack = patientApi.last_consultation as string | null;
+
+  const feedFront = feedBack
+    ? (feedingBackToFront[feedBack] ?? undefined)
+    : undefined;
+  const saltFront = saltBack
+    ? (saltConsumptionBackToFront[saltBack] ?? undefined)
+    : undefined;
+  const alcoholFront = alcoholBack
+    ? (alcoholConsumptionBackToFront[alcoholBack] ?? undefined)
+    : undefined;
+  const smokingFront = smokingBack
+    ? (smokingBackToFront[smokingBack] ?? undefined)
+    : undefined;
+  const lastFront = lastBack
+    ? (lastConsultationBackToFront[lastBack] ?? undefined)
+    : undefined;
+
+  // Garante estrutura clinica
+  if (!defaultValues.clinica) {
+    defaultValues.clinica = { has: undefined, dm: undefined };
+  }
+
+  const has = (defaultValues.clinica.has =
+    defaultValues.clinica.has ?? ({} as any));
+  const dm = (defaultValues.clinica.dm =
+    defaultValues.clinica.dm ?? ({} as any));
+
+  // Só aplica se o campo ainda não tiver valor (pra não atropelar algo do form)
+  if (feedFront && has.estilo_alimentacao == null)
+    has.estilo_alimentacao = feedFront;
+  if (saltFront && has.sal == null) has.sal = saltFront;
+  if (alcoholFront && has.alcool == null) has.alcool = alcoholFront;
+  if (smokingFront && has.tabagismo == null) has.tabagismo = smokingFront;
+  if (lastFront && has.ultima_consulta_has == null)
+    has.ultima_consulta_has = lastFront;
+
+  // DM usa os mesmos valores globais
+  if (feedFront && dm.estilo_alimentacao == null)
+    dm.estilo_alimentacao = feedFront;
+  if (saltFront && dm.sal == null) dm.sal = saltFront;
+  if (alcoholFront && dm.alcool == null) dm.alcool = alcoholFront;
+  if (smokingFront && dm.tabagismo == null) dm.tabagismo = smokingFront;
+  if (lastFront && dm.ultima_consulta_dm == null)
+    dm.ultima_consulta_dm = lastFront;
 }

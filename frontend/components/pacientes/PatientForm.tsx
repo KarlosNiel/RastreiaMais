@@ -412,25 +412,42 @@ export default function PatientForm(props: Props) {
       } else {
         const { id, hasId, dmId } = props as Extract<Props, { mode: "edit" }>;
 
-        // 1) atualiza dados do paciente
+        // 1) atualiza dados "gerais" do paciente
         await updatePaciente(id, apiPayload);
 
         const editData = parsed as RegistroPacienteEdit;
 
-        // 2) atualiza HAS, se existir registro
-        if (hasId) {
-          const hasPayload = formToHasApi(editData as any, id);
-          if (hasPayload) {
-            await updateHAS(hasId, hasPayload);
-          }
+        /* =======================
+           HAS (Hipertensão)
+           ======================= */
+        const hasPayload = formToHasApi(editData as any, id);
+
+        if (hasPayload && hasId) {
+          // Já existia registro de HAS → atualiza
+          await updateHAS(hasId, hasPayload);
+        } else if (hasPayload && !hasId) {
+          // Não existia registro de HAS → cria agora
+          await createHAS(hasPayload);
+        } else if (!hasPayload && hasId) {
+          // Caso "desmarcou HAS" ou limpou todo o bloco clínico.
+          // Aqui é o ponto para, se/quando o backend tiver DELETE,
+          // chamar algo como: await deleteHAS(hasId);
+          // Por enquanto, não chamamos nada para evitar inconsistência.
         }
 
-        // 3) atualiza DM, se existir registro
-        if (dmId) {
-          const dmPayload = formToDmApi(editData as any, id);
-          if (dmPayload) {
-            await updateDM(dmId, dmPayload);
-          }
+        /* =======================
+           DM (Diabetes Mellitus)
+           ======================= */
+        const dmPayload = formToDmApi(editData as any, id);
+
+        if (dmPayload && dmId) {
+          // Já existia registro de DM → atualiza
+          await updateDM(dmId, dmPayload);
+        } else if (dmPayload && !dmId) {
+          // Não existia registro de DM → cria agora
+          await createDM(dmPayload);
+        } else if (!dmPayload && dmId) {
+          // Mesma ideia do HAS: aqui seria o ponto para deletar DM no futuro.
         }
 
         notifySuccess("Dados do paciente atualizados.");

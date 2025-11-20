@@ -173,8 +173,6 @@ axiosInstance.interceptors.response.use(
     const status = error.response.status;
     const path = original.url ?? "";
     if (status !== 401 || isAuthPath(path) || original._retry) {
-      clearTokens();
-      if (isBrowser()) window.location.href = "/auth/login";
       return Promise.reject(error);
     }
 
@@ -188,7 +186,7 @@ axiosInstance.interceptors.response.use(
 
     original._retry = true;
     original.headers = original.headers ?? {};
-    original.headers["Authorization"] = `Bearer ${newAccess}`;
+    (original.headers as any)["Authorization"] = `Bearer ${newAccess}`;
 
     return axiosInstance(original);
   }

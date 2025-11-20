@@ -5,7 +5,7 @@ import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
 import { useEffect, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 /** ───────── helpers ───────── */
 const parseDecimal = (raw: string) =>
@@ -46,9 +46,9 @@ export function getStep3FieldsDynamic({
 }
 
 export default function Step3Clinica() {
-  const { watch } = useFormContext();
-  const has = !!watch("condicoes.has");
-  const dm = !!watch("condicoes.dm");
+  const { control } = useFormContext();
+  const has = !!useWatch({ control, name: "condicoes.has" });
+  const dm = !!useWatch({ control, name: "condicoes.dm" });
 
   const showEmptyHint = !has && !dm;
 
@@ -354,81 +354,6 @@ function BlocoHAS() {
         </div>
       </fieldset>
 
-      {/* Fatores de risco (DM) */}
-      <fieldset className="rounded-2xl border border-default-200 p-4">
-        <legend className="px-1 text-sm font-medium text-foreground/70">
-          Fatores de risco para Diabetes
-        </legend>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <RHFChipGroup
-            name="clinica.dm.risco_idade_45"
-            label="Idade ≥ 45 anos"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_imc_25"
-            label="Sobrepeso/obesidade (IMC ≥ 25)"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_sedentarismo"
-            label="Sedentarismo"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_pa_elevada"
-            label="P.A. elevada"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_lipidios_alterados"
-            label="Colesterol/Triglicerídeos alterados"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_dm_gestacional"
-            label="História de DM gestacional (mulheres)"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-              { value: "nao_se_aplica", label: "N.S.A." },
-            ]}
-            single
-          />
-          <RHFChipGroup
-            name="clinica.dm.risco_sop"
-            label="Síndrome dos ovários policísticos (mulheres)"
-            options={[
-              { value: "sim", label: "Sim" },
-              { value: "nao", label: "Não" },
-              { value: "nao_se_aplica", label: "N.S.A." },
-            ]}
-            single
-          />
-        </div>
-      </fieldset>
-
       {/* Classificação e condutas */}
       <fieldset className="rounded-2xl border border-default-200 p-4">
         <legend className="px-1 text-sm font-medium text-foreground/70">
@@ -487,9 +412,50 @@ function BlocoHAS() {
  * BLOCO — DIABETES (DM)
  * =========================== */
 function BlocoDM() {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const pe = watch("clinica.dm.pe_diabetico") as string | undefined;
   const showMembro = pe === "sim";
+
+  // ===== Cálculo automático do IMC (DM) =====
+  const pesoDm = watch("clinica.dm.peso");
+  const alturaDm = watch("clinica.dm.altura");
+
+  useEffect(() => {
+    try {
+      const peso = typeof pesoDm === "string" ? parseDecimal(pesoDm) : pesoDm;
+      const alturaRaw =
+        typeof alturaDm === "string" ? parseDecimal(alturaDm) : alturaDm;
+
+      const pesoNum = Number(peso);
+      const alturaNum = Number(alturaRaw);
+
+      if (!pesoNum || !alturaNum) {
+        setValue("clinica.dm.imc", undefined, {
+          shouldDirty: true,
+          shouldTouch: false,
+        });
+        return;
+      }
+
+      const alturaM = alturaNum > 3 ? alturaNum / 100 : alturaNum;
+      if (alturaM <= 0) {
+        setValue("clinica.dm.imc", undefined, {
+          shouldDirty: true,
+          shouldTouch: false,
+        });
+        return;
+      }
+
+      const imc = pesoNum / (alturaM * alturaM);
+      const imcRounded = Math.round(imc * 10) / 10;
+      setValue("clinica.dm.imc", imcRounded, {
+        shouldDirty: true,
+        shouldTouch: false,
+      });
+    } catch {
+      // silencioso
+    }
+  }, [pesoDm, alturaDm, setValue]);
 
   return (
     <section className="space-y-6">
@@ -703,6 +669,72 @@ function BlocoDM() {
                 { value: "6m", label: "6 meses" },
                 { value: "1a", label: "1 ano" },
                 { value: ">1a", label: ">1 ano" },
+              ]}
+              single
+            />
+
+            <RHFChipGroup
+              name="clinica.dm.risco_idade_45"
+              label="Idade ≥ 45 anos"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_imc_25"
+              label="Sobrepeso/obesidade (IMC ≥ 25)"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_sedentarismo"
+              label="Sedentarismo"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_pa_elevada"
+              label="P.A. elevada"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_lipidios_alterados"
+              label="Colesterol/Triglicerídeos alterados"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_dm_gestacional"
+              label="História de DM gestacional (mulheres)"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+                { value: "nao_se_aplica", label: "N.S.A." },
+              ]}
+              single
+            />
+            <RHFChipGroup
+              name="clinica.dm.risco_sop"
+              label="Síndrome dos ovários policísticos (mulheres)"
+              options={[
+                { value: "sim", label: "Sim" },
+                { value: "nao", label: "Não" },
+                { value: "nao_se_aplica", label: "N.S.A." },
               ]}
               single
             />
