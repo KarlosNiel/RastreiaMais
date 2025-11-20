@@ -15,6 +15,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import ProfessionalAppointmentDetailsModal from "@/components/profissional/ProfessionalAppointmentDetailsModal";
 import CreateAlertModal from "@/components/gestor/CreateAlertModal";
 import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
+import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpis";
 
 /* ======================
    🔹 Tipos e Funções Auxiliares
@@ -61,14 +62,14 @@ const mapRiskToChip = (t?: RiskTone): ChipTone =>
    🔹 Página Principal
 ====================== */
 export default function ProfissionalPage() {
-  const [KPIS, setKPIS] = useState<any[]>([]);
+  const { data: KPIS} = useProfissionalKpis();
   const [selectedAppointment, setSelectedAppointment] = useState<AgendaRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   
   const queryClient = useQueryClient();
-  const { data: alerts, isLoading: isLoadingAlerts } = useAlertsQuery();
+  const { data: alerts, isLoading: isLoadingAlerts } = useAlertsQuery();  
 
   const formatCpf = (cpf?: string) => {
     if (!cpf) return "—";
@@ -76,10 +77,6 @@ export default function ProfissionalPage() {
     if (digits.length !== 11) return cpf;
     return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
-
-  useEffect(() => {
-    getProfissionalKpis().then(setKPIS);
-  }, []);
 
   /* ========== Busca dos agendamentos ========== */
   const {
@@ -211,6 +208,7 @@ export default function ProfissionalPage() {
               delta={kpi.delta}
               accent={kpi.accent}
               icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
+              footerText="Dados do sistema atualizados com as informações mais recentes."
             />
           ))}
         </section>

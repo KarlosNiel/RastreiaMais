@@ -9,6 +9,7 @@ class ClinicalEvaluationHAS(models.Model):
     BP_assessment2_1 = models.IntegerField("Pressão Arterial 2ª Avaliação (Sistólica)", null=True, blank=True)
     BP_assessment2_2 = models.IntegerField("Pressão Arterial 2ª Avaliação (Diastólica)", null=True, blank=True)
     weight = models.DecimalField("Peso (kg)", max_digits=5, decimal_places=2, null=True, blank=True)
+    height = models.DecimalField("Altura", max_digits=5, decimal_places=2, null=True, blank=True)
     IMC = models.DecimalField("IMC", max_digits=5, decimal_places=2, null=True, blank=True)
     abdominal_circumference = models.DecimalField("Circunferência Abdominal (cm)", max_digits=5, decimal_places=2, null=True, blank=True)
     total_cholesterol = models.IntegerField("Colesterol Total (mg/dL)", null=True, blank=True)

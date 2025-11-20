@@ -1,5 +1,6 @@
 // ...existing code...
 export interface AlertProps {
+  id: number;
   patient?: {
     user?: {
       first_name?: string;

@@ -6,6 +6,8 @@ import { apiJSON, apiPost } from "@/lib/api";
 export function useCreateAlert() {
   const queryClient = useQueryClient();
 
+  
+
   return useMutation({
     mutationFn: async (newAlert: {
       cpf: string;
