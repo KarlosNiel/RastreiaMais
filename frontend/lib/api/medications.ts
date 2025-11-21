@@ -2,10 +2,11 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 
 const BASE = "/api/v1/medications";
+const MEDICATIONS_URL = `${BASE}/medications/`;
 
 /**
  * Tipo básico da medicação que o backend devolve.
- * Ajusta se depois você quiser tipar campos extras (created_at, etc.).
+ * Ajuste se depois quiser tipar campos extras (created_at, etc.).
  */
 export interface MedicationDto {
   id: number;
@@ -30,7 +31,7 @@ type MedicationsResponse =
  * Lista medicações (para o usuário logado, o back já filtra se for paciente).
  */
 export async function listMedications(): Promise<MedicationDto[]> {
-  const resp = await apiGet<MedicationsResponse>(`${BASE}/medications/`);
+  const resp = await apiGet<MedicationsResponse | null>(MEDICATIONS_URL);
 
   if (Array.isArray(resp)) return resp;
   if (resp && Array.isArray((resp as any).results)) {
@@ -42,26 +43,45 @@ export async function listMedications(): Promise<MedicationDto[]> {
 /**
  * Cria uma nova medicação para um paciente.
  * - `patient` é obrigatório.
+ *
+ * Se a API retornar null, lança erro (para evitar seguir com dado indefinido).
  */
 export async function createMedication(
   payload: Omit<MedicationDto, "id">
 ): Promise<MedicationDto> {
-  return apiPost<MedicationDto>(`${BASE}/medications/`, payload);
+  const resp = await apiPost<MedicationDto | null>(MEDICATIONS_URL, payload);
+
+  if (!resp) {
+    throw new Error("Falha ao criar medicação: resposta vazia da API.");
+  }
+
+  return resp;
 }
 
 /**
  * Atualiza parcialmente uma medicação existente.
+ *
+ * Se a API retornar null, lança erro.
  */
 export async function updateMedication(
   id: number,
   payload: Partial<Omit<MedicationDto, "id" | "patient">>
 ): Promise<MedicationDto> {
-  return apiPatch<MedicationDto>(`${BASE}/medications/${id}/`, payload);
+  const resp = await apiPatch<MedicationDto | null>(
+    `${MEDICATIONS_URL}${id}/`,
+    payload
+  );
+
+  if (!resp) {
+    throw new Error("Falha ao atualizar medicação: resposta vazia da API.");
+  }
+
+  return resp;
 }
 
 /**
  * Remove (soft delete) uma medicação.
  */
 export async function deleteMedication(id: number): Promise<void> {
-  await apiDelete<void>(`${BASE}/medications/${id}/`);
+  await apiDelete<null>(`${MEDICATIONS_URL}${id}/`);
 }

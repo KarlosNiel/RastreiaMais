@@ -10,29 +10,32 @@ class ConditionsDataPermission(BaseRolePermission):
         if not user.is_authenticated:
             self.message = "Usuário não autenticado!"
             return False
-        
+
         if user.is_superuser or self.is_manager(request):
             return True
-        
+
         if self.is_professional(request):
             return True
-        
+
         if self.is_patient(request) and request.method in SAFE_METHODS:
             return True
-        
+
         self.message = "Você não tem permissão para acessar está rota."
         return False
-    
+
     def has_object_permission(self, request, view, obj):
         user = request.user
 
         if user.is_superuser or self.is_manager(request):
             return True
-        
+
+        patient = getattr(obj, "patient", None)
+        patient_user = getattr(patient, "user", None) if patient is not None else None
+
         if self.is_professional(request):
-            return getattr(obj, "user", None) == user
-        
-        if self.is_patient(request):
-            return getattr(obj, "user", None) == user
-        
+            return True
+
+        if self.is_patient(request) and request.method in SAFE_METHODS:
+            return patient_user == user
+
         return False

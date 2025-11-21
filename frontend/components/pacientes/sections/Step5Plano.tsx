@@ -2,6 +2,7 @@
 "use client";
 
 import { Button, Card, CardBody } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -9,6 +10,7 @@ import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { RHFSelect } from "@/components/form/RHFSelect";
 import { notifySuccess } from "@/components/ui/notify";
+import { listInstitutions } from "@/lib/api/locations";
 
 /** Util: abrevia "João Silva Santos" -> "João S." */
 function shortName(full?: string) {
@@ -29,11 +31,18 @@ function addDays(d: Date, days: number) {
 
 export default function Step5Plano() {
   const { getValues, getFieldState, setValue, watch } = useFormContext();
+
+  /* ========= DADOS PARA RESUMO AUTOMÁTICO ========= */
   const nome = watch("socio.nome");
   const has = watch("condicoes.has");
   const dm = watch("condicoes.dm");
   const classPA = watch("clinica.has.classificacao_pa");
   const hba1c = watch("clinica.dm.hba1c");
+
+  /* ========= DADOS ESPECÍFICOS DO AGENDAMENTO ========= */
+  const tipoConsulta = watch("plano.tipo_consulta");
+  const dataConsulta = watch("plano.data_consulta") as Date | null | undefined;
+  const dataRetorno = watch("plano.data_retorno") as Date | null | undefined;
 
   const condicoesTxt = useMemo(() => {
     const arr: string[] = [];
@@ -61,9 +70,23 @@ export default function Step5Plano() {
       : null;
   }, [dm, hba1c]);
 
+  const { data: institutionOptions, isLoading: institutionsLoading } = useQuery(
+    {
+      queryKey: ["locations", "institutions"],
+      queryFn: async () => {
+        const items = await listInstitutions();
+        return items.map((inst) => ({
+          key: String(inst.id),
+          label: inst.name,
+        }));
+      },
+    }
+  );
+
   // Compose automático (valor “sugerido”)
   const resumoAuto = useMemo(() => {
     const nomeTxt = shortName(nome);
+
     return [
       `Paciente: ${nomeTxt}`,
       `Condições: ${condicoesTxt}`,
@@ -125,9 +148,32 @@ export default function Step5Plano() {
     [setValue]
   );
 
+  const resumoAgendamento = useMemo(() => {
+    const hasConsulta = !!dataConsulta;
+    const hasRetorno = !!dataRetorno;
+
+    if (hasConsulta && hasRetorno) {
+      return "Será criada uma consulta na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.";
+    }
+
+    if (hasConsulta && !hasRetorno) {
+      return "Será criada apenas uma consulta na data indicada em “Agendar consulta”.";
+    }
+
+    if (!hasConsulta && hasRetorno) {
+      return "Sem data de consulta: será criado um único agendamento usando a data informada em “Agendar retorno”.";
+    }
+
+    // Nenhuma data
+    return "Preencha ao menos a data de consulta ou de retorno para gerar agendamento.";
+  }, [dataConsulta, dataRetorno]);
+
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
+      <Card
+        shadow="none"
+        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+      >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">5. Plano & Agendamentos</h2>
 
@@ -170,7 +216,7 @@ export default function Step5Plano() {
 
             {/* Agendar */}
             <section className="rounded-2xl border border-default-200 p-4">
-              <h3 className="text-sm font-medium text-foreground/80 mb-4">
+              <h3 className="text-sm font-medium text-foreground/80 mb-1">
                 Agendar
               </h3>
 
@@ -187,6 +233,28 @@ export default function Step5Plano() {
                     { key: "avaliacao", label: "Avaliação" },
                     { key: "outro", label: "Outro" },
                   ]}
+                />
+
+                <RHFInput
+                  className="md:col-span-4"
+                  name="plano.hora_consulta"
+                  label="Horário"
+                  placeholder="08:00"
+                  labelPlacement="outside"
+                  inputMode="numeric"
+                />
+
+                <RHFSelect
+                  className="md:col-span-4"
+                  name="plano.local_id"
+                  label="Local"
+                  labelPlacement="outside"
+                  placeholder={
+                    institutionsLoading
+                      ? "Carregando unidades..."
+                      : "Selecione a unidade"
+                  }
+                  options={institutionOptions ?? []}
                 />
 
                 <div className="md:col-span-4">
@@ -259,6 +327,11 @@ export default function Step5Plano() {
                   placeholder="Assinatura simples (opcional)"
                 />
               </div>
+
+              {/* Resumo textual do que será agendado, baseado nas datas preenchidas */}
+              <p className="mt-4 text-xs text-foreground/60">
+                {resumoAgendamento}
+              </p>
             </section>
           </div>
 

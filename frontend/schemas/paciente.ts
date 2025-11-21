@@ -354,15 +354,44 @@ export const MultiprofZ = z.object({
 /* ########################
  * STEP 5 — PLANO & AGENDAMENTOS
  * ######################## */
-export const PlanoZ = z.object({
-  resumo: StrOpt.optional(),
-  tipo_consulta: z
-    .enum(["consulta", "retorno", "avaliacao", "outro"])
-    .optional(),
-  data_consulta: DateOpt.optional(),
-  data_retorno: DateOpt.optional(),
-  assinatura: StrOpt.optional(),
-});
+const PlanoZ = z
+  .object({
+    resumo: StrOpt.optional(),
+    tipo_consulta: z
+      .enum(["consulta", "retorno", "avaliacao", "outro"])
+      .optional(),
+    data_consulta: DateOpt.optional(),
+    data_retorno: DateOpt.optional(),
+    hora_consulta: StrOpt.optional().refine(
+      (v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
+      "Horário inválido (use HH:MM)."
+    ),
+    local_id: NumOpt.optional(),
+    assinatura: StrOpt.optional(),
+  })
+  .superRefine((plano, ctx) => {
+    // Se não tiver NENHUMA data, mas o usuário começou a preencher o plano,
+    // dá pra avisar que precisa de ao menos uma.
+    const algumCampoPreenchido =
+      plano.resumo ||
+      plano.tipo_consulta ||
+      plano.hora_consulta ||
+      plano.local_id ||
+      plano.assinatura;
+
+    if (algumCampoPreenchido && !plano.data_consulta && !plano.data_retorno) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["data_consulta"],
+        message: "Informe a data da consulta ou do retorno.",
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["data_retorno"],
+        message: "Informe a data da consulta ou do retorno.",
+      });
+    }
+  });
 
 /* ########################
  * SCHEMAS GERAIS (CREATE/EDIT)

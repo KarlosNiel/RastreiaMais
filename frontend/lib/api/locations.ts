@@ -56,3 +56,22 @@ export async function updateAddress<T = { id: number }>(
     "Falha ao atualizar endereço. A API retornou resposta vazia."
   );
 }
+
+// Tipo básico da instituição (ajuste se o serializer mudar)
+export type InstitutionApi = {
+  id: number;
+  name: string;
+  maps_localization?: string | null;
+  address?: number | null;
+};
+
+/**
+ * Lista instituições em `/api/v1/locations/institutions/`.
+ */
+export async function listInstitutions(): Promise<InstitutionApi[]> {
+  const res = await apiGet<InstitutionApi[]>("/api/v1/locations/institutions/");
+  return ensureResponse(
+    res,
+    "Falha ao carregar instituições. A API retornou resposta vazia."
+  );
+}

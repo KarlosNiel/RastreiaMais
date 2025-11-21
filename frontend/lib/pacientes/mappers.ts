@@ -151,6 +151,133 @@ export type DmApiPayload = {
   glycated_hemoglobin?: string | null;
 };
 
+export type AppointmentApiPayload = {
+  patient_id: number;
+  professional_id: number;
+  local_id?: number | null;
+  scheduled_datetime: string;
+  type: "Consulta" | "Exame" | "Evento";
+  description?: string;
+  risk_level: "Seguro" | "Moderado" | "Crítico";
+  status?: "pendente" | "ativo" | "finalizado" | "cancelado";
+};
+
+/**
+ * Helper interno: converte valor de data (Date, string, etc)
+ * para ISO datetime com hora fixa (ex.: 08:00).
+ */
+export function toDateTimeISO(
+  value: unknown,
+  hour = 8,
+  minute = 0
+): string | null {
+  if (!value) return null;
+  const d = new Date(value as any);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
+export function formToAppointmentApi(
+  data: RegistroPacienteCreate | RegistroPacienteEdit,
+  patientId: number,
+  professionalId: number
+): AppointmentApiPayload | null {
+  const plano: any = (data as any).plano ?? null;
+  if (!plano) return null;
+
+  /* ===========================
+   * 1) DATA E HORA DO AGENDAMENTO
+   * =========================== */
+
+  // Regra: prioriza data_consulta; se não tiver, usa data_retorno
+  const rawDate = plano.data_consulta ?? plano.data_retorno;
+  if (!rawDate) {
+    // Sem data, não há como criar agendamento
+    return null;
+  }
+
+  const rawTime: string | undefined = plano.hora_consulta;
+  let hour = 8;
+  let minute = 0;
+
+  // Aceita apenas HH:MM 24h; se não bater, usa 08:00 padrão
+  if (typeof rawTime === "string") {
+    const match = rawTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (match) {
+      hour = Number.parseInt(match[1], 10);
+      minute = Number.parseInt(match[2], 10);
+    }
+  }
+
+  const scheduled = toDateTimeISO(rawDate, hour, minute);
+  if (!scheduled) {
+    // Data inválida
+    return null;
+  }
+
+  /* ===========================
+   * 2) TIPO DO AGENDAMENTO
+   * =========================== */
+
+  const rawType: string = plano.tipo_consulta ?? "consulta";
+
+  // Mapeamento para o enum do backend
+  const typeMap: Record<string, AppointmentApiPayload["type"]> = {
+    consulta: "Consulta",
+    retorno: "Consulta", // domínio atual: retorno ainda é uma consulta
+    avaliacao: "Exame",
+    outro: "Evento",
+  };
+
+  const type = typeMap[rawType] ?? "Consulta";
+
+  // Label amigável para aparecer na descrição
+  const tipoLabelMap: Record<string, string> = {
+    consulta: "Consulta",
+    retorno: "Retorno",
+    avaliacao: "Avaliação",
+    outro: "Outro",
+  };
+
+  const tipoLabel = tipoLabelMap[rawType] ?? "Consulta";
+
+  /* ===========================
+   * 3) DESCRIÇÃO
+   * =========================== */
+
+  const descricaoBase = (() => {
+    const resumo = optString(plano.resumo);
+    const assinatura = optString(plano.assinatura);
+
+    if (resumo && assinatura) {
+      return `${resumo}\n\nProfissional: ${assinatura}`;
+    }
+    if (resumo) return resumo;
+    if (assinatura) return `Plano registrado por: ${assinatura}`;
+    return "Plano registrado sem descrição detalhada.";
+  })();
+
+  const description = `Tipo de atendimento: ${tipoLabel}.\n\n${descricaoBase}`;
+
+  /* ===========================
+   * 4) RISCO / OUTROS CAMPOS
+   * =========================== */
+
+  const risk_level: AppointmentApiPayload["risk_level"] = "Moderado";
+
+  return {
+    patient_id: patientId,
+    professional_id: professionalId,
+    local_id: plano.local_id ?? null,
+    scheduled_datetime: scheduled,
+    type,
+    description,
+    risk_level,
+    status: "ativo",
+  };
+}
+
 /* =======================================================================
  * FRONT (form) → BACK (Patient API)
  * ======================================================================= */

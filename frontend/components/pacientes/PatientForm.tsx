@@ -3,11 +3,14 @@
 
 import PatientWizard from "@/components/pacientes/PatientWizard";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
+import { apiGet } from "@/lib/api";
+import { createAppointment } from "@/lib/api/appointments";
 import {
   createAddress,
   updateAddress,
   type AddressApiPayload,
 } from "@/lib/api/locations";
+import { meFetch } from "@/lib/auth";
 import {
   RegistroPacienteCreateZ,
   RegistroPacienteEditZ,
@@ -34,9 +37,11 @@ import { z } from "zod";
 import { createDM, createHAS, updateDM, updateHAS } from "@/lib/api/conditions";
 import { createPaciente, updatePaciente } from "@/lib/api/pacientes";
 import {
+  formToAppointmentApi,
   formToDmApi,
   formToHasApi,
   formToPatientApi,
+  toDateTimeISO,
 } from "@/lib/pacientes/mappers";
 
 /* ===========================
@@ -132,6 +137,83 @@ function getUserScopedDraftKey(): string {
     return `${BASE_DRAFT_KEY}:${uid}`;
   } catch {
     return `${BASE_DRAFT_KEY}:anon`;
+  }
+}
+
+function getLoggedProfessionalId(): number | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const token =
+      localStorage.getItem("access") || sessionStorage.getItem("access");
+    if (!token) return null;
+
+    const payload = decodeJwtPayload(token) ?? {};
+
+    const raw = payload.professional_id ?? payload.profissional_id ?? null;
+
+    if (raw == null) return null;
+
+    const num =
+      typeof raw === "number" ? raw : Number.parseInt(String(raw), 10);
+
+    return Number.isFinite(num) && num > 0 ? num : null;
+  } catch {
+    return null;
+  }
+}
+
+type ProfessionalFromApi = {
+  id: number;
+  user?: {
+    id: number;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
+  role?: string;
+};
+
+/**
+ * Descobre o ID do ProfessionalUser vinculado ao usuário logado.
+ *
+ * Estratégia:
+ * 1) Tenta ler do JWT (getLoggedProfessionalId) – caso no futuro o token traga esse campo.
+ * 2) Se não tiver no token, chama /api/auth/me para pegar o user.id e roles.
+ * 3) Se o usuário for PROFESSIONAL, lista /api/v1/accounts/professionals/
+ *    e encontra o registro cujo user.id = me.user.id.
+ */
+async function resolveProfessionalId(): Promise<number | null> {
+  // 1) Caminho rápido: se um dia o token tiver professional_id, usamos direto.
+  const fromToken = getLoggedProfessionalId();
+  if (fromToken) return fromToken;
+
+  try {
+    const me = await meFetch();
+
+    // Se não for profissional, não tentamos criar agendamento automático.
+    if (!me.roles.includes("PROFESSIONAL")) {
+      return null;
+    }
+
+    const resp = await apiGet<
+      ProfessionalFromApi[] | { results?: ProfessionalFromApi[] }
+    >("/api/v1/accounts/professionals/");
+
+    const raw: any = resp;
+    const list: ProfessionalFromApi[] = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.results)
+        ? raw.results
+        : [];
+
+    const prof = list.find((p) => p.user && p.user.id === me.user.id);
+
+    return prof?.id ?? null;
+  } catch (err) {
+    console.error("Não foi possível resolver o professional_id:", err);
+    return null;
   }
 }
 
@@ -300,9 +382,35 @@ export default function PatientForm(props: Props) {
     notifyWarn("Revise os campos destacados antes de continuar.");
   }
 
+  function toISOWithFixedHour(value: unknown, hour = 8): string | null {
+    if (!value) return null;
+    const d = new Date(value as any);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setHours(hour, 0, 0, 0);
+    return d.toISOString();
+  }
+
   async function onValid(rawData: CreateFormInput | EditFormInput) {
     try {
       const parsed = schema.parse(rawData);
+
+      let professionalId: number | null = null;
+      let isProfessional = false;
+
+      try {
+        professionalId = await resolveProfessionalId();
+        isProfessional = professionalId !== null;
+
+        console.debug("resolveProfessionalId =>", {
+          professionalId,
+          isProfessional,
+        });
+      } catch (e) {
+        console.warn(
+          "Falha ao resolver professionalId; pulando agendamento automático.",
+          e
+        );
+      }
 
       const socio: any = (parsed as any).socio ?? {};
       const endereco = socio?.endereco;
@@ -392,6 +500,60 @@ export default function PatientForm(props: Props) {
           await createDM(dmPayload);
         }
 
+        // AGENDAMENTO (Step5) se plano tiver dados suficientes
+        try {
+          if (isProfessional && professionalId) {
+            const appointmentPayload = formToAppointmentApi(
+              createData,
+              patientId,
+              professionalId
+            );
+
+            if (appointmentPayload) {
+              await createAppointment(appointmentPayload);
+
+              // 2) Se TIVER retorno separado, cria um segundo agendamento
+              const plano: any = (createData as any).plano ?? {};
+              const dataRetorno = plano.data_retorno;
+
+              if (dataRetorno) {
+                // Hora base = hora da consulta principal já montada no payload
+                const base = new Date(appointmentPayload.scheduled_datetime);
+                const retornoISO = toDateTimeISO(
+                  dataRetorno,
+                  base.getHours(),
+                  base.getMinutes()
+                );
+
+                if (
+                  retornoISO &&
+                  retornoISO !== appointmentPayload.scheduled_datetime
+                ) {
+                  await createAppointment({
+                    ...appointmentPayload,
+                    scheduled_datetime: retornoISO,
+                    description:
+                      (appointmentPayload.description ?? "") +
+                      "\n\n(Agendamento de retorno)",
+                  });
+                }
+              }
+            }
+          } else {
+            console.warn(
+              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático não será criado."
+            );
+            notifyWarn(
+              "Paciente salvo, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois."
+            );
+          }
+        } catch (e) {
+          console.error("Falha ao criar agendamento a partir do plano:", e);
+          notifyWarn(
+            "Paciente salvo, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois."
+          );
+        }
+
         // 3) limpa rascunho deste usuário
         if (typeof window !== "undefined") {
           const draftKey = getDraftKey();
@@ -448,6 +610,31 @@ export default function PatientForm(props: Props) {
           await createDM(dmPayload);
         } else if (!dmPayload && dmId) {
           // Mesma ideia do HAS: aqui seria o ponto para deletar DM no futuro.
+        }
+
+        try {
+          if (isProfessional && professionalId) {
+            const appointmentPayload = formToAppointmentApi(
+              editData,
+              id,
+              professionalId
+            );
+            if (appointmentPayload) {
+              await createAppointment(appointmentPayload);
+            }
+          } else {
+            console.warn(
+              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático (edição) não será criado."
+            );
+            notifyWarn(
+              "Dados do paciente foram atualizados, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois."
+            );
+          }
+        } catch (e) {
+          console.error("Falha ao criar agendamento ao editar paciente:", e);
+          notifyWarn(
+            "Dados do paciente foram atualizados, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois."
+          );
         }
 
         notifySuccess("Dados do paciente atualizados.");
