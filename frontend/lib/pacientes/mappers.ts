@@ -353,6 +353,7 @@ export type HasApiPayload = {
   BP_classifications?: string | null;
   framingham_score?: string | null;
   conduct_adopted?: string | null;
+  medications_name?: string | null;
   any_complications_HBP?: string | null;
 };
 
@@ -360,6 +361,7 @@ export type DmApiPayload = {
   patient: number;
   is_diagnosed?: boolean | null;
   uses_medication?: "SIM" | "NAO" | "IRREGULAR" | "NAO_SE_APLICA" | null;
+  medications_name?: string | null;
   family_history?: boolean | null;
   capillary_blood_glucose_random?: string | null;
   fasting_capillary_blood_glucose?: string | null;
@@ -437,7 +439,6 @@ export function formToPatientApi(
     enfermeira: "ENFERMEIRA",
     nutricionista: "NUTRICIONISTA",
     cirurgia_dentista: "CIRURGIA_DENTISTA",
-    // "outro" não tem campo específico no backend; ignoramos aqui
   };
 
   // ───── Estilo de Vida (LifeStyle no backend) ─────
@@ -805,6 +806,10 @@ export function formToHasApi(
     patient: patientId,
     is_diagnosed: yesNoMaybeToBool(has?.diag_has),
     uses_medication: usesMedication,
+    medications_name:
+      has?.medicamentos && has.medicamentos.trim()
+        ? has.medicamentos.trim()
+        : null,
     family_history: familyHistory,
     BP_assessment1_1: has?.pa1_sis ?? null,
     BP_assessment1_2: has?.pa1_dia ?? null,
@@ -833,25 +838,34 @@ export function formToDmApi(
 ): DmApiPayload | null {
   const cond: any = (data as any).condicoes;
   const dm: any = (data as any).clinica?.dm;
+  const usesMedication =
+    dm?.usa_medicacao && treatmentStatusMap[dm.usa_medicacao]
+      ? (treatmentStatusMap[
+          dm.usa_medicacao
+        ] as DmApiPayload["uses_medication"])
+      : null;
 
-  if (!cond?.dm && !dm) return null;
+  // Nova regra: só cria/atualiza DM se a flag do Step 2 estiver marcada
+  if (!cond?.dm) {
+    return null;
+  }
+
+  if (!dm) {
+    return null;
+  }
 
   return {
     patient: patientId,
     is_diagnosed: yesNoMaybeToBool(dm?.diag_dm),
-    uses_medication: dm?.usa_medicacao
-      ? (treatmentStatusMap[
-          dm.usa_medicacao
-        ] as DmApiPayload["uses_medication"])
-      : null,
+    uses_medication: usesMedication,
+    medications_name:
+      dm?.medicamentos && dm.medicamentos.trim()
+        ? dm.medicamentos.trim()
+        : null,
     family_history: yesNoMaybeToBool(dm?.historico_familiar),
-    capillary_blood_glucose_random: dm?.glicemia_aleatoria
-      ? String(dm.glicemia_aleatoria)
-      : null,
-    fasting_capillary_blood_glucose: dm?.glicemia_jejum
-      ? String(dm.glicemia_jejum)
-      : null,
-    glycated_hemoglobin: dm?.hba1c ? String(dm.hba1c) : null,
+    capillary_blood_glucose_random: dm?.glicemia_aleatoria ?? null,
+    fasting_capillary_blood_glucose: dm?.glicemia_jejum ?? null,
+    glycated_hemoglobin: dm?.hba1c ?? null,
   };
 }
 
@@ -864,6 +878,7 @@ export function hasApiToForm(api: any): any {
     usa_medicacao: api.uses_medication
       ? (treatmentStatusBackToFront[api.uses_medication] ?? "nao_se_aplica")
       : "nao_se_aplica",
+    medicamentos: api.medications_name ?? undefined,
     historico_familiar: boolToYesNoMaybe(api.family_history),
     pa1_sis: api.BP_assessment1_1 ?? undefined,
     pa1_dia: api.BP_assessment1_2 ?? undefined,
@@ -913,6 +928,7 @@ export function dmApiToForm(api: any): any {
     usa_medicacao: api.uses_medication
       ? (treatmentStatusBackToFront[api.uses_medication] ?? "nao_se_aplica")
       : "nao_se_aplica",
+    medicamentos: api.medications_name ?? undefined,
     glicemia_aleatoria:
       api.capillary_blood_glucose_random != null &&
       api.capillary_blood_glucose_random !== ""
@@ -930,7 +946,6 @@ export function dmApiToForm(api: any): any {
   };
 }
 
-// Aplica LifeStyle (PatientUser) nos blocos clínicos HAS/DM do form
 export function applyLifestyleFromPatientApiToClinica(
   defaultValues: any,
   patientApi: any
@@ -959,17 +974,25 @@ export function applyLifestyleFromPatientApiToClinica(
     ? (lastConsultationBackToFront[lastBack] ?? undefined)
     : undefined;
 
-  // Garante estrutura clinica
   if (!defaultValues.clinica) {
     defaultValues.clinica = { has: undefined, dm: undefined };
   }
 
-  const has = (defaultValues.clinica.has =
-    defaultValues.clinica.has ?? ({} as any));
-  const dm = (defaultValues.clinica.dm =
-    defaultValues.clinica.dm ?? ({} as any));
+  const has =
+    defaultValues.clinica.has ??
+    (defaultValues.clinica.has = {} as Record<string, unknown>);
 
-  // Só aplica se o campo ainda não tiver valor (pra não atropelar algo do form)
+  const hasDMCondition =
+    defaultValues?.condicoes?.dm === true || defaultValues.clinica.dm != null;
+
+  const dm =
+    hasDMCondition && defaultValues.clinica.dm !== undefined
+      ? (defaultValues.clinica.dm as any)
+      : hasDMCondition
+        ? (defaultValues.clinica.dm = {} as Record<string, unknown>)
+        : null;
+
+  // 🔹 Sempre preenche HAS com Estilo de Vida (se estiver vazio)
   if (feedFront && has.estilo_alimentacao == null)
     has.estilo_alimentacao = feedFront;
   if (saltFront && has.sal == null) has.sal = saltFront;
@@ -978,12 +1001,14 @@ export function applyLifestyleFromPatientApiToClinica(
   if (lastFront && has.ultima_consulta_has == null)
     has.ultima_consulta_has = lastFront;
 
-  // DM usa os mesmos valores globais
-  if (feedFront && dm.estilo_alimentacao == null)
-    dm.estilo_alimentacao = feedFront;
-  if (saltFront && dm.sal == null) dm.sal = saltFront;
-  if (alcoholFront && dm.alcool == null) dm.alcool = alcoholFront;
-  if (smokingFront && dm.tabagismo == null) dm.tabagismo = smokingFront;
-  if (lastFront && dm.ultima_consulta_dm == null)
-    dm.ultima_consulta_dm = lastFront;
+  // 🔹 Só preenche DM se existir bloco DM
+  if (dm) {
+    if (feedFront && dm.estilo_alimentacao == null)
+      dm.estilo_alimentacao = feedFront;
+    if (saltFront && dm.sal == null) dm.sal = saltFront;
+    if (alcoholFront && dm.alcool == null) dm.alcool = alcoholFront;
+    if (smokingFront && dm.tabagismo == null) dm.tabagismo = smokingFront;
+    if (lastFront && dm.ultima_consulta_dm == null)
+      dm.ultima_consulta_dm = lastFront;
+  }
 }

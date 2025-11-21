@@ -1,33 +1,30 @@
 // app/me/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 import { useHasData } from "@/lib/hooks/paciente/useHasData";
+import { useMedications } from "@/lib/hooks/paciente/useMedications";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { ConsultasTable, type ConsultaRow } from "@/components/portal/ConsultasTable";
-
 import {
-  HeartIcon,
-  ChartBarIcon,
-  ShieldExclamationIcon,
-  ExclamationTriangleIcon,
-  ClipboardDocumentCheckIcon,
-  CalendarIcon,
-} from "@heroicons/react/24/outline";
-import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
+  ConsultasTable,
+  type ConsultaRow,
+} from "@/components/portal/ConsultasTable";
 
-/* ===== Mock de Medicações ===== */
-const MEDICACOES = [
-  { id: "m1", nome: "Hidroclorotiazida", obs: "Tomar duas doses ao dia, 1 comprimido de manhã e outro à noite." },
-  { id: "m2", nome: "Losartana", obs: "Tomar 1 comprimido pela manhã." },
-  { id: "m3", nome: "Atorvastatina", obs: "Tomar 1 comprimido à noite antes de dormir." },
-];
+import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
+import {
+  CalendarIcon,
+  ChartBarIcon,
+  ClipboardDocumentCheckIcon,
+  ExclamationTriangleIcon,
+  HeartIcon,
+  ShieldExclamationIcon,
+} from "@heroicons/react/24/outline";
 
 export default function MePage() {
-  const meds = useMemo(() => MEDICACOES, []);
+  const { data: meds = [], isLoading: isLoadingMeds } = useMedications();
   const [selected, setSelected] = useState<ConsultaRow | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -72,7 +69,7 @@ export default function MePage() {
         label: "Sua Pressão Arterial",
         value: hasData.pressaoArterial,
         delta: hasData.deltaPA,
-        accent: hasData.deltaPA < 0 ? "amber" as const : "green" as const,
+        accent: hasData.deltaPA < 0 ? ("amber" as const) : ("green" as const),
         icon: <ChartBarIcon className="h-5 w-5 stroke-orange-600" />,
       },
       {
@@ -88,7 +85,7 @@ export default function MePage() {
         label: "Colesterol Bom (HDL)",
         value: hasData.colesterolHDL,
         delta: hasData.deltaHDL,
-        accent: hasData.deltaHDL > 0 ? "green" as const : "amber" as const,
+        accent: hasData.deltaHDL > 0 ? ("green" as const) : ("amber" as const),
         icon: <HeartIcon className="h-5 w-5 stroke-orange-600" />,
       },
       {
@@ -96,7 +93,7 @@ export default function MePage() {
         label: "Colesterol Ruim (LDL)",
         value: hasData.colesterolLDL,
         delta: hasData.deltaLDL,
-        accent: hasData.deltaLDL < 0 ? "green" as const : "red" as const,
+        accent: hasData.deltaLDL < 0 ? ("green" as const) : ("red" as const),
         icon: <ExclamationTriangleIcon className="h-5 w-5 stroke-orange-600" />,
       },
     ];
@@ -106,7 +103,8 @@ export default function MePage() {
     if (!data) return [];
 
     return data.map((a: any) => {
-      const profissional = `${a.professional?.user?.first_name ?? ""} ${a.professional?.user?.last_name ?? ""}`.trim();
+      const profissional =
+        `${a.professional?.user?.first_name ?? ""} ${a.professional?.user?.last_name ?? ""}`.trim();
       const cargo = a.professional?.role ?? "—";
       const local = a.location?.name ?? a.local?.name ?? "—";
 
@@ -119,7 +117,10 @@ export default function MePage() {
         const d = new Date(dt);
         if (!Number.isNaN(d.getTime())) {
           dataStr = d.toLocaleDateString("pt-BR");
-          horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+          horaStr = d.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
         } else {
           dataStr = String(dt);
         }
@@ -189,20 +190,39 @@ export default function MePage() {
           </div>
 
           <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 pr-2">
-            {meds.map((m) => (
-              <article
-                key={m.id}
-                className="rounded-md border border-gray-200 dark:border-gray-800 p-4 
-                          bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
-              >
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                  {m.nome}
-                </h3>
-                {m.obs && (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{m.obs}</p>
-                )}
-              </article>
-            ))}
+            {isLoadingMeds ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Carregando medicações...
+              </p>
+            ) : meds.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Nenhuma medicação ativa cadastrada.
+              </p>
+            ) : (
+              meds.map((m) => (
+                <article
+                  key={m.id}
+                  className="rounded-md border border-gray-200 dark:border-gray-800 p-4
+                     bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
+                >
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    {m.nome}
+                  </h3>
+
+                  {m.obs && (
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {m.obs}
+                    </p>
+                  )}
+
+                  {m.endDate && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Até {new Date(m.endDate).toLocaleDateString("pt-BR")}
+                    </p>
+                  )}
+                </article>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -217,9 +237,13 @@ export default function MePage() {
         </div>
 
         {isLoading ? (
-          <div className="p-6 text-gray-500 dark:text-gray-400">Carregando consultas...</div>
+          <div className="p-6 text-gray-500 dark:text-gray-400">
+            Carregando consultas...
+          </div>
         ) : isError ? (
-          <div className="p-6 text-red-600 dark:text-red-400">Erro ao carregar consultas.</div>
+          <div className="p-6 text-red-600 dark:text-red-400">
+            Erro ao carregar consultas.
+          </div>
         ) : (
           <ConsultasTable
             rows={rows}
