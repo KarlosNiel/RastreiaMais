@@ -4,263 +4,63 @@ import type {
   RegistroPacienteEdit,
 } from "@/schemas/paciente";
 
-/** ─────────────────────────────────────────────────────────────
- *  Maps de enum (front → back)
- *  ──────────────────────────────────────────────────────────── */
-const civilStatusMap: Record<string, string> = {
-  solteiro: "SOLTEIRO",
-  casado: "CASADO",
-  uniao_estavel: "UNIAO_ESTAVEL",
-  viuvo: "VIUVO",
-  separado: "SEPARADO",
+import {
+  alcoholConsumptionBackToFront,
+  alcoholConsumptionMap,
+  bpClassificationBackToFront,
+  bpClassificationMap,
+  civilStatusBackToFront,
+  civilStatusMap,
+  conductHasBackToFront,
+  conductHasMap,
+  feedingBackToFront,
+  feedingMap,
+  framinghamBackToFront,
+  framinghamMap,
+  hasComplicationsBackToFront,
+  hasComplicationsMap,
+  lastConsultationBackToFront,
+  lastConsultationMap,
+  saltConsumptionBackToFront,
+  saltConsumptionMap,
+  scholarityBackToFront,
+  scholarityMap,
+  smokingBackToFront,
+  smokingMap,
+  treatmentStatusBackToFront,
+  treatmentStatusMap,
+} from "@/lib/pacientes/enums";
+
+import {
+  boolToYesNoMaybe,
+  calcAgeFromBirth,
+  generateSimplePassword,
+  nullableBool,
+  onlyDigits,
+  optString,
+  toDateISO,
+  yesNoMaybeToBool,
+} from "@/lib/pacientes/utils";
+
+// maps específicos da etapa multiprof
+const diseaseChoiceMap: Record<string, string> = {
+  chagas: "CHAGAS",
+  leishmaniose: "LEISHMANIOSE",
+  tuberculose: "TUBERCULOSE",
+  toxoplasmose: "TOXOPLASMOSE",
+  esporotricose: "ESPOROTRICOSE",
+  hanseniase: "HANSENIASE",
 };
 
-const scholarityMap: Record<string, string> = {
-  sem_escolaridade: "ANALFABETO",
-  fund_incompleto: "FUND_INCOMPL",
-  fund_completo: "FUND_COMPL",
-  medio_incompleto: "MED_INCOMPL",
-  medio_completo: "MED_COMPL",
-  sup_incompleto: "SUP_INCOMPL",
-  sup_completo: "SUP_COMPL",
+const referralChoiceMap: Record<string, string> = {
+  psicologo: "PSICOLOGO",
+  medico_vet: "MEDICO_VETERINARIO",
+  fisioterapeuta: "FISIOTERAPEUTA",
+  assistente_social: "ASSISTENTE_SOCIAL",
+  enfermeira: "ENFERMEIRA",
+  nutricionista: "NUTRICIONISTA",
+  cirurgia_dentista: "CIRURGIA_DENTISTA",
 };
-
-// inversos (back → front) para preencher o form na edição
-const civilStatusBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(civilStatusMap).map(([front, back]) => [back, front])
-);
-
-const scholarityBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(scholarityMap).map(([front, back]) => [back, front])
-);
-
-/** Tratamento / yes-no-maybe para HAS/DM */
-const treatmentStatusMap: Record<string, string> = {
-  sim: "SIM",
-  nao: "NAO",
-  irregular: "IRREGULAR",
-  nao_se_aplica: "NAO_SE_APLICA",
-};
-
-const treatmentStatusBackToFront: Record<string, string> = {
-  SIM: "sim",
-  NAO: "nao",
-  IRREGULAR: "irregular",
-  NAO_SE_APLICA: "nao_se_aplica",
-};
-
-/** ─────────────────────────────────────────────────────────────
- *  HAS — Classificação PA / Framingham / Conduta
- *  ──────────────────────────────────────────────────────────── */
-
-// front → back (choices do backend)
-const bpClassificationMap: Record<string, string> = {
-  normal: "NORMAL",
-  pre_hipertenso: "PRE_HIPERTENSO",
-  estagio1: "HIPERTENSO_E1",
-  estagio2: "HIPERTENSO_E2",
-  estagio3: "HIPERTENSO_E3",
-};
-
-const bpClassificationBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(bpClassificationMap).map(([front, back]) => [back, front])
-);
-
-const framinghamMap: Record<string, string> = {
-  "<10": "BAIXO",
-  "10-20": "MODERADO",
-  ">20": "ALTO",
-};
-
-const framinghamBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(framinghamMap).map(([front, back]) => [back, front])
-);
-
-// Conduta adotada (HAS)
-const conductHasMap: Record<string, string> = {
-  aps: "ACOMPANHAMENTO_APS",
-  encaminhamento: "ENCAMINHAMENTO_MEDICO",
-  grupo: "ACONSELHAMENTO_GRUPO",
-  // "outro" não tem equivalente no backend (não há campo texto livre)
-};
-
-const conductHasBackToFront: Record<string, string> = {
-  ACOMPANHAMENTO_APS: "aps",
-  ENCAMINHAMENTO_MEDICO: "encaminhamento",
-  ACONSELHAMENTO_GRUPO: "grupo",
-};
-
-const hasComplicationsMap: Record<string, string> = {
-  avc: "AVC",
-  infarto: "INFARTO",
-  renal: "DOENCA_RENAL",
-};
-
-const hasComplicationsBackToFront: Record<string, string> = {
-  AVC: "avc",
-  INFARTO: "infarto",
-  DOENCA_RENAL: "renal",
-};
-
-/** ─────────────────────────────────────────────────────────────
- *  Estilo de Vida (LifeStyle em PatientUser)
- *  ──────────────────────────────────────────────────────────── */
-
-const feedingMap: Record<string, string> = {
-  saudavel: "SAUDAVEL",
-  parcial: "PARCIALMENTE",
-  pouco: "POUCO",
-};
-
-const feedingBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(feedingMap).map(([front, back]) => [back, front])
-);
-
-const saltConsumptionMap: Record<string, string> = {
-  adequado: "ADEQUADO",
-  exagerado: "EXAGERADO",
-  nao_sabe: "NAO_SABE",
-};
-
-const saltConsumptionBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(saltConsumptionMap).map(([front, back]) => [back, front])
-);
-
-const alcoholConsumptionMap: Record<string, string> = {
-  nao_bebe: "NAO_BEBE",
-  socialmente: "SOCIALMENTE",
-  frequentemente: "FREQUENTEMENTE",
-};
-
-const alcoholConsumptionBackToFront: Record<string, string> =
-  Object.fromEntries(
-    Object.entries(alcoholConsumptionMap).map(([front, back]) => [back, front])
-  );
-
-const smokingMap: Record<string, string> = {
-  nunca: "NUNCA_FUMOU",
-  ex: "EX_FUMANTE",
-  atual: "FUMANTE_ATUAL",
-};
-
-const smokingBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(smokingMap).map(([front, back]) => [back, front])
-);
-
-// ultima_consulta_has / ultima_consulta_dm → LastCheckChoices
-const lastConsultationMap: Record<string, string> = {
-  "7d": "7_DIAS",
-  "15d": "15_DIAS",
-  "30d": "30_DIAS",
-  "60d": "60_DIAS",
-  "90d": "90_DIAS",
-  "6m": "6_MESES",
-  "1a": "1_ANO",
-  ">1a": "MAIS_DE_1_ANO",
-};
-
-const lastConsultationBackToFront: Record<string, string> = Object.fromEntries(
-  Object.entries(lastConsultationMap).map(([front, back]) => [back, front])
-);
-
-function yesNoMaybeToBool(v?: string | null): boolean | null {
-  if (!v) return null;
-  if (v === "sim") return true;
-  if (v === "nao") return false;
-  return null;
-}
-
-function boolToYesNoMaybe(
-  b?: boolean | null
-): "sim" | "nao" | "nao_sabe" | undefined {
-  if (b === true) return "sim";
-  if (b === false) return "nao";
-  return "nao_sabe";
-}
-
-/** Utilidades simples */
-function onlyDigits(s?: string | null) {
-  return (s ?? "").replace(/\D+/g, "");
-}
-
-// Gera senha no formato: LLDDDDD# (2 letras + 5 dígitos + símbolo)
-// Ex.: "ba27412#", "de59023#", "li83704#", "so19485#"
-const PASSWORD_SYMBOL = "#";
-const PASSWORD_DIGITS = 5;
-
-export function generateSimplePassword(): string {
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  const digits = "0123456789";
-
-  // 2 letras + N dígitos
-  const totalRandomSlots = 2 + PASSWORD_DIGITS;
-
-  if (typeof window !== "undefined" && window.crypto?.getRandomValues) {
-    const array = new Uint32Array(totalRandomSlots);
-    window.crypto.getRandomValues(array);
-
-    const l1 = letters[array[0] % letters.length];
-    const l2 = letters[array[1] % letters.length];
-
-    let numPart = "";
-    for (let i = 2; i < totalRandomSlots; i++) {
-      numPart += digits[array[i] % digits.length];
-    }
-
-    return `${l1}${l2}${numPart}${PASSWORD_SYMBOL}`;
-  }
-
-  // fallback: Math.random
-  const randIndex = (max: number) => Math.floor(Math.random() * max);
-
-  const l1 = letters[randIndex(letters.length)];
-  const l2 = letters[randIndex(letters.length)];
-
-  let numPart = "";
-  for (let i = 0; i < PASSWORD_DIGITS; i++) {
-    numPart += digits[randIndex(digits.length)];
-  }
-
-  return `${l1}${l2}${numPart}${PASSWORD_SYMBOL}`;
-}
-
-function toDateISO(d?: Date | string | null) {
-  if (!d) return null;
-  const dt = typeof d === "string" ? new Date(d) : d;
-  if (Number.isNaN(dt.getTime())) return null;
-  // ISO yyyy-mm-dd (sem timezone)
-  return dt.toISOString().slice(0, 10);
-}
-
-function calcAgeFromBirth(d?: Date | string | null): number | null {
-  if (!d) return null;
-
-  const dt = typeof d === "string" ? new Date(d) : d;
-  if (Number.isNaN(dt.getTime())) return null;
-
-  const now = new Date();
-  let years = now.getFullYear() - dt.getFullYear();
-  const m = now.getMonth() - dt.getMonth();
-
-  if (m < 0 || (m === 0 && now.getDate() < dt.getDate())) {
-    years--;
-  }
-
-  return years >= 0 ? years : 0;
-}
-
-/** ─────────────────────────────────────────────────────────────
- * Helpers para campos opcionais (evitar "valores inventados")
- * ───────────────────────────────────────────────────────────── */
-function optString(v: unknown): string | undefined {
-  if (typeof v !== "string") return undefined;
-  const s = v.trim();
-  return s === "" ? undefined : s;
-}
-
-function nullableBool(v: unknown): boolean | null {
-  return typeof v === "boolean" ? v : null;
-}
 
 /** Tipo do payload que o back espera (mínimo para paciente) */
 export type PatientApiPayload = {
@@ -320,7 +120,7 @@ export type PatientApiPayload = {
   has_paresthesia_or_cramps?: boolean | null;
   has_difficulty_walking_or_activity?: boolean | null;
 
-  // LifeStyle (apps.accounts.data.patient.LifeStyle)
+  // LifeStyle
   feed?: string | null;
   salt_consumption?: string | null;
   alcohol_consumption?: string | null;
@@ -368,8 +168,12 @@ export type DmApiPayload = {
   glycated_hemoglobin?: string | null;
 };
 
-/** FRONT (form) → BACK (Patient API)
- *  mode: "create" envia user; "edit" não envia user.
+/* =======================================================================
+ * FRONT (form) → BACK (Patient API)
+ * ======================================================================= */
+
+/**
+ * mode: "create" envia user; "edit" não envia user.
  */
 export function formToPatientApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
@@ -381,21 +185,14 @@ export function formToPatientApi(
   const clinica: any = (data as any).clinica ?? {};
   const hasClinica: any = clinica?.has ?? {};
   const dmClinica: any = clinica?.dm ?? {};
-
   const lifeSrc: any =
     hasClinica && Object.keys(hasClinica).length > 0 ? hasClinica : dmClinica;
-
-  // nome → quebra simples em first_name / last_name
   const nome: string = socio?.nome?.trim?.() ?? "";
   const [first_name, ...rest] = nome.split(/\s+/);
   const last_name = rest.join(" ");
-
-  // e-mail: campo opcional no form
   const rawEmail = optString(socio?.email);
-
   let password: string | undefined;
   if (mode === "create") {
-    // se um dia tiver campo de senha no form, ele tem prioridade
     password = socio?.password || socio?.senha || generateSimplePassword();
   }
 
@@ -420,26 +217,6 @@ export function formToPatientApi(
       : socio?.renda_familiar != null && socio.renda_familiar !== ""
         ? String(socio.renda_familiar)
         : null;
-
-  // maps específicos da etapa multiprof
-  const diseaseChoiceMap: Record<string, string> = {
-    chagas: "CHAGAS",
-    leishmaniose: "LEISHMANIOSE",
-    tuberculose: "TUBERCULOSE",
-    toxoplasmose: "TOXOPLASMOSE",
-    esporotricose: "ESPOROTRICOSE",
-    hanseniase: "HANSENIASE",
-  };
-
-  const referralChoiceMap: Record<string, string> = {
-    psicologo: "PSICOLOGO",
-    medico_vet: "MEDICO_VETERINARIO",
-    fisioterapeuta: "FISIOTERAPEUTA",
-    assistente_social: "ASSISTENTE_SOCIAL",
-    enfermeira: "ENFERMEIRA",
-    nutricionista: "NUTRICIONISTA",
-    cirurgia_dentista: "CIRURGIA_DENTISTA",
-  };
 
   // ───── Estilo de Vida (LifeStyle no backend) ─────
   const feed =
@@ -485,31 +262,27 @@ export function formToPatientApi(
     cpf: onlyDigits(socio?.sus_cpf) || null,
     birth_date: toDateISO(socio?.nascimento),
     age: calcAgeFromBirth(socio?.nascimento),
-
     gender: optString(socio?.genero) ?? null,
     race_ethnicity: optString(socio?.raca_etnia) ?? null,
 
     scholarity: socio?.escolaridade
       ? (scholarityMap[socio.escolaridade] ?? null)
       : null,
-
     occupation: optString(socio?.ocupacao) ?? null,
+    people_per_household:
+      typeof socio?.n_pessoas_domicilio === "number"
+        ? socio.n_pessoas_domicilio
+        : null,
+    family_responsability: optString(socio?.responsavel_familiar) ?? null,
+    family_income: renda,
+    bolsa_familia: nullableBool(socio?.bolsa_familia),
+    micro_area:
+      typeof socio?.micro_area_id === "number" ? socio.micro_area_id : null,
 
     civil_status: socio?.estado_civil
       ? (civilStatusMap[socio.estado_civil] ?? null)
       : null,
 
-    people_per_household:
-      typeof socio?.n_pessoas_domicilio === "number"
-        ? socio.n_pessoas_domicilio
-        : null,
-
-    family_responsability: optString(socio?.responsavel_familiar) ?? null,
-    family_income: renda,
-    bolsa_familia: nullableBool(socio?.bolsa_familia),
-
-    micro_area:
-      typeof socio?.micro_area_id === "number" ? socio.micro_area_id : null,
     address:
       typeof (socio as any)?.address_id === "number"
         ? (socio as any).address_id
@@ -605,10 +378,10 @@ export function formToPatientApi(
   return payload;
 }
 
-/** BACK (Patient API) → FRONT (form defaultValues)
- *  - Se o back não tiver valor, mandamos undefined/"" pro form.
- *  - Login (nome) continua preenchido pelo user.
- */
+/* =======================================================================
+ * BACK (Patient API) → FRONT (defaultValues)
+ * ======================================================================= */
+
 export function patientApiToForm(api: any): RegistroPacienteCreate {
   const socio: any = {};
 
@@ -620,14 +393,9 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   socio.nome = fullName || "";
   socio.sus_cpf = api?.cpf ?? "";
   socio.nascimento = api?.birth_date ?? null; // string yyyy-mm-dd ou null
-
-  // deixamos gênero realmente opcional no form
   socio.genero = api?.gender ?? undefined;
   socio.genero_outro = "";
-
-  // se race_ethnicity vier nulo, não inventamos "nao_informado"
   socio.raca_etnia = api?.race_ethnicity ?? undefined;
-
   socio.telefone = api?.phone ?? "";
   socio.whatsapp =
     typeof api?.whatsapp === "boolean" ? api.whatsapp : undefined;
@@ -693,6 +461,10 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   };
 }
 
+/* =======================================================================
+ * HAS / DM – FRONT → BACK
+ * ======================================================================= */
+
 function hasClinicaHasData(has: any | undefined | null): boolean {
   if (!has) return false;
 
@@ -725,7 +497,6 @@ export function formToHasApi(
   const has = (data as any).clinica?.has;
   const familyHistory = yesNoMaybeToBool(has?.historico_familiar);
 
-  // 🔒 Regra de ouro:
   // - se NÃO marcou HAS
   // - e também NÃO preencheu nada do bloco clínico de HAS
   //   → não cria/atualiza registro nenhum
@@ -794,6 +565,7 @@ export function formToHasApi(
     const first = arr.find((v) => v !== "outro") ?? arr[0];
     return conductHasMap[first] ?? null;
   })();
+
   const complicationEnum = (() => {
     const arr = has?.complicacoes as string[] | undefined;
     if (!arr || arr.length === 0) return null;
@@ -823,7 +595,6 @@ export function formToHasApi(
     cholesterol_data: cholesterolData,
     HDL_cholesterol: has?.hdl != null ? Number(has.hdl) : null,
     HDL_data: hdlData,
-
     BP_classifications: bpClassification,
     framingham_score: framinghamScore,
     conduct_adopted: conductAdopted,
@@ -845,7 +616,7 @@ export function formToDmApi(
         ] as DmApiPayload["uses_medication"])
       : null;
 
-  // Nova regra: só cria/atualiza DM se a flag do Step 2 estiver marcada
+  //só cria/atualiza DM se a flag do Step 2 estiver marcada
   if (!cond?.dm) {
     return null;
   }
@@ -869,7 +640,10 @@ export function formToDmApi(
   };
 }
 
-/** BACK (HAS API) → FRONT (clinica.has) */
+/* =======================================================================
+ * BACK (HAS/DM API) → FRONT (clinica.has / clinica.dm)
+ * ======================================================================= */
+
 export function hasApiToForm(api: any): any {
   if (!api) return undefined;
 
@@ -945,6 +719,10 @@ export function dmApiToForm(api: any): any {
         : undefined,
   };
 }
+
+/* =======================================================================
+ * Aplica LifeStyle (PatientUser) nos blocos clínicos HAS/DM
+ * ======================================================================= */
 
 export function applyLifestyleFromPatientApiToClinica(
   defaultValues: any,
