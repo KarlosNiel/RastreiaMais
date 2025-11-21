@@ -31,6 +31,11 @@ from apps.accounts.api.v1.auth_views import (
     MeView,
 )
 from apps.accounts.api.v1.logout_view import LogoutView
+from apps.accounts.api.v1.password_reset_views import (
+    PasswordResetRequestView,
+    PasswordResetValidateView,
+    PasswordResetConfirmView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,6 +54,9 @@ urlpatterns = [
     ),
     path("api/auth/me", MeView.as_view(), name="auth_me"),
     path("api/auth/logout", LogoutView.as_view(), name="auth_logout"),
+    path("api/password-reset/request/", PasswordResetRequestView.as_view(), name="password_reset_request"),
+    path("api/password-reset/validate/", PasswordResetValidateView.as_view(), name="password_reset_validate"),
+    path("api/password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(
         'api/docs/',
