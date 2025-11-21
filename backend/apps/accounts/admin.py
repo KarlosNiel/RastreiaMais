@@ -3,6 +3,7 @@ from django.contrib import admin
 # Register your models here.
 from django.contrib import admin
 from .models import PatientUser, ProfessionalUser, ManagerUser
+from .models_password_reset import PasswordResetToken
 from apps.commons.admin import BaseModelAdmin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -141,3 +142,15 @@ class ManagerUserAdmin(BaseModelAdmin):
     def get_full_name(self, obj):
         return obj.user.get_full_name()
     get_full_name.short_description = 'Nome completo'
+
+
+# =============================================================================
+@admin.register(PasswordResetToken)
+class PasswordResetTokenAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'expires_at', 'used', 'used_at')
+    list_filter = ('used', 'created_at', 'expires_at')
+    search_fields = ('user__username', 'user__email', 'token')
+    readonly_fields = ('token', 'created_at', 'expires_at', 'used_at')
+    
+    def has_add_permission(self, request):
+        return False

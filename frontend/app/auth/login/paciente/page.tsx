@@ -105,15 +105,23 @@ export default function LoginPacientePage() {
           }}
         />
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer pb-6">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-          />
-          <span>Lembrar-me neste dispositivo</span>
-        </label>
+        <div className="flex items-center justify-between pb-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+            />
+            <span>Lembrar-me</span>
+          </label>
+          <a
+            href="/auth/recuperar-senha"
+            className="text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition"
+          >
+            Esqueceu a senha?
+          </a>
+        </div>
 
         {error && (
           <div role="alert" className="text-danger-500 text-sm">

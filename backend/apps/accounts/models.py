@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from apps.accounts.utils.utils import get_creator_profile, SingleProfileMixin
 
 from apps.accounts.data.patient import LifeStyle, SocialdemographicData, PsychosocialRisks, EnvironmentalRisks, PhysicalMotorRisks, ClassificationConducmMultiProfessional
+from apps.accounts.models_password_reset import PasswordResetToken
 
 # Create your models here.
 
