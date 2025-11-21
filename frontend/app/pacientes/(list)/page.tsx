@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import CreateAppointmentsModal  from "@/components/appointments/CreateAppointmentsModal"
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
@@ -91,6 +92,8 @@ export function PacientesTable({
   enableToolbar = true,
   onAction,
 }: PacienteTableProps) {
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = React.useState(false);
+  const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
   const router = useRouter();
   const [filterValue, setFilterValue] = React.useState("");
   const [riskFilter, setRiskFilter] = React.useState<Set<Key>>(new Set());
@@ -196,6 +199,16 @@ export function PacientesTable({
           return (
             <div className="flex items-center justify-end gap-2">
               <Button
+                onPress={() => {
+                  setSelectedPatientId(row.id);
+                  setIsAppointmentModalOpen(true);
+                }}
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                isIconOnly
+              >
+                <span className="text-green-600 font-bold text-lg">+</span>
+              </Button>
+              <Button
                 onPress={() => onAction?.("open", row)}
                 className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
                 isIconOnly
@@ -265,70 +278,78 @@ export function PacientesTable({
   ) : null;
 
   return (
-    <div className="rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all">
-      <Table
-        aria-label="Lista de pacientes"
-        isHeaderSticky
-        shadow="none"
-        topContent={topContent}
-        topContentPlacement="outside"
-        bottomContentPlacement="outside"
-        sortDescriptor={sortDescriptor}
-        onSortChange={setSortDescriptor}
-        classNames={{
-          th: "px-6 py-3 text-foreground/70 font-semibold",
-          td: "px-6 py-3",
-          wrapper: "bg-transparent border-none shadow-none",
-          table: "dark:bg-gray-900",
-        }}
-      >
-        <TableHeader columns={COLUMNS}>
-          {(column: Column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.align}
-              allowsSorting={!!column.sortable}
-              className="text-sm dark:bg-gray-800"
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-
-        <TableBody
-          emptyContent="Nenhum paciente encontrado."
-          items={sortedItems}
-        >
-          {(item: PatientRow) => (
-            <TableRow
-              key={item.id}
-              className="even:bg-gray-50 dark:even:bg-gray-800/60 dark:odd:bg-gray-900/60 transition"
-            >
-              {(columnKey: Key) => (
-                <TableCell>{renderCell(item, columnKey)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-
-      <div className="py-3 flex justify-center">
-        <Pagination
-          isCompact
-          showControls
-          size="sm"
-          color="primary"
-          page={page}
-          total={totalPages}
-          onChange={setPage}
-          classNames={{
-            next: "dark:bg-gray-800",
-            prev: "dark:bg-gray-800",
-            item: "dark:bg-gray-800",
-          }}
+    <>
+      <CreateAppointmentsModal
+          open={isAppointmentModalOpen}
+          onOpenChange={setIsAppointmentModalOpen}
+          preSelectedPatientId={selectedPatientId}
         />
+
+      <div className="rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all">
+        <Table
+          aria-label="Lista de pacientes"
+          isHeaderSticky
+          shadow="none"
+          topContent={topContent}
+          topContentPlacement="outside"
+          bottomContentPlacement="outside"
+          sortDescriptor={sortDescriptor}
+          onSortChange={setSortDescriptor}
+          classNames={{
+            th: "px-6 py-3 text-foreground/70 font-semibold",
+            td: "px-6 py-3",
+            wrapper: "bg-transparent border-none shadow-none",
+            table: "dark:bg-gray-900",
+          }}
+        >
+          <TableHeader columns={COLUMNS}>
+            {(column: Column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.align}
+                allowsSorting={!!column.sortable}
+                className="text-sm dark:bg-gray-800"
+              >
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+
+          <TableBody
+            emptyContent="Nenhum paciente encontrado."
+            items={sortedItems}
+          >
+            {(item: PatientRow) => (
+              <TableRow
+                key={item.id}
+                className="even:bg-gray-50 dark:even:bg-gray-800/60 dark:odd:bg-gray-900/60 transition"
+              >
+                {(columnKey: Key) => (
+                  <TableCell>{renderCell(item, columnKey)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+
+        <div className="py-3 flex justify-center">
+          <Pagination
+            isCompact
+            showControls
+            size="sm"
+            color="primary"
+            page={page}
+            total={totalPages}
+            onChange={setPage}
+            classNames={{
+              next: "dark:bg-gray-800",
+              prev: "dark:bg-gray-800",
+              item: "dark:bg-gray-800",
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

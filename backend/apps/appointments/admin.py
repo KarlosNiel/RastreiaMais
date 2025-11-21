@@ -11,6 +11,7 @@ class AppointmentAdmin(BaseModelAdmin):
         'patient_display',
         'professional_display',
         'type',
+        'local',
         'colored_risk',
         'status',
         'scheduled_datetime',

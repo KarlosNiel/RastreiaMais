@@ -16,6 +16,7 @@ import ProfessionalAppointmentDetailsModal from "@/components/profissional/Profe
 import CreateAlertModal from "@/components/gestor/CreateAlertModal";
 import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
 import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpis";
+import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 
 /* ======================
    🔹 Tipos e Funções Auxiliares
@@ -114,6 +115,20 @@ export default function ProfissionalPage() {
       alert("Erro ao atualizar o status do agendamento");
     },
   });
+
+  const deleteAlertMutation = useDeleteAlert();
+
+  const handleDeleteAlert = async (alertId: number) => {
+    if (!confirm("Tem certeza que deseja excluir este alerta?")) return;
+
+    try {
+      await deleteAlertMutation.mutateAsync(alertId);
+      setIsAlertModalOpen(false);
+      setSelectedAlert(null);
+    } catch (err) {
+      console.error("Erro ao deletar alerta:", err);
+    }
+  };
 
   /* ========== Mapeamento p/ tabela ========== */
   const AGENDA_ROWS: AgendaRow[] =
@@ -250,7 +265,7 @@ export default function ProfissionalPage() {
           ) : alerts && alerts.length > 0 ? (
             <div className="max-h-70 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
               <ul className="space-y-3">
-                {alerts.map((a, i) => (
+                {alerts.slice().reverse().map((a, i) => (
                   <li
                     onClick={() => {
                       setSelectedAlert(a);

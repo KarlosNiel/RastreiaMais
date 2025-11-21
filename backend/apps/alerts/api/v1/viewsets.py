@@ -10,7 +10,7 @@ from apps.accounts.utils.utils import get_user_profile
 @extend_schema(tags=['Alerts'])
 class AlertViewset(BaseModelViewSet):
     permission_classes = [IsAuthenticated, AlertDataPermission]
-    queryset = Alert.all_objects
+    queryset = Alert.objects
     serializer_class = AlertSerializer
 
     def get_queryset(self):

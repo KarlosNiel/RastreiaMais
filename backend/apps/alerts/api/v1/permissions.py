@@ -30,13 +30,9 @@ class AlertDataPermission(BaseRolePermission):
         if user.is_superuser or self.is_manager(request):
             return True
         
-        if self.is_professional(request) and request.method in SAFE_METHODS:
+        if self.is_professional(request) and request.method:
             return True
-        
-        #* para dar post, put, delete etc apenas em objetos próprios
-        if self.is_professional(request) and request.method not in SAFE_METHODS: 
-            return getattr(obj, "user", None) == user
-        
+    
         if self.is_patient(request):
             self.message = "Pacientes não tem acesso aos alertas..."
             return False
