@@ -4,13 +4,14 @@
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 
 /** Campos deste passo (útil para validação dirigida no Wizard) */
 export const STEP4_FIELDS = ["multiprof"] as const;
 
 export default function Step4Multiprof() {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
   // condicionais
   const usoPsico = watch("multiprof.psico_uso_psicofarmaco");
@@ -20,9 +21,46 @@ export default function Step4Multiprof() {
   const precisaEnc = watch("multiprof.precisa_enc_multiprof");
   const encMultiprof = watch("multiprof.enc_multiprof") as string[] | undefined;
 
+  useEffect(() => {
+    if (precisaEnc !== "sim") {
+      setValue("multiprof.enc_multiprof", []);
+      setValue("multiprof.enc_multiprof_outro", "");
+    }
+  }, [precisaEnc, setValue]);
+
+  useEffect(() => {
+    if (usoPsico !== "sim") {
+      setValue("multiprof.psico_psicofarmaco_qual", "");
+    }
+  }, [usoPsico, setValue]);
+
+  // Limpa diagnóstico quando voltar de "sim" para outro
+  useEffect(() => {
+    if (diagPsico !== "sim") {
+      setValue("multiprof.psico_diagnostico_qual", "");
+    }
+  }, [diagPsico, setValue]);
+
+  // Limpa "quais animais" quando não há animais no domicílio
+  useEffect(() => {
+    if (animaisCasa !== "sim") {
+      setValue("multiprof.ambi_animais_quais", "");
+    }
+  }, [animaisCasa, setValue]);
+
+  // Limpa frequência de AF quando a resposta é "não"
+  useEffect(() => {
+    if (praticaAF !== "sim") {
+      setValue("multiprof.fisico_atividade_freq_semana", undefined);
+    }
+  }, [praticaAF, setValue]);
+
   return (
     <div className="space-y-6">
-      <Card shadow="none" className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2">
+      <Card
+        shadow="none"
+        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+      >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">
             4. Avaliação Multiprofissional

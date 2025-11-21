@@ -103,6 +103,10 @@ export default function EditPatientClient({ id }: Props) {
           } as any;
         }
 
+        if (!defaultValues.multiprof) {
+          (defaultValues as any).multiprof = {};
+        }
+
         // 4.2) Descobre o ID do endereço (se existir)
         const addressId =
           (addressObj && addressObj.id != null

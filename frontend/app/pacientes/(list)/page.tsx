@@ -19,6 +19,7 @@ import {
 } from "@heroui/react";
 import type { Key, SortDescriptor } from "@react-types/shared";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -90,6 +91,7 @@ export function PacientesTable({
   enableToolbar = true,
   onAction,
 }: PacienteTableProps) {
+  const router = useRouter();
   const [filterValue, setFilterValue] = React.useState("");
   const [riskFilter, setRiskFilter] = React.useState<Set<Key>>(new Set());
   const [page, setPage] = React.useState(initialPage);
@@ -225,12 +227,12 @@ export function PacientesTable({
 
   const topContent = enableToolbar ? (
     <div className="flex flex-col gap-4 px-4 sm:px-1">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Input
           isClearable
           radius="full"
           variant="flat"
-          className="w-full sm:max-w-[44%]"
+          className="w-full sm:max-w-xl sm:flex-1"
           placeholder="Buscar paciente, CPF ou endereço..."
           value={filterValue}
           onClear={() => setFilterValue("")}
@@ -242,6 +244,18 @@ export function PacientesTable({
               "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
           }}
         />
+
+        <Button
+          as={Link}
+          href="/pacientes/novo"
+          color="primary"
+          variant="solid"
+          radius="lg"
+          size="md"
+          className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+        >
+          Novo paciente
+        </Button>
       </div>
 
       <span className="text-small text-default-500">

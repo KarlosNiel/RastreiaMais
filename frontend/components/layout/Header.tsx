@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { SunIcon, MoonIcon, BellIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useTheme } from "next-themes";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { UserMenu } from "@/components/navbar/UserMenu";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { BellIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { Button } from "@heroui/button";
+import { useTheme } from "next-themes";
+import Link from "next/link";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -20,9 +21,17 @@ export const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-              Rastreia+
-            </span>
+            <Button
+              as={Link}
+              href="/"
+              variant="light"
+              radius="full"
+              className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
+                Rastreia+
+              </span>
+            </Button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -52,14 +61,16 @@ export const Header = () => {
                   aria-label="Notificações"
                   className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <BellIcon className="size-5 dark:text-white" strokeWidth={2} />
+                  <BellIcon
+                    className="size-5 dark:text-white"
+                    strokeWidth={2}
+                  />
                 </Button>
 
                 {/* Menu do usuário com perfil e logout */}
                 <UserMenu user={user} />
               </>
             )}
-            
           </div>
         </div>
       </div>

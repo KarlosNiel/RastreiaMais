@@ -22,6 +22,16 @@ export function boolToYesNoMaybe(
 }
 
 /**
+ * Converte boolean em "sim" | "nao" (ou undefined se nulo/indefinido)
+ * Útil para campos que usam o schema SimNaoZ ("sim" | "nao").
+ */
+export function boolToSimNao(b?: boolean | null): "sim" | "nao" | undefined {
+  if (b === true) return "sim";
+  if (b === false) return "nao";
+  return undefined;
+}
+
+/**
  * Mantém apenas dígitos (CPF, telefone, etc.)
  */
 export function onlyDigits(s?: string | null): string {

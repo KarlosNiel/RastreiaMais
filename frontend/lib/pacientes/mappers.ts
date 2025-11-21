@@ -13,6 +13,7 @@ import {
   civilStatusMap,
   conductHasBackToFront,
   conductHasMap,
+  diseaseChoiceMap,
   feedingBackToFront,
   feedingMap,
   framinghamBackToFront,
@@ -21,6 +22,7 @@ import {
   hasComplicationsMap,
   lastConsultationBackToFront,
   lastConsultationMap,
+  referralChoiceMap,
   saltConsumptionBackToFront,
   saltConsumptionMap,
   scholarityBackToFront,
@@ -32,6 +34,7 @@ import {
 } from "@/lib/pacientes/enums";
 
 import {
+  boolToSimNao,
   boolToYesNoMaybe,
   calcAgeFromBirth,
   generateSimplePassword,
@@ -41,26 +44,6 @@ import {
   toDateISO,
   yesNoMaybeToBool,
 } from "@/lib/pacientes/utils";
-
-// maps específicos da etapa multiprof
-const diseaseChoiceMap: Record<string, string> = {
-  chagas: "CHAGAS",
-  leishmaniose: "LEISHMANIOSE",
-  tuberculose: "TUBERCULOSE",
-  toxoplasmose: "TOXOPLASMOSE",
-  esporotricose: "ESPOROTRICOSE",
-  hanseniase: "HANSENIASE",
-};
-
-const referralChoiceMap: Record<string, string> = {
-  psicologo: "PSICOLOGO",
-  medico_vet: "MEDICO_VETERINARIO",
-  fisioterapeuta: "FISIOTERAPEUTA",
-  assistente_social: "ASSISTENTE_SOCIAL",
-  enfermeira: "ENFERMEIRA",
-  nutricionista: "NUTRICIONISTA",
-  cirurgia_dentista: "CIRURGIA_DENTISTA",
-};
 
 /** Tipo do payload que o back espera (mínimo para paciente) */
 export type PatientApiPayload = {
@@ -443,6 +426,102 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
     ? (civilStatusBackToFront[api.civil_status] ?? undefined)
     : undefined;
 
+  // ───── Etapa 4 — Dados multiprofissionais ─────
+  const multiprof: any = {};
+
+  // ─── Riscos Psicossociais ───
+  multiprof.psico_uso_psicofarmaco = boolToSimNao(
+    api?.use_psychotropic_medication ?? null
+  );
+  multiprof.psico_psicofarmaco_qual =
+    api?.use_psychotropic_medication_answer ?? "";
+
+  multiprof.psico_diagnostico = boolToYesNoMaybe(
+    api?.any_psychological_psychiatric_diagnosis
+  );
+  multiprof.psico_diagnostico_qual =
+    api?.any_psychological_psychiatric_diagnosis_answer ?? "";
+
+  multiprof.psico_estresse_interfere = boolToSimNao(
+    api?.everyday_stress_interfere_with_your_BP_BS_control ?? null
+  );
+  multiprof.psico_fatores_economicos = boolToSimNao(
+    api?.economic_factors_interfere_with_your_treatment ?? null
+  );
+
+  multiprof.psico_apoio_suficiente = boolToYesNoMaybe(
+    api?.feel_receive_support_from_family_friends_to_maintain_treatment
+  );
+  multiprof.psico_cumpre_orientacoes = boolToSimNao(
+    api?.regularly_follow_health_guidelines ?? null
+  );
+
+  // ─── Riscos Ambientais ───
+  multiprof.ambi_animais_domicilio = boolToYesNoMaybe(
+    api?.presence_of_pets_at_home
+  );
+  multiprof.ambi_animais_quais = api?.presence_of_pets_at_home_answer ?? "";
+
+  multiprof.ambi_animais_vacinados = boolToYesNoMaybe(
+    api?.your_animals_are_vaccinated
+  );
+  multiprof.ambi_feridas_demoram = boolToSimNao(
+    api?.delayed_wound_healing_after_scratches_or_bites ?? null
+  );
+
+  const diseaseCode = api?.diagnosed_transmissible_disease_in_household ?? null;
+  if (diseaseCode) {
+    const found = Object.entries(diseaseChoiceMap).find(
+      ([, back]) => back === diseaseCode
+    );
+    multiprof.ambi_doencas_transmissiveis = found ? [found[0]] : undefined;
+  } else {
+    multiprof.ambi_doencas_transmissiveis = undefined;
+  }
+  multiprof.ambi_doencas_outro = "";
+
+  multiprof.ambi_contato_sangue_fezes_urina = boolToYesNoMaybe(
+    api?.direct_contact_with_animal_bodily_fluids
+  );
+  multiprof.ambi_orientacao_zoonoses = boolToYesNoMaybe(
+    api?.received_guidance_on_zoonoses
+  );
+
+  // ─── Riscos Físico-Motores ───
+  multiprof.fisico_atividade = boolToSimNao(
+    api?.performs_physical_activity ?? null
+  );
+  multiprof.fisico_atividade_freq_semana =
+    api?.performs_physical_activity_answer != null &&
+    api.performs_physical_activity_answer !== ""
+      ? Number(api.performs_physical_activity_answer)
+      : undefined;
+
+  multiprof.fisico_edemas = boolToSimNao(api?.has_edema ?? null);
+  multiprof.fisico_dispneia = boolToSimNao(api?.has_dyspnea ?? null);
+  multiprof.fisico_formigamento_caimbras = boolToSimNao(
+    api?.has_paresthesia_or_cramps ?? null
+  );
+  multiprof.fisico_dificuldade_caminhar = boolToSimNao(
+    api?.has_difficulty_walking_or_activity ?? null
+  );
+
+  // ─── Encaminhamento Multiprofissional ───
+  multiprof.precisa_enc_multiprof = boolToSimNao(
+    api?.requires_multidisciplinary_referral ?? null
+  );
+
+  const referralCode = api?.requires_multidisciplinary_referral_choose ?? null;
+  if (referralCode) {
+    const found = Object.entries(referralChoiceMap).find(
+      ([, back]) => back === referralCode
+    );
+    multiprof.enc_multiprof = found ? [found[0]] : undefined;
+  } else {
+    multiprof.enc_multiprof = undefined;
+  }
+  multiprof.enc_multiprof_outro = "";
+
   // Shape mínimo compatível com RegistroPacienteCreateZ
   return {
     socio,
@@ -456,7 +535,7 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
       has: undefined,
       dm: undefined,
     } as any,
-    multiprof: undefined as any,
+    multiprof,
     plano: undefined as any,
   };
 }

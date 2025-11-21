@@ -161,3 +161,27 @@ export const lastConsultationMap: ChoiceMap = {
 
 export const lastConsultationBackToFront: ChoiceMap =
   invertMap(lastConsultationMap);
+
+export const diseaseChoiceMap: ChoiceMap = {
+  chagas: "CHAGAS",
+  leishmaniose: "LEISHMANIOSE",
+  tuberculose: "TUBERCULOSE",
+  toxoplasmose: "TOXOPLASMOSE",
+  esporotricose: "ESPOROTRICOSE",
+  hanseniase: "HANSENIASE",
+};
+
+export const diseaseChoiceBackToFront: ChoiceMap = invertMap(diseaseChoiceMap);
+
+export const referralChoiceMap: ChoiceMap = {
+  psicologo: "PSICOLOGO",
+  medico_vet: "MEDICO_VETERINARIO",
+  fisioterapeuta: "FISIOTERAPEUTA",
+  assistente_social: "ASSISTENTE_SOCIAL",
+  enfermeira: "ENFERMEIRA",
+  nutricionista: "NUTRICIONISTA",
+  cirurgia_dentista: "CIRURGIA_DENTISTA",
+};
+
+export const referralChoiceBackToFront: ChoiceMap =
+  invertMap(referralChoiceMap);
