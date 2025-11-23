@@ -18,9 +18,6 @@ import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
 import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpis";
 import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 
-/* ======================
-   🔹 Tipos e Funções Auxiliares
-====================== */
 type RiskTone = "safe" | "moderate" | "critical";
 type ChipTone = "safe" | "attention" | "critical" | "neutral";
 
@@ -59,9 +56,6 @@ function mapRiskLevel(level: string): RiskTone {
 const mapRiskToChip = (t?: RiskTone): ChipTone =>
   t === "moderate" ? "attention" : (t ?? "safe");
 
-/* ======================
-   🔹 Página Principal
-====================== */
 export default function ProfissionalPage() {
   const { data: KPIS} = useProfissionalKpis();
   const [selectedAppointment, setSelectedAppointment] = useState<AgendaRow | null>(null);
@@ -79,7 +73,6 @@ export default function ProfissionalPage() {
     return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
-  /* ========== Busca dos agendamentos ========== */
   const {
     data: appointments,
     isLoading,
@@ -102,7 +95,6 @@ export default function ProfissionalPage() {
     },
   });
 
-  /* ========== Mutation para atualizar status ========== */
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       return await apiPatch(`/api/v1/appointments/appointments/${id}/`, { status });
@@ -130,7 +122,6 @@ export default function ProfissionalPage() {
     }
   };
 
-  /* ========== Mapeamento p/ tabela ========== */
   const AGENDA_ROWS: AgendaRow[] =
     appointments?.map((a) => ({
       id: String(a.id),
@@ -148,7 +139,6 @@ export default function ProfissionalPage() {
       status: a.status || "ativo",
     })) ?? [];
 
-  /* ========== Handlers de ações ========== */
   const handleAction = (action: "done" | "delete" | "open", row: AgendaRow) => {
     switch (action) {
       case "done":
@@ -168,7 +158,6 @@ export default function ProfissionalPage() {
     }
   };
 
-  /* ========== Renderização ========== */
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
       {/* Cabeçalho */}
@@ -211,9 +200,7 @@ export default function ProfissionalPage() {
         </div>
       </header>
 
-      {/* KPIs e Alertas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* KPIs */}
         <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {KPIS.map((kpi) => (
             <KpiCard
@@ -228,7 +215,6 @@ export default function ProfissionalPage() {
           ))}
         </section>
 
-        {/* Alertas dos Pacientes */}
         <section className="mt-4 rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -332,7 +318,6 @@ export default function ProfissionalPage() {
         </section>
       </div>
 
-      {/* Agenda */}
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all">
         <div className="flex items-center gap-2 mb-4">
           <ChartBarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -360,7 +345,6 @@ export default function ProfissionalPage() {
         )}
       </section>
 
-      {/* Modal de Detalhes do Agendamento */}
       <ProfessionalAppointmentDetailsModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

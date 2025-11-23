@@ -43,7 +43,7 @@ export type ProfessionalApiPayload = {
  */
 export async function createProfissional<T = ProfessionalApi>(
   payload: ProfessionalApiPayload
-): Promise<T> {
+): Promise<T | null> {
   return apiPost<T>("/api/v1/accounts/professionals/", payload);
 }
 
@@ -54,7 +54,7 @@ export async function createProfissional<T = ProfessionalApi>(
 export async function updateProfissional<T = ProfessionalApi>(
   id: number,
   payload: Partial<ProfessionalApiPayload>
-): Promise<T> {
+): Promise<T | null> {
   return apiPatch<T>(`/api/v1/accounts/professionals/${id}/`, payload);
 }
 
@@ -63,7 +63,7 @@ export async function updateProfissional<T = ProfessionalApi>(
  */
 export async function getProfissional<T = ProfessionalApi>(
   id: number
-): Promise<T> {
+): Promise<T | null> {
   return apiGet<T>(`/api/v1/accounts/professionals/${id}/`);
 }
 
@@ -77,7 +77,7 @@ export async function getProfissional<T = ProfessionalApi>(
  */
 export async function listProfissionais<
   T = ProfessionalApi[] | { results: ProfessionalApi[] },
->(searchParams?: string): Promise<T> {
+>(searchParams?: string): Promise<T | null> {
   const suffix = searchParams ? `?${searchParams}` : "";
   return apiGet<T>(`/api/v1/accounts/professionals/${suffix}`);
 }
@@ -85,6 +85,6 @@ export async function listProfissionais<
 /**
  * Remoção (soft delete) de um profissional.
  */
-export async function deleteProfissional<T = void>(id: number): Promise<T> {
+export async function deleteProfissional<T = void>(id: number): Promise<T | null> {
   return apiDelete<T>(`/api/v1/accounts/professionals/${id}/`);
 }

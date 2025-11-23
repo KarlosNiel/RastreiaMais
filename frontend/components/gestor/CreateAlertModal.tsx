@@ -1,288 +1,200 @@
 "use client";
 
-import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
-import { Button } from "@heroui/button";
-import { Input, Textarea, Select, SelectItem } from "@heroui/react";
-import { useAppointments } from "@/lib/hooks/appointments/useAppointments";
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@/lib/api";
 import { useEffect, useState } from "react";
-import { Spinner } from "@heroui/spinner";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Select,
+  SelectItem,
+  Textarea,
+  Button,
+} from "@heroui/react";
+import { useCreateAlert } from "@/lib/hooks/alerts/useCreateAlert";
+import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 
-interface CreateAppointmentModalProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  preSelectedPatientId?: string | null;
+interface AlertData {
+  id?: number | string;
+  patient: any;
+  cpf?: string;
+  risk_level?: "safe" | "moderate" | "critical";
+  title?: string;
+  description?: string;
 }
 
-export default function CreateAppointmentsModal({
-  open,
-  onOpenChange,
-  preSelectedPatientId,
-}: CreateAppointmentModalProps) {
-  const { create } = useAppointments();
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  alertData?: AlertData | null;
+}
 
-  const [form, setForm] = useState({
-    professional: "",
-    scheduled_datetime: "",
-    local: "",
-    risk_level: "Seguro",
-    type: "Consulta",
-    description: "",
-  });
+export default function CreateAlertModal({ open, onOpenChange, alertData }: Props) {
+  const [cpf, setCpf] = useState("");
+  const [risk, setRisk] = useState<"safe" | "moderate" | "critical" | "">("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  // Buscar dados do paciente selecionado
-  const { data: patient, isLoading: loadingPatient } = useQuery({
-    queryKey: ["patient", preSelectedPatientId],
-    queryFn: async () => {
-      if (!preSelectedPatientId) return null;
-      const resp = await apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
-      return resp;
-    },
-    enabled: open && !!preSelectedPatientId,
-  });
+  const createAlert = useCreateAlert();
+  const deleteAlert = useDeleteAlert();
 
-  // Buscar todos os profissionais
-  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
-      const list = Array.isArray(resp) ? resp : resp?.results || [];
-      return list;
-    },
-    enabled: open,
-  });
-
-  // Buscar instituições (locais)
-  const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
-    queryKey: ["institutions"],
-    queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/locations/institutions/");
-      const list = Array.isArray(resp) ? resp : resp?.results || [];
-      return list;
-    },
-    enabled: open,
-  });
-
-  // Resetar form ao fechar
   useEffect(() => {
-    if (!open) {
-      setForm({
-        professional: "",
-        scheduled_datetime: "",
-        local: "",
-        risk_level: "Seguro",
-        type: "Consulta",
-        description: "",
-      });
+    if (alertData) {
+      setCpf(alertData.patient?.cpf || "");
+      setRisk(alertData.risk_level || "");
+      setTitle(alertData.title || "");
+      setDescription(alertData.description || "");
+    } else {
+      setCpf("");
+      setRisk("");
+      setTitle("");
+      setDescription("");
     }
-  }, [open]);
+  }, [alertData, open]);
 
-  const onSubmit = async () => {
-    // Validação
-    if (!preSelectedPatientId) {
-      alert("Paciente não selecionado");
-      return;
-    }
+  const handleSave = async () => {
+    if (!cpf.trim() || !title || !description) return;
 
-    if (!form.professional) {
-      alert("Por favor, selecione um profissional");
-      return;
-    }
-
-    if (!form.scheduled_datetime) {
-      alert("Por favor, preencha a Data e Hora do agendamento");
-      return;
-    }
+    const payload = {
+      cpf: /^\d+$/.test(cpf) ? cpf : cpf.trim(),
+      risk_level: risk || "safe",
+      title,
+      description,
+    };
 
     try {
-      await create.mutateAsync({
-        patient_id: Number(preSelectedPatientId),
-        professional_id: Number(form.professional),
-        scheduled_datetime: form.scheduled_datetime,
-        local: form.local ? Number(form.local) : null,
-        risk_level: form.risk_level,
-        type: form.type,
-        description: form.description,
-        status: "ativo",
-      });
-      alert("Agendamento criado com sucesso!");
+      await createAlert.mutateAsync(payload);
       onOpenChange(false);
-    } catch (error: any) {
-      console.error("Erro ao criar agendamento:", error);
-      const errorMsg = error?.response?.data?.detail 
-        || error?.response?.data?.message 
-        || JSON.stringify(error?.response?.data)
-        || "Erro ao criar agendamento. Verifique os dados e tente novamente.";
-      alert(errorMsg);
-    }
+    } catch {}
   };
 
-  const isLoading = loadingPatient || loadingProfessionals || loadingInstitutions;
+  const handleDelete = async () => {
+    if (!alertData?.id) return;
 
-  // Função para formatar CPF
-  const formatCpf = (cpf?: string) => {
-    if (!cpf) return "";
-    const digits = cpf.replace(/\D/g, "");
-    if (digits.length !== 11) return cpf;
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    try {
+      await deleteAlert.mutateAsync(Number(alertData.id));
+      setConfirmDeleteOpen(false);
+      onOpenChange(false);
+    } catch {}
   };
 
   return (
-    <Modal isOpen={open} onOpenChange={onOpenChange} size="lg" scrollBehavior="inside">
-      <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold">Novo Agendamento</h2>
-          <p className="text-sm text-gray-500 font-normal">
-            Preencha as informações para criar um novo agendamento
-          </p>
-        </ModalHeader>
-
-        <ModalBody className="space-y-4 pb-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner color="warning" />
-            </div>
-          ) : (
+    <>
+      <Modal isOpen={open} onOpenChange={onOpenChange} backdrop="blur">
+        <ModalContent>
+          {(onClose) => (
             <>
-              {/* Informações do Paciente (somente leitura) */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Paciente</p>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  {patient?.user?.first_name} {patient?.user?.last_name}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  CPF: {formatCpf(patient?.cpf)}
-                </p>
-              </div>
+              <ModalHeader>{alertData ? "Detalhes do Alerta" : "Criar Novo Alerta"}</ModalHeader>
 
-              {/* Profissional (Select) */}
-              <Select
-                label="Profissional *"
-                placeholder="Selecione o profissional"
-                selectedKeys={form.professional ? [form.professional] : []}
-                onChange={(e) => setForm({ ...form, professional: e.target.value })}
-                classNames={{
-                  trigger: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-                isRequired
-              >
-                {professionals.length > 0 ? (
-                  professionals.map((prof: any) => (
-                    <SelectItem key={String(prof.id)}>
-                      {prof.user?.first_name} {prof.user?.last_name}
-                      {prof.specialty ? ` - ${prof.specialty}` : ""}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem key="empty" isDisabled>
-                    Nenhum profissional cadastrado
-                  </SelectItem>
-                )}
-              </Select>
+              <ModalBody className="space-y-3">
+                <Input
+                  label="CPF"
+                  placeholder="Ex: 12345678900"
+                  variant="bordered"
+                  value={cpf}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^[A-Za-z\s]+$/.test(value)) setCpf(value);
+                    else if (/^\d*$/.test(value)) setCpf(value.slice(0, 11));
+                  }}
+                  isDisabled={!!alertData}
+                />
 
-              {/* Data e Hora */}
-              <Input
-                type="datetime-local"
-                label="Data e Hora *"
-                placeholder="Selecione a data e hora"
-                value={form.scheduled_datetime}
-                onChange={(e) => setForm({ ...form, scheduled_datetime: e.target.value })}
-                classNames={{
-                  inputWrapper: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-                isRequired
-              />
-
-              {/* Tipo */}
-              <Select
-                label="Tipo *"
-                placeholder="Selecione o tipo"
-                selectedKeys={[form.type]}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                classNames={{
-                  trigger: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-                isRequired
-              >
-                <SelectItem key="Consulta">Consulta</SelectItem>
-                <SelectItem key="Exame">Exame</SelectItem>
-                <SelectItem key="Evento">Evento</SelectItem>
-              </Select>
-
-              {/* Nível de Risco */}
-              <Select
-                label="Nível de Risco *"
-                placeholder="Selecione o nível de risco"
-                selectedKeys={[form.risk_level]}
-                onChange={(e) => setForm({ ...form, risk_level: e.target.value })}
-                classNames={{
-                  trigger: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-                isRequired
-              >
-                <SelectItem key="Seguro">Seguro</SelectItem>
-                <SelectItem key="Moderado">Moderado</SelectItem>
-                <SelectItem key="Crítico">Crítico</SelectItem>
-              </Select>
-
-              {/* Local (Instituição) */}
-              <Select
-                label="Local"
-                placeholder="Selecione o local (opcional)"
-                selectedKeys={form.local ? [form.local] : []}
-                onChange={(e) => setForm({ ...form, local: e.target.value })}
-                classNames={{
-                  trigger: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-              >
-                {institutions.length > 0 ? (
-                  institutions.map((institution: any) => (
-                    <SelectItem key={String(institution.id)}>
-                      {institution.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem key="empty" isDisabled>
-                    Nenhuma instituição cadastrada
-                  </SelectItem>
-                )}
-              </Select>
-
-              {/* Descrição */}
-              <Textarea
-                label="Descrição"
-                placeholder="Informações adicionais sobre o agendamento (opcional)"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                minRows={3}
-                classNames={{
-                  inputWrapper: "bg-white dark:bg-gray-800 border dark:border-gray-700",
-                }}
-              />
-
-              {/* Botões */}
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  variant="flat"
-                  onPress={() => onOpenChange(false)}
-                  isDisabled={create.isPending}
+                <Select
+                  label="Nível de Risco"
+                  variant="bordered"
+                  selectedKeys={risk ? [risk] : []}
+                  onChange={(e) => setRisk(e.target.value as any)}
+                  isDisabled={!!alertData}
                 >
-                  Cancelar
-                </Button>
-                <Button
-                  color="primary"
-                  onPress={onSubmit}
-                  isLoading={create.isPending}
-                  className="text-white"
-                >
-                  Criar Agendamento
-                </Button>
-              </div>
+                  <SelectItem key="safe">Seguro</SelectItem>
+                  <SelectItem key="moderate">Moderado</SelectItem>
+                  <SelectItem key="critical">Crítico</SelectItem>
+                </Select>
+
+                <Input
+                  label="Título"
+                  placeholder="Ex: Falta de retorno da consulta"
+                  variant="bordered"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  isDisabled={!!alertData}
+                />
+
+                <Textarea
+                  label="Descrição"
+                  placeholder="Descreva o motivo do alerta..."
+                  variant="bordered"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  isDisabled={!!alertData}
+                />
+              </ModalBody>
+
+              {alertData ? (
+                <ModalFooter>
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    onPress={() => setConfirmDeleteOpen(true)}
+                    isLoading={deleteAlert.isPending}
+                  >
+                    Excluir Alerta
+                  </Button>
+
+                  <Button variant="light" onPress={onClose}>
+                    Fechar
+                  </Button>
+                </ModalFooter>
+              ) : (
+                <ModalFooter>
+                  <Button variant="light" onPress={onClose}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    color="primary"
+                    onPress={handleSave}
+                    isLoading={createAlert.isPending}
+                  >
+                    Salvar
+                  </Button>
+                </ModalFooter>
+              )}
             </>
           )}
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="text-danger">Confirmar Exclusão</ModalHeader>
+
+              <ModalBody>
+                Tem certeza que deseja excluir este alerta? Essa ação não pode ser desfeita.
+              </ModalBody>
+
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>
+                  Cancelar
+                </Button>
+
+                <Button
+                  color="danger"
+                  isLoading={deleteAlert.isPending}
+                  onPress={handleDelete}
+                >
+                  Excluir
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

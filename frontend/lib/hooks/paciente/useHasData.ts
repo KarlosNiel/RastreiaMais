@@ -1,4 +1,3 @@
-// lib/hooks/patient/useHasData.ts
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 
@@ -14,7 +13,7 @@ interface HASData {
   cholesterol_data?: string;
   HDL_cholesterol?: number;
   HDL_data?: string;
-  triglycerides?: number | null;     // <── ADICIONADO
+  triglycerides?: number | null;
   patient?: number;
   id?: number;
 }
@@ -40,29 +39,19 @@ interface ProcessedHASData {
   rawData?: HASData;
 }
 
-/* ============================================================
-   🧮 CÁLCULO REAL DO LDL
-   - Usa Friedewald se TG existir
-   - Usa VLDL estimado = 25 mg/dl se TG não existir
-=============================================================== */
 function calcularLDL(
   total: number,
   hdl: number,
   triglicerideos?: number | null
 ): number {
-  // ✔ Se houver TG, aplica fórmula de Friedewald REAL
   if (triglicerideos !== undefined && triglicerideos !== null) {
     return Math.max(0, Math.round(total - hdl - triglicerideos / 5));
   }
 
-  // ✔ Sem TG → usa VLDL médio 25 (mais correto clinicamente)
   const VLDL_ESTIMADO = 25;
   return Math.max(0, Math.round(total - hdl - VLDL_ESTIMADO));
 }
 
-/* ============================================================
-   🩺 CÁLCULO DE RISCO CARDIOVASCULAR (inalterado)
-=============================================================== */
 function calcularRiscoCardiovascular(
   sistolica: number,
   diastolica: number,
@@ -97,15 +86,13 @@ function calcularRiscoCardiovascular(
   return { nivel: "Baixo", cor: "green" };
 }
 
-/* ============================================================
-   🔄 PROCESSAMENTO DOS DADOS
-=============================================================== */
+
 function processarDadosHAS(data?: HASData): ProcessedHASData {
   if (!data) {
     return {
       pressaoArterial: "—",
       riscoCardiovascular: "Moderado" as RiskLevel,
-      riscoColor: "amber",
+      riscoColor: "amber" as RiskColor,
       colesterolHDL: "—",
       colesterolLDL: "—",
       colesterolTotal: 0,
@@ -153,7 +140,10 @@ function processarDadosHAS(data?: HASData): ProcessedHASData {
           hdl,
           ldl
         )
-      : { nivel: "Moderado", cor: "amber" };
+      : {
+          nivel: "Moderado" as RiskLevel,
+          cor: "amber" as RiskColor,
+        };
 
   const deltaPA = sistolicaMedia > 140 ? -0.8 : 1.2;
   const deltaHDL = hdl < 50 ? 1.3 : -0.5;
@@ -173,9 +163,6 @@ function processarDadosHAS(data?: HASData): ProcessedHASData {
   };
 }
 
-/* ============================================================
-   🔄 HOOK PRINCIPAL
-=============================================================== */
 export function useHasData() {
   const query = useQuery<ProcessedHASData>({
     queryKey: ["has-data"],

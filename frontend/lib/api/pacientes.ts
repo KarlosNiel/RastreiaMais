@@ -8,25 +8,17 @@ import type { PatientApiPayload } from "@/lib/pacientes/mappers";
  */
 export async function createPaciente<T = unknown>(
   payload: PatientApiPayload
-): Promise<T> {
+): Promise<T | null> {
   return apiPost<T>("/api/v1/accounts/patients/", payload);
 }
 
-/**
- * Atualização parcial (PATCH) de paciente.
- * No modo edit, o payload normalmente não inclui o objeto `user`.
- */
 export async function updatePaciente<T = unknown>(
   id: number,
   payload: PatientApiPayload
-): Promise<T> {
+): Promise<T | null> {
   return apiPatch<T>(`/api/v1/accounts/patients/${id}/`, payload);
 }
 
-/**
- * Busca de paciente (uso client-side).
- * Para server-side, você já tem helpers específicos usando cookies().
- */
-export async function getPaciente<T = unknown>(id: number): Promise<T> {
+export async function getPaciente<T = unknown>(id: number): Promise<T | null> {
   return apiGet<T>(`/api/v1/accounts/patients/${id}/`);
 }

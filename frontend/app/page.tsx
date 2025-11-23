@@ -9,6 +9,6 @@ export default async function Home() {
   if (role === "PROFESSIONAL") redirect("/profissional");
   if (role === "PATIENT") redirect("/me");
 
-  // sem login → vai pro /auth/login
+  //! sem login → vai pro /auth/login
   redirect("/auth/login");
 }

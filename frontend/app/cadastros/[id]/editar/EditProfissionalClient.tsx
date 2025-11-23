@@ -1,4 +1,3 @@
-// app/cadastros/[id]/editar/EditProfissionalClient.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -35,13 +34,12 @@ export default function EditProfissionalClient({ id }: Props) {
 
         const user = profissionalApi.user ?? {};
 
-        // 🔹 Monta os defaultValues no MESMO formato do ProfessionalForm
         const defaultValues: ProfissionalFormValues = {
           username: user.username ?? "",
           firstName: user.first_name ?? "",
           lastName: user.last_name ?? "",
           email: user.email ?? "",
-          telefone: "", // ainda não vem da API
+          telefone: "",
           cargo: profissionalApi.role ?? "Enfermeiro",
           senha: "",
           repetirSenha: "",

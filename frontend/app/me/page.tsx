@@ -1,9 +1,9 @@
-// app/me/page.tsx
 "use client";
 
 import { apiGet } from "@/lib/api";
 import { useHasData } from "@/lib/hooks/paciente/useHasData";
 import { useMedications } from "@/lib/hooks/paciente/useMedications";
+import { useMe } from "@/lib/hooks/me/useMe";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
@@ -24,6 +24,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function MePage() {
+  const { data: me, isLoading: isLoadingMe } = useMe();
   const { data: meds = [], isLoading: isLoadingMeds } = useMedications();
   const [selected, setSelected] = useState<ConsultaRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -52,7 +53,7 @@ export default function MePage() {
     },
   });
 
-  // Monta KPIs dinâmicos baseado nos dados da API
+  //! Monta KPIs dinâmicos baseado nos dados da API
   const KPIS = useMemo(() => {
     if (!hasData) return [];
 
@@ -143,24 +144,35 @@ export default function MePage() {
     });
   }, [data]);
 
+  //! Formatar nome do paciente
+  const patientName = useMemo(() => {
+    if (!me?.user) return "Paciente";
+    const firstName = me.user.first_name || "";
+    const lastName = me.user.last_name || "";
+    return `Paciente: ${firstName} ${lastName}`.trim() || me.user.username || "Paciente";
+  }, [me]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
       {/* Header */}
       <header className="flex flex-col gap-2 pt-8 pb-4 md:flex-row md:items-end md:justify-between md:pb-5">
         <div>
-          <h1 className="text-2xl font-semibold md:text-3xl dark:text-white">
-            Paciente Gustavo, 55 anos
-          </h1>
+          {isLoadingMe ? (
+            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+          ) : (
+            <h1 className="text-2xl font-semibold md:text-3xl dark:text-white">
+              {patientName}
+            </h1>
+          )}
           <p className="mt-1 text-sm text-foreground/60 dark:text-white">
             Hipertensão Arterial Sistêmica (HAS) <span aria-hidden>▾</span>
           </p>
         </div>
       </header>
 
-      {/* KPIs + Medicações */}
-      <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3">
+      <section className="mt-6 grid grid-cols-1 sm-grid-cols-2 gap-6">
         {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:col-span-2">
           {isLoadingHas ? (
             <div className="col-span-2 p-6 text-center text-gray-500 dark:text-gray-400">
               Carregando dados clínicos...
@@ -180,54 +192,8 @@ export default function MePage() {
           )}
         </div>
 
-        {/* Medicações */}
-        <div className="rounded-md bg-white dark:bg-gray-900 shadow-sm border border-transparent dark:border-gray-800 p-4 transition-all md:col-span-1">
-          <div className="flex items-center gap-2 mb-4">
-            <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              Medicações Atuais
-            </h2>
-          </div>
-
-          <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 pr-2">
-            {isLoadingMeds ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Carregando medicações...
-              </p>
-            ) : meds.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Nenhuma medicação ativa cadastrada.
-              </p>
-            ) : (
-              meds.map((m) => (
-                <article
-                  key={m.id}
-                  className="rounded-md border border-gray-200 dark:border-gray-800 p-4
-                     bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
-                >
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                    {m.nome}
-                  </h3>
-
-                  {m.obs && (
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {m.obs}
-                    </p>
-                  )}
-
-                  {m.endDate && (
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Até {new Date(m.endDate).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
-                </article>
-              ))
-            )}
-          </div>
-        </div>
       </section>
 
-      {/* Consultas */}
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-full transition-all">
         <div className="flex items-center gap-2 mb-4">
           <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />

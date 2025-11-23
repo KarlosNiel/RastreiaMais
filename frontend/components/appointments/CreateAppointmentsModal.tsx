@@ -1,28 +1,97 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { Input, Textarea, Select, SelectItem } from "@heroui/react";
-import { useAppointments } from "@/lib/hooks/appointments/useAppointments";
+import { Spinner } from "@heroui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
-import { useEffect, useState } from "react";
-import { Spinner } from "@heroui/spinner";
+import { useAppointments } from "@/lib/hooks/appointments/useAppointments";
 
-interface CreateAppointmentModalProps {
-    open: boolean;
-    onOpenChange: (v: boolean) => void;
-    preSelectedPatientId?: string | null;
+function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal
+      isOpen={open}
+      onOpenChange={onClose}
+      size="sm"
+      classNames={{ base: "rounded-2xl shadow-xl dark:bg-gray-900" }}
+    >
+      <ModalContent>
+        <ModalHeader className="text-green-600 font-semibold">
+          Agendamento criado
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-default-700 dark:text-gray-300">
+            O agendamento foi registrado com sucesso.
+          </p>
+          <Button
+            color="success"
+            radius="full"
+            className="mt-4"
+            onPress={onClose}
+          >
+            Fechar
+          </Button>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
 }
 
 export default function CreateAppointmentsModal({
-    open,
-    onOpenChange,
-    preSelectedPatientId,
-}: CreateAppointmentModalProps) {
-    const { create } = useAppointments();
+  open,
+  onOpenChange,
+  preSelectedPatientId,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  preSelectedPatientId?: string | null;
+}) {
+  const { create } = useAppointments();
 
-    const [form, setForm] = useState({
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  const [form, setForm] = useState({
+    professional_id: "",
+    professional_name: "",
+    local_id: "",
+    scheduled_datetime: "",
+    risk_level: "Seguro",
+    type: "Consulta",
+    description: "",
+  });
+
+  const { data: patient, isLoading: loadingPatient } = useQuery({
+    queryKey: ["patient", preSelectedPatientId],
+    queryFn: async () => {
+      if (!preSelectedPatientId) return null;
+      return apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
+    },
+    enabled: open && !!preSelectedPatientId,
+  });
+
+  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
+    queryKey: ["professionals"],
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+      return Array.isArray(resp) ? resp : resp?.results || [];
+    },
+    enabled: open,
+  });
+
+  const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
+    queryKey: ["institutions"],
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/locations/institutions/");
+      return Array.isArray(resp) ? resp : resp?.results || [];
+    },
+    enabled: open,
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setForm({
         professional_id: "",
         professional_name: "",
         local_id: "",
@@ -30,263 +99,232 @@ export default function CreateAppointmentsModal({
         risk_level: "Seguro",
         type: "Consulta",
         description: "",
-    });
+      });
+    }
+  }, [open]);
 
-    const { data: patient, isLoading: loadingPatient } = useQuery({
-        queryKey: ["patient", preSelectedPatientId],
-        queryFn: async () => {
-            if (!preSelectedPatientId) return null;
-            return apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
-        },
-        enabled: open && !!preSelectedPatientId,
-    });
+  const onSubmit = async () => {
+    if (!preSelectedPatientId) return;
+    if (!form.professional_id) return;
+    if (!form.local_id) return;
+    if (!form.scheduled_datetime) return;
 
-    const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
-        queryKey: ["professionals"],
-        queryFn: async () => {
-            const resp = await apiGet<any>("/api/v1/accounts/professionals/");
-            return Array.isArray(resp) ? resp : resp?.results || [];
-        },
-        enabled: open,
-    });
-
-    const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
-        queryKey: ["institutions"],
-        queryFn: async () => {
-            const resp = await apiGet<any>("/api/v1/locations/institutions/");
-            return Array.isArray(resp) ? resp : resp?.results || [];
-        },
-        enabled: open,
-    });
-
-    useEffect(() => {
-        if (!open) {
-            setForm({
-                professional_id: "",
-                professional_name: "",
-                local_id: "",
-                scheduled_datetime: "",
-                risk_level: "Seguro",
-                type: "Consulta",
-                description: "",
-            });
-        }
-    }, [open]);
-
-    const onSubmit = async () => {
-        if (!preSelectedPatientId) return alert("Paciente não selecionado");
-        if (!form.professional_id) return alert("Selecione um profissional");
-        if (!form.local_id) return alert("Selecione a instituição");
-        if (!form.scheduled_datetime) return alert("Defina data e hora");
-
-        const payload: any = {
-            patient_id: Number(preSelectedPatientId),
-            professional_id: Number(form.professional_id),
-            local_id: Number(form.local_id),
-            scheduled_datetime: form.scheduled_datetime,
-            risk_level: form.risk_level,
-            type: form.type,
-            status: "ativo",
-        };
-
-        if (form.description.trim()) payload.description = form.description.trim();
-
-        try {
-            await create.mutateAsync(payload);
-            alert("Agendamento criado com sucesso!");
-            onOpenChange(false);
-        } catch (err: any) {
-            alert(
-                err?.response?.data?.detail ||
-                err?.response?.data?.message ||
-                JSON.stringify(err?.response?.data || "Erro")
-            );
-        }
+    const payload: any = {
+      patient_id: Number(preSelectedPatientId),
+      professional_id: Number(form.professional_id),
+      local_id: Number(form.local_id),
+      scheduled_datetime: form.scheduled_datetime,
+      risk_level: form.risk_level,
+      type: form.type,
+      status: "ativo",
     };
 
-    const isLoading =
-        loadingPatient || loadingProfessionals || loadingInstitutions;
+    if (form.description.trim()) payload.description = form.description.trim();
 
-    const formatCpf = (cpf?: string) => {
-        if (!cpf) return "";
-        const d = cpf.replace(/\D/g, "");
-        if (d.length !== 11) return cpf;
-        return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-    };
+    try {
+      await create.mutateAsync(payload);
+      setSuccessOpen(true);
+    } catch {}
+  };
 
-    return (
-        <Modal
-            isOpen={open}
-            onOpenChange={onOpenChange}
-            size="lg"
-            scrollBehavior="inside"
-            classNames={{ base: "rounded-2xl shadow-xl" }}
-        >
-            <ModalContent>
-                <ModalHeader className="flex flex-col gap-1 pb-0">
-                    <h2 className="text-xl font-semibold">Novo Agendamento</h2>
-                    <p className="text-sm text-default-500">
-                        Preencha as informações abaixo para criar o agendamento
-                    </p>
-                </ModalHeader>
+  const handleSuccessClose = () => {
+    setSuccessOpen(false);
+    onOpenChange(false);
+  };
 
-                <ModalBody className="space-y-6 pt-2 pb-6">
-                    {isLoading ? (
-                        <div className="flex justify-center py-10">
-                            <Spinner size="lg" color="warning" />
-                        </div>
-                    ) : (
-                        <>
-                            {/* PACIENTE */}
-                            <div className="bg-default-50 rounded-xl p-4 border border-default-200 shadow-sm">
-                                <p className="text-xs text-default-500 mb-1">Paciente</p>
-                                <p className="font-semibold text-default-900 text-base">
-                                    {patient?.user?.first_name} {patient?.user?.last_name}
-                                </p>
-                                <p className="text-sm text-default-700">
-                                    CPF: {formatCpf(patient?.cpf)}
-                                </p>
-                            </div>
+  const isLoading =
+    loadingPatient || loadingProfessionals || loadingInstitutions;
 
-                            {/* PROFISSIONAL */}
-                            <Select
-                                label="Profissional *"
-                                variant="bordered"
-                                radius="lg"
-                                className="w-full"
-                                placeholder="Selecione um profissional"
-                                selectedKeys={form.professional_id ? [form.professional_id] : []}
-                                onSelectionChange={(keys) => {
-                                    const key = Array.from(keys)[0];
-                                    const prof = professionals.find((p: any) => String(p.id) === key);
+  const formatCpf = (cpf?: string) => {
+    if (!cpf) return "";
+    const d = cpf.replace(/\D/g, "");
+    if (d.length !== 11) return cpf;
+    return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
 
-                                    setForm({
-                                        ...form,
-                                        professional_id: String(key),
-                                        professional_name: prof
-                                            ? `${prof.user?.first_name} ${prof.user?.last_name}`
-                                            : "",
-                                    });
-                                }}
-                                renderValue={() =>
-                                    form.professional_name ? (
-                                        <span className="text-default-900">
-                                            {form.professional_name}
-                                        </span>
-                                    ) : null
-                                }
-                            >
-                                {professionals.map((p: any) => (
-                                    <SelectItem key={String(p.id)} value={String(p.id)}>
-                                        {p.user?.first_name} {p.user?.last_name}
-                                        {p.specialty ? ` - ${p.specialty}` : ""}
-                                    </SelectItem>
-                                ))}
-                            </Select>
+  return (
+    <>
+      <Modal
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="lg"
+        scrollBehavior="inside"
+        classNames={{
+          base: "rounded-2xl shadow-2xl dark:bg-gray-900",
+        }}
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1 pb-0 dark:text-gray-100">
+            <h2 className="text-xl font-semibold">Novo Agendamento</h2>
+            <p className="text-sm text-default-500 dark:text-gray-400">
+              Preencha as informações abaixo para criar o agendamento
+            </p>
+          </ModalHeader>
 
-                            {/* INSTITUIÇÃO */}
-                            <Select
-                                label="Instituição *"
-                                variant="bordered"
-                                radius="lg"
-                                className="w-full"
-                                placeholder="Selecione a instituição"
-                                selectedKeys={form.local_id ? [form.local_id] : []}
-                                onSelectionChange={(keys) => {
-                                    const key = Array.from(keys)[0];
-                                    setForm({ ...form, local_id: String(key) });
-                                }}
-                                renderValue={(items) =>
-                                    items.length > 0 ? (
-                                        <span className="text-default-900">
-                                            {items[0].textValue}
-                                        </span>
-                                    ) : null
-                                }
-                            >
-                                {institutions.map((i: any) => (
-                                    <SelectItem key={String(i.id)} value={String(i.id)}>
-                                        {i.name}
-                                    </SelectItem>
-                                ))}
-                            </Select>
+          <ModalBody className="space-y-6 pt-2 pb-6">
+            {isLoading ? (
+              <div className="flex justify-center py-10">
+                <Spinner size="lg" color="warning" />
+              </div>
+            ) : (
+              <>
+                <div className="bg-default-50 dark:bg-gray-800 rounded-xl p-4  shadow-sm">
+                  <p className="text-xs text-default-500 dark:text-gray-300 mb-1">
+                    Paciente
+                  </p>
+                  <p className="font-semibold text-default-900 dark:text-gray-100 text-base">
+                    {patient?.user?.first_name} {patient?.user?.last_name}
+                  </p>
+                  <p className="text-sm text-default-700 dark:text-gray-300">
+                    CPF: {formatCpf(patient?.cpf)}
+                  </p>
+                </div>
 
-                            {/* DATA */}
-                            <Input
-                                type="datetime-local"
-                                label="Data e Hora *"
-                                variant="bordered"
-                                radius="lg"
-                                value={form.scheduled_datetime}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        scheduled_datetime: e.target.value,
-                                    })
-                                }
-                            />
+                <Select
+                  label="Profissional *"
+                  variant="flat"
+                  radius="lg"
+                  classNames={{
+                    trigger:
+                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
+                  }}
+                  selectedKeys={form.professional_id ? [form.professional_id] : []}
+                  placeholder="Selecione um profissional"
+                  onSelectionChange={(keys) => {
+                    const key = Array.from(keys)[0];
+                    const prof = professionals.find((p: any) => String(p.id) === key);
+                    setForm({
+                      ...form,
+                      professional_id: String(key),
+                      professional_name: prof
+                        ? `${prof.user?.first_name} ${prof.user?.last_name}`
+                        : "",
+                    });
+                  }}
+                >
+                  {professionals.map((p: any) => (
+                    <SelectItem key={String(p.id)}>
+                      {p.user?.first_name} {p.user?.last_name}
+                      {p.specialty ? ` - ${p.specialty}` : ""}
+                    </SelectItem>
+                  ))}
+                </Select>
 
-                            {/* TIPO */}
-                            <Select
-                                label="Tipo *"
-                                variant="bordered"
-                                radius="lg"
-                                selectedKeys={[form.type]}
-                                onChange={(e) =>
-                                    setForm({ ...form, type: e.target.value })
-                                }
-                            >
-                                <SelectItem key="Consulta">Consulta</SelectItem>
-                                <SelectItem key="Exame">Exame</SelectItem>
-                                <SelectItem key="Evento">Evento</SelectItem>
-                            </Select>
+                <Select
+                  label="Instituição *"
+                  variant="flat"
+                  radius="lg"
+                  classNames={{
+                    trigger:
+                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
+                  }}
+                  selectedKeys={form.local_id ? [form.local_id] : []}
+                  placeholder="Selecione a instituição"
+                  onSelectionChange={(keys) => {
+                    const key = Array.from(keys)[0];
+                    setForm({ ...form, local_id: String(key) });
+                  }}
+                >
+                  {institutions.map((i: any) => (
+                    <SelectItem key={String(i.id)}>{i.name}</SelectItem>
+                  ))}
+                </Select>
 
-                            {/* RISCO */}
-                            <Select
-                                label="Nível de Risco *"
-                                variant="bordered"
-                                radius="lg"
-                                selectedKeys={[form.risk_level]}
-                                onChange={(e) =>
-                                    setForm({ ...form, risk_level: e.target.value })
-                                }
-                            >
-                                <SelectItem key="Seguro">Seguro</SelectItem>
-                                <SelectItem key="Moderado">Moderado</SelectItem>
-                                <SelectItem key="Crítico">Crítico</SelectItem>
-                            </Select>
+                <Input
+                  type="datetime-local"
+                  label="Data e Hora *"
+                  placeholder="dd/mm/aaaa"
+                  radius="lg"
+                  variant="flat"
+                  classNames={{
+                    inputWrapper:
+                      "bg-transparent  dark:bg-gray-800",
+                    input: "dark:text-gray-100",
+                  }}
+                  value={form.scheduled_datetime}
+                  onChange={(e) =>
+                    setForm({ ...form, scheduled_datetime: e.target.value })
+                  }
+                />
 
-                            {/* DESCRIÇÃO */}
-                            <Textarea
-                                label="Descrição"
-                                variant="bordered"
-                                radius="lg"
-                                minRows={3}
-                                value={form.description}
-                                onChange={(e) =>
-                                    setForm({ ...form, description: e.target.value })
-                                }
-                            />
+                <Select
+                  label="Tipo *"
+                  variant="flat"
+                  radius="lg"
+                  selectedKeys={[form.type]}
+                  classNames={{
+                    trigger:
+                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
+                  }}
+                  onChange={(e) =>
+                    setForm({ ...form, type: e.target.value })
+                  }
+                >
+                  <SelectItem key="Consulta">Consulta</SelectItem>
+                  <SelectItem key="Exame">Exame</SelectItem>
+                  <SelectItem key="Evento">Evento</SelectItem>
+                </Select>
 
-                            {/* BOTÕES */}
-                            <div className="flex justify-end gap-3 pt-4">
-                                <Button variant="flat" radius="lg" onPress={() => onOpenChange(false)}>
-                                    Cancelar
-                                </Button>
+                <Select
+                  label="Nível de Risco *"
+                  variant="flat"
+                  radius="lg"
+                  selectedKeys={[form.risk_level]}
+                  classNames={{
+                    trigger:
+                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
+                  }}
+                  onChange={(e) =>
+                    setForm({ ...form, risk_level: e.target.value })
+                  }
+                >
+                  <SelectItem key="Seguro">Seguro</SelectItem>
+                  <SelectItem key="Moderado">Moderado</SelectItem>
+                  <SelectItem key="Crítico">Crítico</SelectItem>
+                </Select>
 
-                                <Button
-                                    color="primary"
-                                    radius="lg"
-                                    onPress={onSubmit}
-                                    isLoading={create.isPending}
-                                >
-                                    Criar Agendamento
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </ModalBody>
-            </ModalContent>
-        </Modal>
-    );
+                <Textarea
+                  label="Descrição"
+                  variant="flat"
+                  radius="lg"
+                  minRows={3}
+                  classNames={{
+                    inputWrapper:
+                      "bg-transparent  dark:bg-gray-800",
+                    input: "dark:text-gray-100",
+                  }}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                />
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    variant="flat"
+                    radius="full"
+                    className=" dark:text-gray-200"
+                    onPress={() => onOpenChange(false)}
+                  >
+                    Cancelar
+                  </Button>
+
+                  <Button
+                    color="primary"
+                    radius="full"
+                    onPress={onSubmit}
+                    isLoading={create.isPending}
+                  >
+                    Criar Agendamento
+                  </Button>
+                </div>
+              </>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <SuccessModal open={successOpen} onClose={handleSuccessClose} />
+    </>
+  );
 }

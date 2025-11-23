@@ -13,7 +13,8 @@ RISK_LEVEL = [
 TYPE_CHOICES = [
     ('Consulta', 'Consulta'),
     ('Exame', 'Exame'),
-    ('Evento', 'Evento')
+    ('Evento', 'Evento'),
+    ('Retorno', 'Retorno'),
 ]
 
 STATUS_CHOICES = [

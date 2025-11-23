@@ -53,7 +53,6 @@ export function AppLayout({ children }: AppLayoutProps) {
               </Button>
 
               {/* Menu do usuário com perfil e logout */}
-              <UserMenu />
             </div>
           </div>
         </div>
