@@ -55,57 +55,58 @@ export function RHFInput<T extends FieldValues>({
   const handleParse = useCallback(
     (raw: string) => {
       const cleaned = numericOnly ? raw.replace(/\D+/g, "") : raw;
+
       return valueParser ? valueParser(cleaned) : cleaned;
     },
-    [numericOnly, valueParser]
+    [numericOnly, valueParser],
   );
 
   const handleFormat = useCallback(
     (val: any) => {
       if (valueFormatter) return valueFormatter(val);
       if (val === null || typeof val === "undefined") return "";
+
       return String(val);
     },
-    [valueFormatter]
+    [valueFormatter],
   );
 
   return (
     <Controller
       control={control}
-      name={name}
       defaultValue={emptyDefaultValue as any} // <- garante string (evita undefined)
-      rules={rules}
+      name={name}
       render={({ field, fieldState }) => {
         const displayed = handleFormat(field.value);
 
         return (
           <Input
-            classNames={
-              {
-                inputWrapper: "dark:bg-gray-800"
-              }
-            }
-            // RHF injeta { name, onBlur, ref } — mantemos.
+            // RHF injeta { name, onBlur, ref } — mantemos ref aqui
+            ref={field.ref}
+            classNames={{
+              inputWrapper: "dark:bg-gray-800",
+            }}
+            errorMessage={fieldState.error?.message}
+            isInvalid={!!fieldState.error}
+            label={label}
+            labelPlacement={rest.labelPlacement ?? "outside"}
             name={field.name}
-            onBlur={field.onBlur}
-            // usamos onValueChange do HeroUI (não o onChange nativo)
+            placeholder={placeholder}
+            type={type}
             value={displayed}
+            {...rest}
+            // callbacks no final (regra react/jsx-sort-props)
+            onBlur={field.onBlur}
             onValueChange={(raw) => {
               const parsed = handleParse(raw);
+
               field.onChange(parsed);
               onValueChange?.(parsed, raw);
             }}
-            ref={field.ref}
-            type={type}
-            label={label}
-            labelPlacement={rest.labelPlacement ?? "outside"}
-            placeholder={placeholder}
-            isInvalid={!!fieldState.error}
-            errorMessage={fieldState.error?.message}
-            {...rest}
           />
         );
       }}
+      rules={rules}
     />
   );
 }

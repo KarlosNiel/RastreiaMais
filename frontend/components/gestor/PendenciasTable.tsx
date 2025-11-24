@@ -1,7 +1,8 @@
 // components/gestor/PendenciasTable.tsx
 "use client";
 
-import { StatusChip } from "@/components/ui/StatusChip";
+import type { Key, SortDescriptor } from "@react-types/shared";
+
 import {
   Button,
   Dropdown,
@@ -17,8 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
-import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
+
+import { StatusChip } from "@/components/ui/StatusChip";
 
 export type RiskTone = "safe" | "moderate" | "critical";
 
@@ -61,14 +63,14 @@ const riskWeight: Record<RiskTone, number> = {
 
 /** Ícone de sort local (evita depender de @heroui/shared-icons) */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden {...props}>
+  <svg aria-hidden height="1em" viewBox="0 0 24 24" width="1em" {...props}>
     <path
       d="M7 14l5 5 5-5M7 10l5-5 5 5"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={1.5}
     />
   </svg>
 );
@@ -85,7 +87,6 @@ export function PendenciasTable({
   initialRowsPerPage = 6,
 }: Props) {
   const [filterValue, setFilterValue] = React.useState("");
-  // Usar Key de @react-types/shared
   const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
   const [visibleColumns] = React.useState<Set<string>>(
     () => new Set(columns.map((c) => String(c.uid)))
@@ -100,7 +101,6 @@ export function PendenciasTable({
   const hasSearch = Boolean(filterValue?.trim());
 
   const headerColumns = React.useMemo<Column[]>(() => {
-    // (não usamos "all" aqui; sempre um Set de strings)
     return columns.filter((c) => visibleColumns.has(String(c.uid)));
   }, [visibleColumns]);
 
@@ -109,6 +109,7 @@ export function PendenciasTable({
 
     if (hasSearch) {
       const q = filterValue.toLowerCase();
+
       data = data.filter(
         (r) =>
           r.paciente.toLowerCase().includes(q) ||
@@ -118,10 +119,10 @@ export function PendenciasTable({
     }
 
     if (riskFilter !== "all" && (riskFilter as Set<Key>).size) {
-      // normaliza o Set<Key> para Set<string>
       const sel = new Set<string>(
         Array.from(riskFilter as Set<Key>).map(String)
       );
+
       data = data.filter((r) => sel.has(r.risco));
     }
 
@@ -137,6 +138,7 @@ export function PendenciasTable({
   const pageItems = React.useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+
     return filteredItems.slice(start, end);
   }, [filteredItems, page, rowsPerPage]);
 
@@ -156,6 +158,7 @@ export function PendenciasTable({
         typeof secondRaw === "string" ? secondRaw.toLowerCase() : secondRaw;
 
       const cmp = first < second ? -1 : first > second ? 1 : 0;
+
       return direction === "descending" ? -cmp : cmp;
     });
   }, [pageItems, sortDescriptor]);
@@ -192,29 +195,29 @@ export function PendenciasTable({
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
-            radius="full"
-            variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
-                  input:
-                    "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+                "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
+              input:
+                "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
             placeholder="Buscar por paciente, pendência ou microárea…"
+            radius="full"
             startContent={
               <svg
                 aria-hidden
-                viewBox="0 0 24 24"
                 className="size-4 text-foreground/50"
+                viewBox="0 0 24 24"
               >
                 <path
-                  fill="currentColor"
                   d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                  fill="currentColor"
                 />
               </svg>
             }
             value={filterValue}
+            variant="flat"
             onClear={() => {
               setFilterValue("");
               setPage(1);
@@ -228,16 +231,19 @@ export function PendenciasTable({
           <div className="flex items-center gap-3">
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button variant="flat" radius="full" className="flex justify-center items-center">
+                <Button
+                  className="flex justify-center items-center"
+                  radius="full"
+                  variant="flat"
+                >
                   Risco
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
                 aria-label="Filtro de Risco"
-                disallowEmptySelection
                 closeOnSelect={false}
+                disallowEmptySelection
                 selectionMode="multiple"
-                // selectedKeys precisa ser "all" | Iterable<Key>
                 selectedKeys={
                   riskFilter === "all" ? "all" : (riskFilter as Iterable<Key>)
                 }
@@ -256,8 +262,8 @@ export function PendenciasTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline-none text-small border rounded"
                 aria-label="Linhas por página"
+                className="bg-transparent outline-none text-small border rounded"
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
@@ -285,18 +291,17 @@ export function PendenciasTable({
     return (
       <div className="py-2 flex justify-center">
         <Pagination
-          isCompact
-          showControls
+          classNames={{
+            next: "dark:bg-gray-800",
+            prev: "dark:bg-gray-800",
+            item: "dark:bg-gray-800",
+          }}
           color="primary"
+          isCompact
           page={page}
+          showControls
           total={pages}
           onChange={setPage}
-          classNames={{
-              next: "dark:bg-gray-800",
-              prev: "dark:bg-gray-800",
-              item: "dark:bg-gray-800",
-            }
-          }
         />
       </div>
     );
@@ -304,40 +309,47 @@ export function PendenciasTable({
 
   return (
     <Table
-      aria-label="Tabela de pendências"
       isHeaderSticky
-      topContent={topContent}
-      topContentPlacement="outside"
+      aria-label="Tabela de pendências"
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
-      selectionMode="none"
-      sortDescriptor={sortDescriptor}
-      sortIcon={SortGlyph}
-      onSortChange={setSortDescriptor}
       classNames={{
         th: "px-6 py-3 text-foreground/70 font-semibold",
         td: "px-6 py-3",
         base: "min-h-[320px]",
         table: "dark:bg-gray-900",
-        wrapper: "bg-transparent border-none shadow-none px-2"
+        wrapper: "bg-transparent border-none shadow-none px-2",
       }}
+      selectionMode="none"
+      sortDescriptor={sortDescriptor}
+      sortIcon={SortGlyph}
+      topContent={topContent}
+      topContentPlacement="outside"
+      onSortChange={setSortDescriptor}
     >
       <TableHeader columns={headerColumns}>
         {(column: Column) => (
           <TableColumn
-            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
+            className="text-sm dark:bg-gray-800 w-[20%]"
           >
             {column.name}
           </TableColumn>
         )}
       </TableHeader>
 
-      <TableBody emptyContent="Sem registros" items={sortedItems} className="overflow-x-auto">
+      <TableBody
+        className="overflow-x-auto"
+        emptyContent="Sem registros"
+        items={sortedItems}
+      >
         {(item: PendenciasRow) => (
-          <TableRow key={item.id} className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900">
+          <TableRow
+            key={item.id}
+            className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900"
+          >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

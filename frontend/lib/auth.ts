@@ -28,6 +28,7 @@ export function setRoleCookie(role: Role) {
   // Marcar Secure APENAS quando a página está em HTTPS
   const isHttps =
     typeof location !== "undefined" && location.protocol === "https:";
+
   document.cookie = [
     `role=${encodeURIComponent(role)}`,
     "Path=/",
@@ -51,7 +52,7 @@ export function clearRoleCookie() {
 export async function login(
   username: string,
   password: string,
-  persistent: boolean = true
+  persistent: boolean = true,
 ): Promise<MeResponse> {
   const res = await fetch(`${API}/api/token/`, {
     method: "POST",
@@ -61,18 +62,23 @@ export async function login(
 
   if (!res.ok) {
     let msg = "Credenciais inválidas.";
+
     try {
       const data = await res.json();
+
       msg = (data?.detail as string) || msg;
     } catch {
       const txt = await res.text();
+
       if (txt) msg = txt;
     }
     throw new Error(msg);
   }
 
   const { access, refresh } = await res.json();
+
   setTokens(access, refresh, persistent);
+
   return meFetch();
 }
 
@@ -80,32 +86,35 @@ export async function loginAndAssertRole(
   username: string,
   password: string,
   required: Role[],
-  persistent: boolean = true
+  persistent: boolean = true,
 ): Promise<MeResponse> {
   const me = await login(username, password, persistent);
+
   if (!hasAnyRole(me.roles, required)) {
     logout();
     throw new Error(
       required.length === 1
         ? `Esta conta não possui o papel necessário (${required[0]}).`
-        : `Esta conta não possui os papéis necessários (${required.join(", ")}).`
+        : `Esta conta não possui os papéis necessários (${required.join(", ")}).`,
     );
   }
-  
+
   // Disparar evento para atualizar o contexto
   if (isBrowser()) {
-    window.dispatchEvent(new Event('tokenRefresh'));
+    window.dispatchEvent(new Event("tokenRefresh"));
   }
-  
+
   return me;
 }
 
 export async function meFetch(): Promise<MeResponse> {
   try {
     const me = await apiJSON(`/api/auth/me`, { method: "GET" });
+
     return me as MeResponse;
   } catch (err: any) {
     const msg = err?.message || "Sua sessão expirou. Faça login novamente.";
+
     throw new Error(msg);
   }
 }
@@ -113,6 +122,7 @@ export async function meFetch(): Promise<MeResponse> {
 function getRefreshToken(): string | null {
   try {
     if (!isBrowser()) return null;
+
     return localStorage.getItem("refresh") || sessionStorage.getItem("refresh");
   } catch {
     return null;
@@ -123,6 +133,7 @@ export async function logout() {
   try {
     // Tenta fazer logout no servidor (blacklist do token)
     const refreshToken = getRefreshToken();
+
     if (refreshToken) {
       await fetch(`${API}/api/auth/logout`, {
         method: "POST",
@@ -130,9 +141,9 @@ export async function logout() {
         body: JSON.stringify({ refresh: refreshToken }),
       });
     }
-  } catch (error) {
-    // Se falhar no servidor, continua com logout local
-    console.warn("Erro ao fazer logout no servidor:", error);
+  } catch {
+    // Se falhar no servidor, seguimos com o logout local normalmente.
+    // (Não exibimos nada em produção para evitar poluir logs do console.)
   } finally {
     // Sempre limpa os dados locais
     clearTokens();
@@ -140,9 +151,10 @@ export async function logout() {
     if (isBrowser()) {
       localStorage.removeItem("role");
       // Disparar evento para atualizar o contexto
-      window.dispatchEvent(new Event('tokenRefresh'));
+      window.dispatchEvent(new Event("tokenRefresh"));
       // Redirecionar apenas se não estivermos já na página de login
       const currentPath = window.location.pathname;
+
       if (!currentPath.startsWith("/auth/login")) {
         window.location.href = "/auth/login";
       }
@@ -163,6 +175,7 @@ export function pickDashboard(roles: Role[]): string {
   if (roles.includes("MANAGER")) return "/gestor";
   if (roles.includes("PROFESSIONAL")) return "/profissional";
   if (roles.includes("PATIENT")) return "/me";
+
   return "/auth/login";
 }
 
@@ -171,5 +184,6 @@ export function pickRole(roles: Role[]): Role | null {
   if (roles.includes("MANAGER")) return "MANAGER";
   if (roles.includes("PROFESSIONAL")) return "PROFESSIONAL";
   if (roles.includes("PATIENT")) return "PATIENT";
+
   return null;
 }

@@ -16,13 +16,16 @@ function toCalendarDate(v: unknown): CalendarDate | null {
   // String no formato YYYY-MM-DD → parseDate
   if (typeof v === "string") {
     // Tentamos parse "YYYY-MM-DD"; se vier outro formato, tentamos Date
-    // parseDate lança se não for ISO date-only, então protegemos:
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+
     if (m) return parseDate(v);
+
     const d = new Date(v);
+
     if (!Number.isNaN(d.getTime())) {
       return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
     }
+
     return null;
   }
 
@@ -36,11 +39,11 @@ function toCalendarDate(v: unknown): CalendarDate | null {
 
 /**
  * Converte CalendarDate (DateValue) para Date local sem usar timezone UTC.
- * Mantemos apenas Y/M/D (00:00 local). O backend/validação (Zod) coerce.date lida com Date.
+ * Mantemos apenas Y/M/D (00:00 local).
  */
 function calendarDateToDate(cd: CalendarDate | null): Date | undefined {
   if (!cd) return undefined;
-  // Ano, mês (1-12), dia
+
   return new Date(cd.year, cd.month - 1, cd.day);
 }
 
@@ -86,27 +89,20 @@ export function RHFDate({
             {...restField}
             ref={ref}
             className={className}
-            classNames={
-              {
-                inputWrapper: "dark:bg-gray-800"
-              }
-            }
-            label={label}
-            isRequired={isRequired}
-            // granularity default = "day" (suficiente para cadastro)
+            classNames={{ inputWrapper: "dark:bg-gray-800" }}
+            description={fieldState.error ? undefined : description}
+            errorMessage={fieldState.error?.message}
             granularity={pickerProps.granularity ?? "day"}
-            // valor controlado pelo RHF convertido
+            isInvalid={!!fieldState.error}
+            isRequired={isRequired}
+            label={label}
+            labelPlacement={labelPlacement ?? "outside"}
             value={dateValue as any}
             onChange={(dv) => {
-              // dv pode ser CalendarDate ou null
               const jsDate = calendarDateToDate(dv as CalendarDate | null);
-              onChange(jsDate); // guardamos Date no form
+
+              onChange(jsDate);
             }}
-            // mensagens de ajuda/erro
-            description={fieldState.error ? undefined : description}
-            labelPlacement={"outside"}
-            isInvalid={!!fieldState.error}
-            errorMessage={fieldState.error?.message}
           />
         );
       }}
