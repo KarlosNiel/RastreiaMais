@@ -1,11 +1,12 @@
 // frontend/app/error.tsx
 "use client";
 
-import { app as cfg } from "@/config/rastreiamais";
 import { Button, Card } from "@heroui/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect } from "react";
+
+import { app as cfg } from "@/config/rastreiamais";
 
 export default function GlobalError({
   error,
@@ -38,6 +39,7 @@ export default function GlobalError({
     } catch {
       // Fallback simples
       const el = document.createElement("textarea");
+
       el.value = error.digest;
       document.body.appendChild(el);
       el.select();
@@ -48,32 +50,32 @@ export default function GlobalError({
 
   return (
     <main
-      className="container-app grid min-h-svh md:min-h-dvh place-items-center py-8"
       aria-live="polite"
+      className="container-app grid min-h-svh md:min-h-dvh place-items-center py-8"
     >
       <motion.div
-        initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.18, ease: "easeOut" }}
         className="w-full max-w-md"
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
       >
         <Card
-          role="alert"
-          aria-labelledby="err-title"
           aria-describedby="err-desc"
-          shadow="none"
+          aria-labelledby="err-title"
           className="accent-left w-full rounded-2xl border border-divider bg-content1 p-6 md:p-8 text-foreground shadow-soft"
+          role="alert"
+          shadow="none"
         >
           <div className="stack-6 text-center">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
               {/* ícone simples */}
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
+                aria-hidden="true"
+                fill="currentColor"
                 height="22"
                 viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
+                width="22"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   d="M11 15h2v2h-2v-2zm0-8h2v6h-2V7zm1-5C6.48 2 2 6.48 2 12s4.48 10 10 10
@@ -82,11 +84,11 @@ export default function GlobalError({
               </svg>
             </div>
 
-            <h1 id="err-title" className="ty-h2 md:ty-title">
+            <h1 className="ty-h2 md:ty-title" id="err-title">
               Algo deu errado
             </h1>
 
-            <p id="err-desc" className="ty-meta text-foreground/60">
+            <p className="ty-meta text-foreground/60" id="err-desc">
               Tente novamente. Se o problema persistir, fale com o suporte.
             </p>
 
@@ -104,11 +106,11 @@ export default function GlobalError({
                       ID do erro: <code>{error.digest}</code>
                     </span>
                     <Button
-                      size="sm"
+                      className="text-xs"
                       color="default"
+                      size="sm"
                       variant="light"
                       onPress={copyDigest}
-                      className="text-xs"
                     >
                       Copiar ID
                     </Button>
@@ -119,38 +121,38 @@ export default function GlobalError({
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button
-                onPress={() => reset()}
+                className="ring-offset-app ring-focus focus-visible:ring-2"
                 color="primary"
                 variant="solid"
-                className="ring-offset-app ring-focus focus-visible:ring-2"
+                onPress={() => reset()}
               >
                 Tentar novamente
               </Button>
 
               <Button
                 as={Link}
-                href="/"
-                color="default"
-                variant="bordered"
                 className="ring-offset-app ring-focus focus-visible:ring-2"
+                color="default"
+                href="/"
+                variant="bordered"
               >
                 Ir para a Home
               </Button>
 
               <Button
                 as="a"
+                className="ring-offset-app ring-focus focus-visible:ring-2"
+                color="default"
                 href={`mailto:${encodeURIComponent(
-                  supportEmail
+                  supportEmail,
                 )}?subject=${encodeURIComponent("Erro no Rastreia+")}${
                   error?.digest
                     ? `&body=${encodeURIComponent(
-                        `ID do erro (digest): ${error.digest}`
+                        `ID do erro (digest): ${error.digest}`,
                       )}`
                     : ""
                 }`}
-                color="default"
                 variant="light"
-                className="ring-offset-app ring-focus focus-visible:ring-2"
               >
                 Suporte
               </Button>

@@ -1,17 +1,18 @@
 "use client";
 
-import { RHFChipGroup, type ChipOption } from "@/components/form/RHFChipGroup";
-import { RHFInput } from "@/components/form/RHFInput";
-import {
-  createProfissional,
-  updateProfissional,
-} from "@/lib/api/profissionais";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Alert } from "@heroui/alert";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+
+import {
+  createProfissional,
+  updateProfissional,
+} from "@/lib/api/profissionais";
+import { RHFInput } from "@/components/form/RHFInput";
+import { RHFChipGroup, type ChipOption } from "@/components/form/RHFChipGroup";
 
 /* ===== Tipos / Constantes ===== */
 const cargoOptions: ChipOption[] = [
@@ -63,14 +64,13 @@ export default function ProfessionalForm({
 
   const mergedDefaults = useMemo(
     () => ({ ...baseDefaults, ...(defaultValues ?? {}) }),
-    [defaultValues]
+    [defaultValues],
   );
 
-  const { control, handleSubmit, watch } =
-    useForm<ProfissionalFormValues>({
-      defaultValues: mergedDefaults,
-      mode: "onBlur",
-    });
+  const { control, handleSubmit, watch } = useForm<ProfissionalFormValues>({
+    defaultValues: mergedDefaults,
+    mode: "onBlur",
+  });
 
   const senhaValue = watch("senha");
   const isCreate = mode === "create";
@@ -94,6 +94,7 @@ export default function ProfessionalForm({
         payloadUser.password = values.senha;
       } else {
         const originalUsername = defaultValues?.username?.trim();
+
         if (!originalUsername || originalUsername !== username) {
           payloadUser.username = username;
         }
@@ -138,12 +139,7 @@ export default function ProfessionalForm({
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {alert && (
-        <Alert
-          color={alert.type}
-          variant="flat"
-          radius="lg"
-          className="mb-6"
-        >
+        <Alert className="mb-6" color={alert.type} radius="lg" variant="flat">
           {alert.message}
         </Alert>
       )}
@@ -160,8 +156,8 @@ export default function ProfessionalForm({
       </div>
 
       <Card
-        shadow="sm"
         className="border border-default-200 dark:border-default-100 bg-white dark:bg-gray-900"
+        shadow="sm"
       >
         <CardBody className="p-6">
           <h2 className="text-lg font-semibold mb-4 text-foreground">
@@ -170,54 +166,53 @@ export default function ProfessionalForm({
 
           <form
             noValidate
-            onSubmit={handleSubmit(onSubmit)}
             className="grid grid-cols-1 gap-5 md:grid-cols-2"
+            onSubmit={handleSubmit(onSubmit)}
           >
             <RHFInput
-              control={control}
-              name="username"
-              label="Nome de usuário"
-              placeholder="Ex: joao.silva"
               isRequired
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
+              control={control}
+              label="Nome de usuário"
+              name="username"
+              placeholder="Ex: joao.silva"
               rules={{
                 required: "Informe o nome de usuário",
                 minLength: { value: 3, message: "Mínimo de 3 caracteres" },
                 pattern: {
                   value: /^[\w.@+-]+$/,
-                  message:
-                    "Use apenas letras, números e os símbolos @ . + - _",
+                  message: "Use apenas letras, números e os símbolos @ . + - _",
                 },
               }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
             />
 
             <RHFInput
+              isRequired
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
-              name="firstName"
               label="Primeiro nome"
+              name="firstName"
               placeholder="Ex: João"
-              isRequired
               rules={{ required: "Informe o primeiro nome" }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
             />
 
             <RHFInput
+              isRequired
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
-              name="lastName"
               label="Sobrenome"
+              name="lastName"
               placeholder="Ex: da Silva"
-              isRequired
               rules={{ required: "Informe o sobrenome" }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
             />
 
             <RHFInput
-              control={control}
-              name="email"
-              type="email"
-              label="E-mail vinculado"
-              placeholder="Digite o e-mail"
               isRequired
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
+              control={control}
+              label="E-mail vinculado"
+              name="email"
+              placeholder="Digite o e-mail"
               rules={{
                 required: "Informe o e-mail",
                 pattern: {
@@ -225,13 +220,14 @@ export default function ProfessionalForm({
                   message: "E-mail inválido",
                 },
               }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
+              type="email"
             />
 
             <RHFInput
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
-              name="telefone"
               label="Telefone vinculado"
+              name="telefone"
               placeholder="(xx) 9xxxx-xxxx"
               rules={{
                 pattern: {
@@ -239,30 +235,29 @@ export default function ProfessionalForm({
                   message: "Telefone inválido",
                 },
               }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
             />
 
             <RHFChipGroup
-              control={control}
-              name="cargo"
-              label="Cargo"
-              options={cargoOptions}
               single
-              rules={{ required: "Selecione o cargo" }}
               className="md:col-span-2"
+              control={control}
+              label="Cargo"
+              name="cargo"
+              options={cargoOptions}
+              rules={{ required: "Selecione o cargo" }}
             />
 
             <RHFInput
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
-              name="senha"
-              type="password"
+              isRequired={isCreate}
               label={isCreate ? "Senha" : "Nova senha"}
+              name="senha"
               placeholder={
                 isCreate
                   ? "Digite a senha"
                   : "Deixe em branco para manter a atual"
               }
-              isRequired={isCreate}
               rules={{
                 required: isCreate ? "Informe a senha" : false,
                 minLength: {
@@ -270,35 +265,36 @@ export default function ProfessionalForm({
                   message: "Mínimo de 6 caracteres",
                 },
               }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
+              type="password"
             />
 
             <RHFInput
+              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
-              name="repetirSenha"
-              type="password"
+              isRequired={isCreate}
               label={isCreate ? "Repetir a senha" : "Confirmar nova senha"}
+              name="repetirSenha"
               placeholder={
                 isCreate
                   ? "Repita a senha"
                   : "Repita a nova senha (se informada)"
               }
-              isRequired={isCreate}
               rules={{
                 required: isCreate ? "Repita a senha" : false,
                 validate: (v) => {
                   if (!senhaValue && !isCreate) return true;
+
                   return v === senhaValue || "As senhas não conferem";
                 },
               }}
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
+              type="password"
             />
 
             <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-              <Button variant="flat" color="danger" as="a" href="/gestor">
+              <Button as="a" color="danger" href="/gestor" variant="flat">
                 Cancelar
               </Button>
-              <Button type="submit" color="primary" isLoading={submitting}>
+              <Button color="primary" isLoading={submitting} type="submit">
                 {isCreate ? "Finalizar Registro" : "Salvar alterações"}
               </Button>
             </div>

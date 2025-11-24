@@ -1,7 +1,8 @@
 // frontend/components/ui/StatusChip.tsx
-import { cn } from "@/lib/utils";
 import { ComponentPropsWithoutRef } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+
+import { cn } from "@/lib/utils";
 
 const chip = tv({
   base: [
@@ -64,8 +65,8 @@ export function StatusChip({
   return (
     <span
       {...rest}
-      data-tone={tone}
       className={cn(chip({ tone, size }), className)}
+      data-tone={tone}
     >
       {children}
     </span>

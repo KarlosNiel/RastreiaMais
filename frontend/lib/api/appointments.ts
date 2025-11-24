@@ -1,6 +1,7 @@
 // lib/api/appointments.ts
-import { apiDelete, apiPatch, apiPost } from "@/lib/api";
 import type { AppointmentApiPayload } from "@/lib/pacientes/mappers";
+
+import { apiDelete, apiPatch, apiPost } from "@/lib/api";
 
 const BASE = "/api/v1/appointments";
 
@@ -13,7 +14,7 @@ const BASE = "/api/v1/appointments";
  * O backend já filtra por profissional conforme o usuário logado.
  */
 export async function createAppointment<T = unknown>(
-  payload: AppointmentApiPayload
+  payload: AppointmentApiPayload,
 ): Promise<T | null> {
   return apiPost<T | null>(`${BASE}/appointments/`, payload);
 }
@@ -24,7 +25,7 @@ export async function createAppointment<T = unknown>(
  */
 export async function updateAppointment<T = unknown>(
   id: number,
-  payload: Partial<AppointmentApiPayload> & { status?: string }
+  payload: Partial<AppointmentApiPayload> & { status?: string },
 ): Promise<T | null> {
   return apiPatch<T | null>(`${BASE}/appointments/${id}/`, payload);
 }

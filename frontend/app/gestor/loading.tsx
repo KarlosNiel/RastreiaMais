@@ -1,8 +1,9 @@
 "use client";
+import { Card } from "@heroui/react";
+
 import { StatCardSkeleton } from "@/components/skeletons/StatCardSkeleton";
 import { ChartSkeleton } from "@/components/skeletons/ChartSkeleton";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
-import { Card } from "@heroui/react";
 import { Skeleton } from "@/components/skeletons/Skeleton";
 
 export default function LoadingGestor() {

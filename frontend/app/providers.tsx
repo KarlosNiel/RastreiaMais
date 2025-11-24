@@ -1,13 +1,16 @@
 "use client";
 
-import { AuthProvider } from "@/context/authContext";
+import type { ReactNode } from "react";
+
 import { HeroUIProvider } from "@heroui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import type { ReactNode } from "react";
+
+import { AuthProvider } from "@/context/authContext";
 
 function getQueryClient() {
   const g = globalThis as unknown as { __rq?: QueryClient };
+
   if (!g.__rq) {
     g.__rq = new QueryClient({
       defaultOptions: {
@@ -21,16 +24,17 @@ function getQueryClient() {
       },
     });
   }
+
   return g.__rq;
 }
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
     <NextThemesProvider
+      disableTransitionOnChange
+      enableSystem
       attribute="class"
       defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
       storageKey="rastreia-theme"
     >
       <HeroUIProvider className="font-sans">

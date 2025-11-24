@@ -18,25 +18,27 @@ export const Presentation = () => {
           </h1>
 
           <p className="text-xl sm:text-2xl text-default-600 dark:text-gray-300 mb-8 leading-relaxed">
-            Plataforma completa para auxiliar UBS e APS no gerenciamento de dados
-            de pacientes com doenças crônicas não transmissíveis
+            Plataforma completa para auxiliar UBS e APS no gerenciamento de
+            dados de pacientes com doenças crônicas não transmissíveis
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button color="primary" size="lg" className="text-base font-semibold">
-                <Link href="/auth/login/profissional">
-                  Acessar como Profissional
-                </Link>
+            <Button
+              className="text-base font-semibold"
+              color="primary"
+              size="lg"
+            >
+              <Link href="/auth/login/profissional">
+                Acessar como Profissional
+              </Link>
             </Button>
             <Button
+              className="text-base font-semibold"
               color="secondary"
               size="lg"
               variant="flat"
-              className="text-base font-semibold"
             >
-              <Link href="/auth/login/paciente">
-                  Acessar como Paciente
-              </Link>
+              <Link href="/auth/login/paciente">Acessar como Paciente</Link>
             </Button>
           </div>
 
@@ -65,6 +67,7 @@ export const Presentation = () => {
               },
             ].map((card, i) => {
               const Icon = card.icon;
+
               return (
                 <Card
                   key={i}

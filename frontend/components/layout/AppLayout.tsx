@@ -4,9 +4,9 @@ import { ReactNode } from "react";
 import { Button } from "@heroui/button";
 import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
-import Nav from "@/components/navbar/Nav";
-import { UserMenu } from "@/components/navbar/UserMenu";
 import Link from "next/link";
+
+import Nav from "@/components/navbar/Nav";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -26,11 +26,11 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <Link className="flex items-center gap-2" href="/">
               <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
                 Rastreia+
               </span>
-            </Link> 
+            </Link>
 
             {/* Navegação principal */}
             <Nav />
@@ -40,10 +40,10 @@ export function AppLayout({ children }: AppLayoutProps) {
               {/* Toggle tema */}
               <Button
                 isIconOnly
+                aria-label="Alternar tema"
                 size="sm"
                 variant="light"
                 onPress={toggleTheme}
-                aria-label="Alternar tema"
               >
                 {theme === "dark" ? (
                   <SunIcon className="h-4 w-4" />
@@ -59,9 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Conteúdo principal */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

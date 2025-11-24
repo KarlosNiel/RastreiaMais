@@ -8,7 +8,7 @@ type ChoiceMap = Record<string, string>;
 
 function invertMap(map: ChoiceMap): ChoiceMap {
   return Object.fromEntries(
-    Object.entries(map).map(([front, back]) => [back, front])
+    Object.entries(map).map(([front, back]) => [back, front]),
   );
 }
 
@@ -133,7 +133,7 @@ export const alcoholConsumptionMap: ChoiceMap = {
 };
 
 export const alcoholConsumptionBackToFront: ChoiceMap = invertMap(
-  alcoholConsumptionMap
+  alcoholConsumptionMap,
 );
 
 export const smokingMap: ChoiceMap = {

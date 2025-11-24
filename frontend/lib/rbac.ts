@@ -28,14 +28,16 @@ const accessMatrix: Record<Role, Pattern[]> = {
 export function canAccess(pathname: string, role?: Role | null): boolean {
   if (!role) return false;
   const allowed = accessMatrix[role];
+
   return allowed.some((prefix) => pathname.startsWith(prefix));
 }
 
 // Helper para filtrar itens de menu por papel
 export function filterNav<T extends { href: string }>(
   items: T[],
-  role?: Role | null
+  role?: Role | null,
 ): T[] {
   if (!role) return [];
+
   return items.filter((it) => canAccess(it.href, role));
 }

@@ -1,27 +1,25 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import {
+  CalendarIcon,
+  ChartBarIcon,
+  ExclamationTriangleIcon,
+  HeartIcon,
+  ShieldExclamationIcon,
+} from "@heroicons/react/24/outline";
+
 import { apiGet } from "@/lib/api";
 import { useHasData } from "@/lib/hooks/paciente/useHasData";
 import { useMedications } from "@/lib/hooks/paciente/useMedications";
 import { useMe } from "@/lib/hooks/me/useMe";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import {
   ConsultasTable,
   type ConsultaRow,
 } from "@/components/portal/ConsultasTable";
-
 import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
-import {
-  CalendarIcon,
-  ChartBarIcon,
-  ClipboardDocumentCheckIcon,
-  ExclamationTriangleIcon,
-  HeartIcon,
-  ShieldExclamationIcon,
-} from "@heroicons/react/24/outline";
 
 export default function MePage() {
   const { data: me, isLoading: isLoadingMe } = useMe();
@@ -42,13 +40,16 @@ export default function MePage() {
     queryKey: ["appointments"],
     queryFn: async () => {
       const resp = await apiGet<any>("/api/v1/appointments/appointments/");
+
       if (Array.isArray(resp)) return resp;
+
       return resp?.results ?? [];
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 2,
     retry: (failureCount, error: any) => {
       if (error?.status === 401) return false;
+
       return failureCount < 3;
     },
   });
@@ -116,6 +117,7 @@ export default function MePage() {
 
       if (dt) {
         const d = new Date(dt);
+
         if (!Number.isNaN(d.getTime())) {
           dataStr = d.toLocaleDateString("pt-BR");
           horaStr = d.toLocaleTimeString("pt-BR", {
@@ -149,7 +151,12 @@ export default function MePage() {
     if (!me?.user) return "Paciente";
     const firstName = me.user.first_name || "";
     const lastName = me.user.last_name || "";
-    return `Paciente: ${firstName} ${lastName}`.trim() || me.user.username || "Paciente";
+
+    return (
+      `Paciente: ${firstName} ${lastName}`.trim() ||
+      me.user.username ||
+      "Paciente"
+    );
   }, [me]);
 
   return (
@@ -191,7 +198,6 @@ export default function MePage() {
             </div>
           )}
         </div>
-
       </section>
 
       <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-full transition-all">
@@ -212,18 +218,18 @@ export default function MePage() {
           </div>
         ) : (
           <ConsultasTable
-            rows={rows}
-            initialPage={1}
-            onView={handleView}
-            initialRowsPerPage={4}
             className="rounded-md overflow-hidden"
+            initialPage={1}
+            initialRowsPerPage={4}
+            rows={rows}
+            onView={handleView}
           />
         )}
 
         <PatientAppointmentDetailsModal
+          data={selected}
           open={open}
           onClose={() => setOpen(false)}
-          data={selected}
         />
       </section>
     </div>

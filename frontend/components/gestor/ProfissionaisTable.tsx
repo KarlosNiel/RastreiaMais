@@ -1,8 +1,8 @@
 // components/gestor/ProfissionaisTable.tsx
 "use client";
 
-import { RMButton } from "@/components/ui/RMButton";
-import { StatusChip } from "@/components/ui/StatusChip";
+import type { Key, SortDescriptor } from "@react-types/shared";
+
 import {
   Button,
   Dropdown,
@@ -18,13 +18,10 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
-import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
-import {
-  EyeIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+
+import { StatusChip } from "@/components/ui/StatusChip";
 
 type Status = "Ativo" | "Licença" | "Afastado";
 
@@ -73,14 +70,14 @@ const columns: Column[] = [
 
 /** Ícone de ordenação local */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden {...props}>
+  <svg aria-hidden height="1em" viewBox="0 0 24 24" width="1em" {...props}>
     <path
       d="M7 14l5 5 5-5M7 10l5-5 5 5"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={1.5}
     />
   </svg>
 );
@@ -100,7 +97,7 @@ export function ProfissionaisTable({
 }: Props) {
   const [filterValue, setFilterValue] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
-    "all"
+    "all",
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(initialRowsPerPage);
   const [page, setPage] = React.useState(initialPage);
@@ -116,18 +113,20 @@ export function ProfissionaisTable({
 
     if (hasSearch) {
       const q = filterValue.toLowerCase();
+
       data = data.filter(
         (r) =>
           r.profissional.toLowerCase().includes(q) ||
           r.cargo.toLowerCase().includes(q) ||
-          r.local.toLowerCase().includes(q)
+          r.local.toLowerCase().includes(q),
       );
     }
 
     if (statusFilter !== "all" && (statusFilter as Set<Key>).size) {
       const sel = new Set<string>(
-        Array.from(statusFilter as Set<Key>).map(String)
+        Array.from(statusFilter as Set<Key>).map(String),
       );
+
       data = data.filter((r) => sel.has(r.status));
     }
 
@@ -143,6 +142,7 @@ export function ProfissionaisTable({
   const pageItems = React.useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+
     return filteredItems.slice(start, end);
   }, [filteredItems, page, rowsPerPage]);
 
@@ -166,6 +166,7 @@ export function ProfissionaisTable({
         typeof secondRaw === "string" ? secondRaw.toLowerCase() : secondRaw;
 
       const cmp = first < second ? -1 : first > second ? 1 : 0;
+
       return direction === "descending" ? -cmp : cmp;
     });
   }, [pageItems, sortDescriptor]);
@@ -186,9 +187,9 @@ export function ProfissionaisTable({
         return (
           <div className="flex items-center justify-start gap-2">
             <Button
-              onPress={() => onAction?.("edit", row)}
-              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
               isIconOnly
+              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+              onPress={() => onAction?.("edit", row)}
             >
               <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </Button>
@@ -205,29 +206,29 @@ export function ProfissionaisTable({
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
-            radius="full"
-            variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
-                    "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
-                  input:
-                    "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+                "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
+              input:
+                "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
             placeholder="Buscar por profissional, cargo ou local…"
+            radius="full"
             startContent={
               <svg
                 aria-hidden
-                viewBox="0 0 24 24"
                 className="size-4 text-foreground/50"
+                viewBox="0 0 24 24"
               >
                 <path
-                  fill="currentColor"
                   d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                  fill="currentColor"
                 />
               </svg>
             }
             value={filterValue}
+            variant="flat"
             onClear={() => {
               setFilterValue("");
               setPage(1);
@@ -241,20 +242,24 @@ export function ProfissionaisTable({
           <div className="flex gap-3 items-center">
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button variant="flat" radius="full" className="flex justify-center items-center">
+                <Button
+                  className="flex justify-center items-center"
+                  radius="full"
+                  variant="flat"
+                >
                   Status
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
-                aria-label="Filtro de status"
                 disallowEmptySelection
+                aria-label="Filtro de status"
                 closeOnSelect={false}
-                selectionMode="multiple"
                 selectedKeys={
                   statusFilter === "all"
                     ? "all"
                     : (statusFilter as Iterable<Key>)
                 }
+                selectionMode="multiple"
                 onSelectionChange={(keys) =>
                   setStatusFilter(keys as "all" | Set<Key>)
                 }
@@ -298,16 +303,15 @@ export function ProfissionaisTable({
         <Pagination
           isCompact
           showControls
+          classNames={{
+            next: "dark:bg-gray-800",
+            prev: "dark:bg-gray-800",
+            item: "dark:bg-gray-800",
+          }}
           color="primary"
           page={page}
           total={pages}
           onChange={setPage}
-          classNames={{
-              next: "dark:bg-gray-800",
-              prev: "dark:bg-gray-800",
-              item: "dark:bg-gray-800",
-            }
-          }
         />
       </div>
     );
@@ -315,40 +319,47 @@ export function ProfissionaisTable({
 
   return (
     <Table
-      aria-label="Tabela de profissionais"
       isHeaderSticky
-      topContent={topContent}
-      topContentPlacement="outside"
+      aria-label="Tabela de profissionais"
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
-      selectionMode="none"
-      sortDescriptor={sortDescriptor}
-      sortIcon={SortGlyph}
-      onSortChange={setSortDescriptor}
       classNames={{
         th: "px-6 py-3 text-foreground/70 font-semibold",
         td: "px-6 py-3",
         base: "min-h-[320px]",
         table: "dark:bg-gray-900",
-        wrapper: "bg-transparent border-none shadow-none px-2"
+        wrapper: "bg-transparent border-none shadow-none px-2",
       }}
+      selectionMode="none"
+      sortDescriptor={sortDescriptor}
+      sortIcon={SortGlyph}
+      topContent={topContent}
+      topContentPlacement="outside"
+      onSortChange={setSortDescriptor}
     >
       <TableHeader columns={columns}>
         {(column: Column) => (
           <TableColumn
-            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
+            className="text-sm dark:bg-gray-800 w-[20%]"
           >
             {column.name}
           </TableColumn>
         )}
       </TableHeader>
 
-      <TableBody emptyContent="Sem profissionais" items={sortedItems} className="overflow-x-auto"> 
+      <TableBody
+        className="overflow-x-auto"
+        emptyContent="Sem profissionais"
+        items={sortedItems}
+      >
         {(item: ProfRow) => (
-          <TableRow key={item.id} className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900">
+          <TableRow
+            key={item.id}
+            className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900"
+          >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>
             )}

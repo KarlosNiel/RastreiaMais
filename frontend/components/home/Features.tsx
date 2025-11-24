@@ -1,8 +1,11 @@
 "use client";
 
-import { Button, Card, CardBody } from "@heroui/react";
-import Link from "next/link";
-import { HeartIcon, DocumentTextIcon, CalendarIcon, WindowIcon,
+import { Card, CardBody } from "@heroui/react";
+import {
+  HeartIcon,
+  DocumentTextIcon,
+  CalendarIcon,
+  WindowIcon,
 } from "@heroicons/react/24/outline";
 
 export const Features = () => {
@@ -57,6 +60,7 @@ export const Features = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {features.map((feature, i) => {
             const Icon = feature.icon;
+
             return (
               <Card
                 key={i}

@@ -1,7 +1,8 @@
 // components/profissional/AgendaTable.tsx
 "use client";
 
-import { StatusChip } from "@/components/ui/StatusChip";
+import type { Key, SortDescriptor } from "@react-types/shared";
+
 import {
   Button,
   Dropdown,
@@ -18,8 +19,9 @@ import {
   TableRow,
   Tooltip,
 } from "@heroui/react";
-import type { Key, SortDescriptor } from "@react-types/shared";
 import * as React from "react";
+
+import { StatusChip } from "@/components/ui/StatusChip";
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
@@ -56,7 +58,7 @@ const RISK_OPTIONS = [
 const STATUS_OPTIONS = [
   { name: "Ativo", uid: "ativo" },
   { name: "Finalizado", uid: "finalizado" },
-  { name: "Cancelado", uid: "cancelado" }
+  { name: "Cancelado", uid: "cancelado" },
 ] as const;
 
 const COLUMNS: readonly Column[] = [
@@ -76,14 +78,14 @@ const riskWeight: Record<RiskTone, number> = {
 
 /** Ícone de sort local */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden {...props}>
+  <svg aria-hidden height="1em" viewBox="0 0 24 24" width="1em" {...props}>
     <path
       d="M7 14l5 5 5-5M7 10l5-5 5 5"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth={1.5}
     />
   </svg>
 );
@@ -104,9 +106,11 @@ export type AgendaTableProps = {
 /* ===== Utils ===== */
 const toMinutes = (hhmm: string) => {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+
   if (!m) return Number.NaN;
   const h = Number(m[1]);
   const mm = Number(m[2]);
+
   return h * 60 + mm;
 };
 
@@ -129,7 +133,9 @@ export function AgendaTable({
 }: AgendaTableProps) {
   const [filterValue, setFilterValue] = React.useState("");
   const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>("all");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
+    "all",
+  );
   const [page, setPage] = React.useState(initialPage);
   const [pageSize, setPageSize] = React.useState(initialRowsPerPage);
   const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
@@ -139,12 +145,12 @@ export function AgendaTable({
 
   const riskSetFromProps = React.useMemo<"all" | Set<RiskTone>>(
     () => (risks === "all" ? "all" : new Set(risks)),
-    [risks]
+    [risks],
   );
 
   const statusSetFromProps = React.useMemo<"all" | Set<string>>(
     () => (statuses === "all" ? "all" : new Set(statuses)),
-    [statuses]
+    [statuses],
   );
 
   const effectiveQuery = enableToolbar ? filterValue : (query ?? "");
@@ -168,23 +174,26 @@ export function AgendaTable({
     let data = rows;
 
     const q = (effectiveQuery || "").toLowerCase().trim();
+
     if (q) {
       data = data.filter(
         (r) =>
           r.paciente.toLowerCase().includes(q) ||
           r.docMasked.toLowerCase().includes(q) ||
           r.condicao.toLowerCase().includes(q) ||
-          r.local.toLowerCase().includes(q)
+          r.local.toLowerCase().includes(q),
       );
     }
 
     if (effectiveRiskSet !== "all") {
       const sel = effectiveRiskSet as Set<RiskTone>;
+
       data = data.filter((r) => sel.has(r.risco));
     }
 
     if (effectiveStatusSet !== "all") {
       const sel = effectiveStatusSet as Set<string>;
+
       data = data.filter((r) => sel.has(r.status));
     }
 
@@ -195,7 +204,7 @@ export function AgendaTable({
     () =>
       totalPagesOverride ??
       Math.max(1, Math.ceil(filteredItems.length / pageSize)),
-    [filteredItems.length, pageSize, totalPagesOverride]
+    [filteredItems.length, pageSize, totalPagesOverride],
   );
 
   React.useEffect(() => {
@@ -204,6 +213,7 @@ export function AgendaTable({
 
   const pageItems = React.useMemo(() => {
     const start = (page - 1) * pageSize;
+
     return filteredItems.slice(start, start + pageSize);
   }, [filteredItems, page, pageSize]);
 
@@ -222,6 +232,7 @@ export function AgendaTable({
       } else if (key === "hora") {
         const A = toMinutes(a.hora);
         const B = toMinutes(b.hora);
+
         if (!Number.isNaN(A) && !Number.isNaN(B)) {
           first = A;
           second = B;
@@ -248,7 +259,7 @@ export function AgendaTable({
   const renderCell = React.useCallback(
     (row: AgendaRow, colKey: Key) => {
       const k = String(colKey) as keyof AgendaRow | "actions";
-      
+
       // Verifica se já foi finalizado ou cancelado
       const isFinalized = row.status === "finalizado";
       const isCanceled = row.status === "cancelado";
@@ -288,15 +299,15 @@ export function AgendaTable({
                   row.status === "finalizado"
                     ? "safe"
                     : row.status === "cancelado"
-                    ? "critical"
-                    : "attention"
+                      ? "critical"
+                      : "attention"
                 }
               >
                 {row.status === "finalizado"
                   ? "Finalizado"
                   : row.status === "cancelado"
-                  ? "Cancelado"
-                  : "Ativo"}
+                    ? "Cancelado"
+                    : "Ativo"}
               </StatusChip>
             </div>
           );
@@ -305,19 +316,23 @@ export function AgendaTable({
             <div className="flex items-center justify-end gap-2">
               <Tooltip content="Finalizar agendamento">
                 <button
+                  aria-label={`Concluir ${row.paciente}`}
                   className={`rounded-lg border border-divider p-2 focus:outline-none focus:ring-2 focus:ring-focus ${
                     isDisabled
                       ? "opacity-40 cursor-not-allowed"
                       : "hover:bg-content2 hover:border-emerald-500"
                   }`}
-                  aria-label={`Concluir ${row.paciente}`}
-                  onClick={() => !isDisabled && onAction?.("done", row)}
                   disabled={isDisabled}
+                  onClick={() => !isDisabled && onAction?.("done", row)}
                 >
-                  <svg viewBox="0 0 24 24" className="size-5 text-emerald-600" aria-hidden>
+                  <svg
+                    aria-hidden
+                    className="size-5 text-emerald-600"
+                    viewBox="0 0 24 24"
+                  >
                     <path
-                      fill="currentColor"
                       d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                      fill="currentColor"
                     />
                   </svg>
                 </button>
@@ -325,19 +340,23 @@ export function AgendaTable({
 
               <Tooltip content="Cancelar agendamento">
                 <button
+                  aria-label={`Excluir ${row.paciente}`}
                   className={`rounded-lg border border-divider p-2 focus:outline-none focus:ring-2 focus:ring-focus ${
                     isDisabled
                       ? "opacity-40 cursor-not-allowed"
                       : "hover:bg-content2 hover:border-rose-500"
                   }`}
-                  aria-label={`Excluir ${row.paciente}`}
-                  onClick={() => !isDisabled && onAction?.("delete", row)}
                   disabled={isDisabled}
+                  onClick={() => !isDisabled && onAction?.("delete", row)}
                 >
-                  <svg viewBox="0 0 24 24" className="size-5 text-rose-600" aria-hidden>
+                  <svg
+                    aria-hidden
+                    className="size-5 text-rose-600"
+                    viewBox="0 0 24 24"
+                  >
                     <path
-                      fill="currentColor"
                       d="M6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7Zm3-3h6l1 1h4v2H4V5h4l1-1Z"
+                      fill="currentColor"
                     />
                   </svg>
                 </button>
@@ -345,14 +364,18 @@ export function AgendaTable({
 
               <Tooltip content="Ver detalhes">
                 <button
-                  className="rounded-lg border border-divider p-2 hover:bg-content2 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-focus"
                   aria-label={`Abrir ${row.paciente}`}
+                  className="rounded-lg border border-divider p-2 hover:bg-content2 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-focus"
                   onClick={() => onAction?.("open", row)}
                 >
-                  <svg viewBox="0 0 24 24" className="size-5 text-blue-600" aria-hidden>
+                  <svg
+                    aria-hidden
+                    className="size-5 text-blue-600"
+                    viewBox="0 0 24 24"
+                  >
                     <path
-                      fill="currentColor"
                       d="M14 3v2H5v14h14v-9h2v11H3V3h11Zm7 0h-6v2h2.59l-9.83 9.83 1.41 1.41L19 6.41V9h2V3Z"
+                      fill="currentColor"
                     />
                   </svg>
                 </button>
@@ -363,7 +386,7 @@ export function AgendaTable({
           return (row as any)[k];
       }
     },
-    [onAction]
+    [onAction],
   );
 
   const topContent = React.useMemo(() => {
@@ -375,8 +398,6 @@ export function AgendaTable({
         <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
-            radius="full"
-            variant="flat"
             className="w-full sm:max-w-[44%]"
             classNames={{
               inputWrapper:
@@ -385,19 +406,21 @@ export function AgendaTable({
                 "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
             }}
             placeholder="Buscar por paciente, condição ou local…"
+            radius="full"
             startContent={
               <svg
                 aria-hidden
-                viewBox="0 0 24 24"
                 className="size-4 text-foreground/50"
+                viewBox="0 0 24 24"
               >
                 <path
-                  fill="currentColor"
                   d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                  fill="currentColor"
                 />
               </svg>
             }
             value={filterValue}
+            variant="flat"
             onClear={() => {
               setFilterValue("");
               setPage(1);
@@ -411,18 +434,18 @@ export function AgendaTable({
           <div className="flex items-center gap-3">
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button variant="flat" radius="full">
+                <Button radius="full" variant="flat">
                   Risco
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
-                aria-label="Filtro de Risco"
                 disallowEmptySelection
+                aria-label="Filtro de Risco"
                 closeOnSelect={false}
-                selectionMode="multiple"
                 selectedKeys={
                   riskFilter === "all" ? "all" : (riskFilter as Iterable<Key>)
                 }
+                selectionMode="multiple"
                 onSelectionChange={(keys) =>
                   setRiskFilter(keys as "all" | Set<Key>)
                 }
@@ -437,18 +460,20 @@ export function AgendaTable({
 
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button variant="flat" radius="full">
+                <Button radius="full" variant="flat">
                   Status
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
-                aria-label="Filtro de Status"
                 disallowEmptySelection
+                aria-label="Filtro de Status"
                 closeOnSelect={false}
-                selectionMode="multiple"
                 selectedKeys={
-                  statusFilter === "all" ? "all" : (statusFilter as Iterable<Key>)
+                  statusFilter === "all"
+                    ? "all"
+                    : (statusFilter as Iterable<Key>)
                 }
+                selectionMode="multiple"
                 onSelectionChange={(keys) =>
                   setStatusFilter(keys as "all" | Set<Key>)
                 }
@@ -464,8 +489,8 @@ export function AgendaTable({
             <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
               Por página:
               <select
-                className="bg-transparent outline-0 text-small border rounded"
                 aria-label="Linhas por página"
+                className="bg-transparent outline-0 text-small border rounded"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
@@ -487,7 +512,14 @@ export function AgendaTable({
         </div>
       </div>
     );
-  }, [enableToolbar, filteredItems.length, filterValue, riskFilter, statusFilter, pageSize]);
+  }, [
+    enableToolbar,
+    filteredItems.length,
+    filterValue,
+    riskFilter,
+    statusFilter,
+    pageSize,
+  ]);
 
   const bottomContent = React.useMemo(() => {
     return (
@@ -495,16 +527,16 @@ export function AgendaTable({
         <Pagination
           isCompact
           showControls
-          size="sm"
-          color="primary"
-          page={page}
-          total={totalPages}
-          onChange={setPage}
           classNames={{
             next: "dark:bg-gray-800",
             prev: "dark:bg-gray-800",
             item: "dark:bg-gray-800",
           }}
+          color="primary"
+          page={page}
+          size="sm"
+          total={totalPages}
+          onChange={setPage}
         />
       </div>
     );
@@ -512,18 +544,10 @@ export function AgendaTable({
 
   return (
     <Table
-      aria-label="Agenda de atendimentos"
       isHeaderSticky
-      removeWrapper={false}
-      shadow="none"
-      selectionMode="none"
-      topContent={topContent}
-      topContentPlacement="outside"
+      aria-label="Agenda de atendimentos"
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
-      sortDescriptor={sortDescriptor}
-      sortIcon={SortGlyph}
-      onSortChange={setSortDescriptor}
       classNames={{
         th: "px-6 py-3 text-foreground/70 font-semibold",
         td: "px-6 py-3",
@@ -531,14 +555,22 @@ export function AgendaTable({
         table: "dark:bg-gray-900",
         wrapper: "bg-transparent border-none shadow-none px-2",
       }}
+      removeWrapper={false}
+      selectionMode="none"
+      shadow="none"
+      sortDescriptor={sortDescriptor}
+      sortIcon={SortGlyph}
+      topContent={topContent}
+      topContentPlacement="outside"
+      onSortChange={setSortDescriptor}
     >
       <TableHeader columns={[...COLUMNS]}>
         {(column: Column) => (
           <TableColumn
-            className="text-sm dark:bg-gray-800 w-[20%]"
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
+            className="text-sm dark:bg-gray-800 w-[20%]"
           >
             {column.name}
           </TableColumn>

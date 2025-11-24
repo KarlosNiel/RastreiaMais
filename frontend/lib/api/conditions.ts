@@ -1,6 +1,7 @@
 // lib/api/conditions.ts
-import { apiDelete, apiPatch, apiPost } from "@/lib/api";
 import type { DmApiPayload, HasApiPayload } from "@/lib/pacientes/mappers";
+
+import { apiDelete, apiPatch, apiPost } from "@/lib/api";
 
 const BASE = "/api/v1/conditions";
 
@@ -12,7 +13,7 @@ const BASE = "/api/v1/conditions";
  * Cria um caso de HAS para um paciente.
  */
 export async function createHAS<T = unknown>(
-  payload: HasApiPayload
+  payload: HasApiPayload,
 ): Promise<T | null> {
   return apiPost<T | null>(`${BASE}/systolic-hypertension-cases/`, payload);
 }
@@ -22,11 +23,11 @@ export async function createHAS<T = unknown>(
  */
 export async function updateHAS<T = unknown>(
   id: number,
-  payload: Partial<HasApiPayload>
+  payload: Partial<HasApiPayload>,
 ): Promise<T | null> {
   return apiPatch<T | null>(
     `${BASE}/systolic-hypertension-cases/${id}/`,
-    payload
+    payload,
   );
 }
 
@@ -45,7 +46,7 @@ export async function deleteHAS<T = unknown>(id: number): Promise<T | null> {
  * Cria um caso de DM para um paciente.
  */
 export async function createDM<T = unknown>(
-  payload: DmApiPayload
+  payload: DmApiPayload,
 ): Promise<T | null> {
   return apiPost<T | null>(`${BASE}/diabetes-mellitus-cases/`, payload);
 }
@@ -55,7 +56,7 @@ export async function createDM<T = unknown>(
  */
 export async function updateDM<T = unknown>(
   id: number,
-  payload: Partial<DmApiPayload>
+  payload: Partial<DmApiPayload>,
 ): Promise<T | null> {
   return apiPatch<T | null>(`${BASE}/diabetes-mellitus-cases/${id}/`, payload);
 }

@@ -34,18 +34,20 @@ function clearAllCookies() {
 
 function getAccess() {
   if (!isBrowser()) return null;
+
   return localStorage.getItem("access") || sessionStorage.getItem("access");
 }
 
 function getRefresh() {
   if (!isBrowser()) return null;
+
   return localStorage.getItem("refresh") || sessionStorage.getItem("refresh");
 }
 
 export function setTokens(
   access: string,
   refresh: string,
-  persistent: boolean = true
+  persistent: boolean = true,
 ) {
   if (!isBrowser()) return;
 
@@ -80,9 +82,11 @@ export function clearTokens() {
 function readErrorMessageFromAxios(errResp: any) {
   try {
     const data = errResp?.data;
+
     if (!data) return `HTTP ${errResp?.status ?? "Error"}`;
     if (data.detail) return String(data.detail);
     if (data.message) return String(data.message);
+
     return JSON.stringify(data);
   } catch {
     return `HTTP ${errResp?.status ?? "Error"}`;
@@ -108,6 +112,7 @@ let refreshInFlight: Promise<string | null> | null = null;
 
 async function ensureAccessToken(): Promise<string | null> {
   const refresh = getRefresh();
+
   if (!refresh) return null;
 
   if (!refreshInFlight) {
@@ -115,11 +120,14 @@ async function ensureAccessToken(): Promise<string | null> {
       .post(`${API}/api/token/refresh/`, { refresh })
       .then((res) => {
         const newAccess = res.data?.access;
+
         if (newAccess) setTokens(newAccess, refresh);
+
         return newAccess ?? null;
       })
       .catch(() => {
         clearTokens();
+
         return null;
       })
       .finally(() => {
@@ -146,6 +154,7 @@ const axiosInstance: AxiosInstance = axios.create({
 // Attach Authorization header
 axiosInstance.interceptors.request.use((config) => {
   const token = getAccess();
+
   if (token) {
     config.headers = config.headers ?? {};
     if (!config.headers["Authorization"]) {
@@ -172,6 +181,7 @@ axiosInstance.interceptors.response.use(
     const original = error.config as AxiosRequestConfig & { _retry?: boolean };
     const status = error.response.status;
     const path = original.url ?? "";
+
     if (status !== 401 || isAuthPath(path) || original._retry) {
       return Promise.reject(error);
     }
@@ -181,6 +191,7 @@ axiosInstance.interceptors.response.use(
     if (!newAccess) {
       clearTokens();
       if (isBrowser()) window.location.href = "/auth/login";
+
       return Promise.reject(error);
     }
 
@@ -189,7 +200,7 @@ axiosInstance.interceptors.response.use(
     (original.headers as any)["Authorization"] = `Bearer ${newAccess}`;
 
     return axiosInstance(original);
-  }
+  },
 );
 
 // ─────────────────────────────────────────────────────────────
@@ -215,10 +226,12 @@ async function rawWithAxios(path: string, init: RequestInit) {
 export async function apiJSON<T = any>(path: string, init: RequestInit = {}) {
   try {
     const res = await rawWithAxios(path, init);
+
     return res.status === 204 || res.status === 205 ? null : (res.data as T);
   } catch (err: any) {
     const status = err.response?.status ?? 0;
     const msg = readErrorMessageFromAxios(err.response);
+
     throw new ApiError(msg, status, err.response?.data);
   }
 }
@@ -235,7 +248,7 @@ export const apiGet = <T = any>(path: string, init: RequestInit = {}) =>
 export const apiPost = <T = any>(
   path: string,
   body?: any,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ) =>
   apiJSON<T>(path, {
     ...init,
@@ -252,7 +265,7 @@ export const apiPost = <T = any>(
 export const apiPut = <T = any>(
   path: string,
   body?: any,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ) =>
   apiJSON<T>(path, {
     ...init,
@@ -269,7 +282,7 @@ export const apiPut = <T = any>(
 export const apiPatch = <T = any>(
   path: string,
   body?: any,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ) =>
   apiJSON<T>(path, {
     ...init,

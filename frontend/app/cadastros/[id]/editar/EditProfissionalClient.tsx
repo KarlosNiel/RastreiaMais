@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { apiGet } from "@/lib/api";
 import ProfessionalForm, {
   ProfissionalFormValues,
@@ -29,7 +30,7 @@ export default function EditProfissionalClient({ id }: Props) {
       try {
         // 🔹 Busca o profissional na API
         const profissionalApi = await apiGet<any>(
-          `/api/v1/accounts/professionals/${id}/`
+          `/api/v1/accounts/professionals/${id}/`,
         );
 
         const user = profissionalApi.user ?? {};
@@ -53,7 +54,7 @@ export default function EditProfissionalClient({ id }: Props) {
         if (!cancelled) {
           setError(
             err?.message ||
-              "Não foi possível carregar os dados do profissional."
+              "Não foi possível carregar os dados do profissional.",
           );
         }
       } finally {
@@ -91,6 +92,6 @@ export default function EditProfissionalClient({ id }: Props) {
   }
 
   return (
-    <ProfessionalForm mode="edit" id={id} defaultValues={data.defaultValues} />
+    <ProfessionalForm defaultValues={data.defaultValues} id={id} mode="edit" />
   );
 }

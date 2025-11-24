@@ -25,6 +25,7 @@ const NAV: { label: string; href: string; roles: Exclude<Role, null>[] }[] = [
 function readRoleFromCookie(): Role {
   if (typeof document === "undefined") return null;
   const m = document.cookie.match(/(?:^|;\s*)role=([^;]+)/);
+
   return (m ? decodeURIComponent(m[1]) : null) as Role;
 }
 
@@ -47,13 +48,15 @@ export default function Nav() {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "role") setRole((e.newValue as Role) ?? null);
     };
+
     window.addEventListener("storage", onStorage);
 
     // tenta re-ler cookie quando a aba volta a ficar visível
     const onVis = () =>
       setRole(
-        readRoleFromCookie() ?? (localStorage.getItem("role") as Role) ?? null
+        readRoleFromCookie() ?? (localStorage.getItem("role") as Role) ?? null,
       );
+
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
@@ -65,7 +68,7 @@ export default function Nav() {
   if (!role) return null; // sem papel → não exibe navegação
 
   const items = NAV.filter((i) =>
-    i.roles.includes(role as Exclude<Role, null>)
+    i.roles.includes(role as Exclude<Role, null>),
   );
 
   return (
@@ -77,9 +80,7 @@ export default function Nav() {
         return (
           <Link
             key={i.href}
-            href={i.href}
             aria-current={active ? "page" : undefined}
-            data-active={active ? "true" : "false"}
             className={[
               "rounded-2xl px-3 py-2 text-sm transition",
               // estados visuais padronizados
@@ -90,6 +91,8 @@ export default function Nav() {
               // inativo
               "data-[active=false]:text-foreground/80",
             ].join(" ")}
+            data-active={active ? "true" : "false"}
+            href={i.href}
           >
             {i.label}
           </Link>

@@ -1,9 +1,13 @@
 "use client";
 
-import { apiGet } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { PacientesTable, type PatientRow } from "@/components/pacientes/PacientesTable";
+
+import { apiGet } from "@/lib/api";
+import {
+  PacientesTable,
+  type PatientRow,
+} from "@/components/pacientes/PacientesTable";
 
 export default function Page() {
   const router = useRouter();

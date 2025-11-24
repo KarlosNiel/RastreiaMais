@@ -1,11 +1,12 @@
 "use client";
 
-import { UserMenu } from "@/components/navbar/UserMenu";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { BellIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+
+import { useAuth } from "@/lib/hooks/useAuth";
+import { UserMenu } from "@/components/navbar/UserMenu";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -23,10 +24,10 @@ export const Header = () => {
           <div className="flex items-center gap-2">
             <Button
               as={Link}
-              href="/"
-              variant="light"
-              radius="full"
               className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+              href="/"
+              radius="full"
+              variant="light"
             >
               <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
                 Rastreia+
@@ -38,11 +39,11 @@ export const Header = () => {
             {/* Botão toggle dark mode */}
             <Button
               isIconOnly
+              aria-label="Alternar tema"
+              className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
               size="sm"
               variant="light"
               onPress={toggleTheme}
-              aria-label="Alternar tema"
-              className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
             >
               {theme === "dark" ? (
                 <SunIcon className="size-5 text-white" strokeWidth={2} />
@@ -56,10 +57,10 @@ export const Header = () => {
               <>
                 <Button
                   isIconOnly
-                  size="sm"
-                  variant="light"
                   aria-label="Notificações"
                   className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
+                  size="sm"
+                  variant="light"
                 >
                   <BellIcon
                     className="size-5 dark:text-white"

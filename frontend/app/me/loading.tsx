@@ -1,5 +1,6 @@
 "use client";
 import { Card } from "@heroui/react";
+
 import { Skeleton } from "@/components/skeletons/Skeleton";
 import { StatCardSkeleton } from "@/components/skeletons/StatCardSkeleton";
 import { MedicationGridSkeleton } from "@/components/skeletons/MedicationGridSkeleton";

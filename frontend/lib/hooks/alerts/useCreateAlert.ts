@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiJSON, apiPost } from "@/lib/api";
+
+import { apiPost } from "@/lib/api";
 
 export function useCreateAlert() {
   const queryClient = useQueryClient();
-
-  
 
   return useMutation({
     mutationFn: async (newAlert: {
@@ -15,7 +14,6 @@ export function useCreateAlert() {
       title: string;
       description: string;
     }) => {
-        
       return apiPost("/api/v1/alerts/alerts/", newAlert);
     },
     onSuccess: () => {

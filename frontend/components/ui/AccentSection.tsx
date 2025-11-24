@@ -1,8 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import * as React from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+
+import { cn } from "@/lib/utils";
 
 const section = tv({
   slots: {
@@ -146,12 +147,12 @@ export function AccentSection({
 
   return (
     <Comp
+      aria-labelledby={title ? titleId : undefined}
+      className={cn(root(), className, classNames?.root)}
+      data-accent={accent}
       id={id}
       role={title ? "region" : undefined}
-      aria-labelledby={title ? titleId : undefined}
       style={style}
-      data-accent={accent}
-      className={cn(root(), className, classNames?.root)}
       {...domProps}
     >
       {(title || right || description) && (
@@ -159,8 +160,8 @@ export function AccentSection({
           <div className="min-w-0">
             {title ? (
               <TitleTag
-                id={titleId}
                 className={cn(titleCls(), classNames?.title)}
+                id={titleId}
               >
                 {title}
               </TitleTag>

@@ -1,10 +1,12 @@
 // frontend/components/auth/AuthCard.tsx
 "use client";
 
+import type { ReactNode } from "react";
+
 import { Button, Card, Divider, Input } from "@heroui/react";
 import Image from "next/image";
+
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
 import { app as cfg } from "@/config/rastreiamais";
 
 type Props = {
@@ -15,28 +17,29 @@ type Props = {
 };
 
 export function AuthCard({ children, imageSrc, heading, className }: Props) {
-  const supportEmail = (cfg as any)?.links?.supportEmail || "suporte@exemplo.com";
+  const supportEmail =
+    (cfg as any)?.links?.supportEmail || "suporte@exemplo.com";
 
   return (
     <Card
-      shadow="md"
       className={cn(
         "w-full sm:w-[75%] lg:w-[94%] mx-auto my-8 max-w-5xl overflow-hidden rounded-2xl border border-divider dark:bg-gray-900 text-foreground",
         "transition-all duration-300 hover:shadow-lg",
-        className
+        className,
       )}
+      shadow="md"
     >
       <div className="flex flex-col md:flex-row">
         {/* Imagem lateral (visível apenas no desktop) */}
         {imageSrc && (
           <div className="relative hidden lg:block md:w-1/2 overflow-hidden rounded-l-2xl">
             <Image
-              src={imageSrc}
-              alt="Tela de autenticação"
               fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
               priority
+              alt="Tela de autenticação"
+              className="object-cover"
+              sizes="(min-width: 768px) 50vw, 100vw"
+              src={imageSrc}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent dark:from-black/40" />
           </div>
@@ -63,8 +66,8 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
           <div className="mt-6 text-center text-sm text-foreground/70">
             <p>Precisa de ajuda?</p>
             <a
-              href={`mailto:${supportEmail}`}
               className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-md"
+              href={`mailto:${supportEmail}`}
             >
               {supportEmail}
             </a>
@@ -72,7 +75,8 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
 
           <Divider className="my-8" />
           <p className="text-center text-sm text-foreground/60 ">
-            © <time>{new Date().getFullYear()}</time> Rastreia+. Todos os direitos reservados.
+            © <time>{new Date().getFullYear()}</time> Rastreia+. Todos os
+            direitos reservados.
           </p>
         </div>
       </div>
@@ -84,10 +88,6 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
 export function TextField(props: React.ComponentProps<typeof Input>) {
   return (
     <Input
-      radius="lg"
-      size="lg"
-      variant="bordered"
-      labelPlacement="outside"
       className="w-full"
       classNames={{
         label: "text-sm text-foreground/70 mb-1",
@@ -99,6 +99,10 @@ export function TextField(props: React.ComponentProps<typeof Input>) {
         input:
           "text-base placeholder:text-foreground/40 focus-visible:outline-none",
       }}
+      labelPlacement="outside"
+      radius="lg"
+      size="lg"
+      variant="bordered"
       {...props}
     />
   );
@@ -108,14 +112,14 @@ export function TextField(props: React.ComponentProps<typeof Input>) {
 export function SubmitButton(props: React.ComponentProps<typeof Button>) {
   return (
     <Button
-      type="submit"
-      variant="solid"
-      radius="lg"
       fullWidth
       className={cn(
         "h-12 text-base font-medium rounded-xl shadow-sm",
-        "hover:opacity-95 active:translate-y-px transition-all  bg-orange-600 dark:bg-gray-800 text-white dark:text-orange-600"
+        "hover:opacity-95 active:translate-y-px transition-all  bg-orange-600 dark:bg-gray-800 text-white dark:text-orange-600",
       )}
+      radius="lg"
+      type="submit"
+      variant="solid"
       {...props}
     />
   );

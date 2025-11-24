@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { RMButton } from "@/components/ui/RMButton";
 
 export function FormActions({
@@ -20,7 +21,7 @@ export function FormActions({
       <RMButton as={Link} href={cancelHref} look="outline" tone="danger">
         {cancelLabel}
       </RMButton>
-      <RMButton type="submit" look="solid" tone="brand" isDisabled={submitting}>
+      <RMButton isDisabled={submitting} look="solid" tone="brand" type="submit">
         {submitting ? "Enviando…" : submitLabel}
       </RMButton>
     </div>

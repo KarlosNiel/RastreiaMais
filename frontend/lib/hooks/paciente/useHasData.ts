@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { apiGet } from "@/lib/api";
 
 interface HASData {
@@ -42,13 +43,14 @@ interface ProcessedHASData {
 function calcularLDL(
   total: number,
   hdl: number,
-  triglicerideos?: number | null
+  triglicerideos?: number | null,
 ): number {
   if (triglicerideos !== undefined && triglicerideos !== null) {
     return Math.max(0, Math.round(total - hdl - triglicerideos / 5));
   }
 
   const VLDL_ESTIMADO = 25;
+
   return Math.max(0, Math.round(total - hdl - VLDL_ESTIMADO));
 }
 
@@ -57,7 +59,7 @@ function calcularRiscoCardiovascular(
   diastolica: number,
   colesterolTotal: number,
   hdl: number,
-  ldl: number
+  ldl: number,
 ): { nivel: RiskLevel; cor: RiskColor } {
   let pontos = 0;
 
@@ -83,9 +85,9 @@ function calcularRiscoCardiovascular(
   if (pontos >= 10) return { nivel: "Muito Alto", cor: "red" };
   if (pontos >= 7) return { nivel: "Alto", cor: "orange" };
   if (pontos >= 4) return { nivel: "Moderado", cor: "amber" };
+
   return { nivel: "Baixo", cor: "green" };
 }
-
 
 function processarDadosHAS(data?: HASData): ProcessedHASData {
   if (!data) {
@@ -138,7 +140,7 @@ function processarDadosHAS(data?: HASData): ProcessedHASData {
           diastolicaMedia,
           colesterolTotal,
           hdl,
-          ldl
+          ldl,
         )
       : {
           nivel: "Moderado" as RiskLevel,
@@ -169,7 +171,7 @@ export function useHasData() {
     queryFn: async () => {
       try {
         const response = await apiGet<HASResponse>(
-          "/api/v1/conditions/systolic-hypertension-cases/"
+          "/api/v1/conditions/systolic-hypertension-cases/",
         );
 
         let hasData: HASData | undefined;
@@ -183,6 +185,7 @@ export function useHasData() {
         return processarDadosHAS(hasData);
       } catch (error) {
         console.error("Erro ao buscar dados de HAS:", error);
+
         return processarDadosHAS(undefined);
       }
     },
@@ -190,6 +193,7 @@ export function useHasData() {
     staleTime: 1000 * 60 * 5,
     retry: (failureCount, error: any) => {
       if (error?.status === 401) return false;
+
       return failureCount < 2;
     },
   });

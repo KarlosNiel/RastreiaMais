@@ -1,11 +1,9 @@
 // frontend/app/pacientes/(list)/PacientesTable.tsx
 "use client";
 
-import {
-  EyeIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import type { Key, SortDescriptor } from "@react-types/shared";
+
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import {
   Button,
   Input,
@@ -17,9 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/react";
-import type { Key, SortDescriptor } from "@react-types/shared";
 import Link from "next/link";
 import * as React from "react";
+
 import CreateAppointmentsModal from "@/components/appointments/CreateAppointmentsModal";
 
 /* ===== Tipos ===== */
@@ -90,8 +88,11 @@ export function PacientesTable({
   enableToolbar = true,
   onAction,
 }: PacienteTableProps) {
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = React.useState(false);
-  const [selectedPatientId, setSelectedPatientId] = React.useState<string | null>(null);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] =
+    React.useState(false);
+  const [selectedPatientId, setSelectedPatientId] = React.useState<
+    string | null
+  >(null);
   const [filterValue, setFilterValue] = React.useState("");
   const [riskFilter, setRiskFilter] = React.useState<Set<Key>>(new Set());
   const [page, setPage] = React.useState(initialPage);
@@ -105,6 +106,7 @@ export function PacientesTable({
     let data = rows;
 
     const q = filterValue.toLowerCase().trim();
+
     if (q) {
       data = data.filter((r) => {
         const nome =
@@ -162,6 +164,7 @@ export function PacientesTable({
     });
 
     const start = (page - 1) * pageSize;
+
     return arr.slice(start, start + pageSize);
   }, [filteredItems, sortDescriptor, page, pageSize]);
 
@@ -169,11 +172,13 @@ export function PacientesTable({
   const renderCell = React.useCallback(
     (row: PatientRow, colKey: Key) => {
       const k = String(colKey) as keyof PatientRow | "actions";
+
       switch (k) {
         case "user":
           return `${row.user.first_name} ${row.user.last_name}`;
         case "address": {
           const a = row.address;
+
           if (!a) return "—";
 
           const street = a.street ?? "";
@@ -195,19 +200,19 @@ export function PacientesTable({
           return (
             <div className="flex items-center justify-end gap-2">
               <Button
+                isIconOnly
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
                 onPress={() => {
                   setSelectedPatientId(row.id);
                   setIsAppointmentModalOpen(true);
                 }}
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-                isIconOnly
               >
                 <span className="text-green-600 font-bold text-lg">+</span>
               </Button>
               <Button
-                onPress={() => onAction?.("edit", row)}
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
                 isIconOnly
+                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
+                onPress={() => onAction?.("edit", row)}
               >
                 <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </Button>
@@ -217,7 +222,7 @@ export function PacientesTable({
           return (row as any)[k];
       }
     },
-    [onAction]
+    [onAction],
   );
 
   const topContent = enableToolbar ? (
@@ -225,29 +230,29 @@ export function PacientesTable({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Input
           isClearable
-          radius="full"
-          variant="flat"
           className="w-full sm:max-w-xl sm:flex-1"
-          placeholder="Buscar paciente, CPF ou endereço..."
-          value={filterValue}
-          onClear={() => setFilterValue("")}
-          onValueChange={(v) => setFilterValue(v)}
           classNames={{
             inputWrapper:
               "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-50 dark:hover:bg-gray-800",
             input:
               "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
           }}
+          placeholder="Buscar paciente, CPF ou endereço..."
+          radius="full"
+          value={filterValue}
+          variant="flat"
+          onClear={() => setFilterValue("")}
+          onValueChange={(v) => setFilterValue(v)}
         />
 
         <Button
           as={Link}
-          href="/pacientes/novo"
+          className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
           color="primary"
-          variant="solid"
+          href="/pacientes/novo"
           radius="lg"
           size="md"
-          className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+          variant="solid"
         >
           Novo paciente
         </Button>
@@ -263,26 +268,26 @@ export function PacientesTable({
     <>
       <CreateAppointmentsModal
         open={isAppointmentModalOpen}
-        onOpenChange={setIsAppointmentModalOpen}
         preSelectedPatientId={selectedPatientId}
+        onOpenChange={setIsAppointmentModalOpen}
       />
 
       <div className="rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all">
         <Table
-          aria-label="Lista de pacientes"
           isHeaderSticky
-          shadow="none"
-          topContent={topContent}
-          topContentPlacement="outside"
+          aria-label="Lista de pacientes"
           bottomContentPlacement="outside"
-          sortDescriptor={sortDescriptor}
-          onSortChange={setSortDescriptor}
           classNames={{
             th: "px-6 py-3 text-foreground/70 font-semibold",
             td: "px-6 py-3",
             wrapper: "bg-transparent border-none shadow-none",
             table: "dark:bg-gray-900",
           }}
+          shadow="none"
+          sortDescriptor={sortDescriptor}
+          topContent={topContent}
+          topContentPlacement="outside"
+          onSortChange={setSortDescriptor}
         >
           <TableHeader columns={COLUMNS}>
             {(column: Column) => (
@@ -318,16 +323,16 @@ export function PacientesTable({
           <Pagination
             isCompact
             showControls
-            size="sm"
-            color="primary"
-            page={page}
-            total={totalPages}
-            onChange={setPage}
             classNames={{
               next: "dark:bg-gray-800",
               prev: "dark:bg-gray-800",
               item: "dark:bg-gray-800",
             }}
+            color="primary"
+            page={page}
+            size="sm"
+            total={totalPages}
+            onChange={setPage}
           />
         </div>
       </div>

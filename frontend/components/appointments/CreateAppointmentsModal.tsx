@@ -6,16 +6,23 @@ import { Button } from "@heroui/button";
 import { Input, Textarea, Select, SelectItem } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
 import { useQuery } from "@tanstack/react-query";
+
 import { apiGet } from "@/lib/api";
 import { useAppointments } from "@/lib/hooks/appointments/useAppointments";
 
-function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function SuccessModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   return (
     <Modal
-      isOpen={open}
-      onOpenChange={onClose}
-      size="sm"
       classNames={{ base: "rounded-2xl shadow-xl dark:bg-gray-900" }}
+      isOpen={open}
+      size="sm"
+      onOpenChange={onClose}
     >
       <ModalContent>
         <ModalHeader className="text-green-600 font-semibold">
@@ -26,9 +33,9 @@ function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void })
             O agendamento foi registrado com sucesso.
           </p>
           <Button
+            className="mt-4"
             color="success"
             radius="full"
-            className="mt-4"
             onPress={onClose}
           >
             Fechar
@@ -66,24 +73,28 @@ export default function CreateAppointmentsModal({
     queryKey: ["patient", preSelectedPatientId],
     queryFn: async () => {
       if (!preSelectedPatientId) return null;
+
       return apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
     },
     enabled: open && !!preSelectedPatientId,
   });
 
-  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
-      return Array.isArray(resp) ? resp : resp?.results || [];
-    },
-    enabled: open,
-  });
+  const { data: professionals = [], isLoading: loadingProfessionals } =
+    useQuery({
+      queryKey: ["professionals"],
+      queryFn: async () => {
+        const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+
+        return Array.isArray(resp) ? resp : resp?.results || [];
+      },
+      enabled: open,
+    });
 
   const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
     queryKey: ["institutions"],
     queryFn: async () => {
       const resp = await apiGet<any>("/api/v1/locations/institutions/");
+
       return Array.isArray(resp) ? resp : resp?.results || [];
     },
     enabled: open,
@@ -138,20 +149,22 @@ export default function CreateAppointmentsModal({
   const formatCpf = (cpf?: string) => {
     if (!cpf) return "";
     const d = cpf.replace(/\D/g, "");
+
     if (d.length !== 11) return cpf;
+
     return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
   return (
     <>
       <Modal
-        isOpen={open}
-        onOpenChange={onOpenChange}
-        size="lg"
-        scrollBehavior="inside"
         classNames={{
           base: "rounded-2xl shadow-2xl dark:bg-gray-900",
         }}
+        isOpen={open}
+        scrollBehavior="inside"
+        size="lg"
+        onOpenChange={onOpenChange}
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1 pb-0 dark:text-gray-100">
@@ -164,7 +177,7 @@ export default function CreateAppointmentsModal({
           <ModalBody className="space-y-6 pt-2 pb-6">
             {isLoading ? (
               <div className="flex justify-center py-10">
-                <Spinner size="lg" color="warning" />
+                <Spinner color="warning" size="lg" />
               </div>
             ) : (
               <>
@@ -181,18 +194,22 @@ export default function CreateAppointmentsModal({
                 </div>
 
                 <Select
-                  label="Profissional *"
-                  variant="flat"
-                  radius="lg"
                   classNames={{
                     trigger:
                       "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
                   }}
-                  selectedKeys={form.professional_id ? [form.professional_id] : []}
+                  label="Profissional *"
                   placeholder="Selecione um profissional"
+                  radius="lg"
+                  selectedKeys={
+                    form.professional_id ? [form.professional_id] : []
+                  }
+                  variant="flat"
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0];
-                    const prof = professionals.find((p: any) => String(p.id) === key);
+                    const prof = professionals.find(
+                      (p: any) => String(p.id) === key,
+                    );
 
                     setForm({
                       ...form,
@@ -217,17 +234,18 @@ export default function CreateAppointmentsModal({
                 </Select>
 
                 <Select
-                  label="Instituição *"
-                  variant="flat"
-                  radius="lg"
                   classNames={{
                     trigger:
                       "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
                   }}
-                  selectedKeys={form.local_id ? [form.local_id] : []}
+                  label="Instituição *"
                   placeholder="Selecione a instituição"
+                  radius="lg"
+                  selectedKeys={form.local_id ? [form.local_id] : []}
+                  variant="flat"
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0];
+
                     setForm({ ...form, local_id: String(key) });
                   }}
                 >
@@ -237,34 +255,31 @@ export default function CreateAppointmentsModal({
                 </Select>
 
                 <Input
-                  type="datetime-local"
+                  classNames={{
+                    inputWrapper: "bg-transparent  dark:bg-gray-800",
+                    input: "dark:text-gray-100",
+                  }}
                   label="Data e Hora *"
                   placeholder="dd/mm/aaaa"
                   radius="lg"
-                  variant="flat"
-                  classNames={{
-                    inputWrapper:
-                      "bg-transparent  dark:bg-gray-800",
-                    input: "dark:text-gray-100",
-                  }}
+                  type="datetime-local"
                   value={form.scheduled_datetime}
+                  variant="flat"
                   onChange={(e) =>
                     setForm({ ...form, scheduled_datetime: e.target.value })
                   }
                 />
 
                 <Select
-                  label="Tipo *"
-                  variant="flat"
-                  radius="lg"
-                  selectedKeys={[form.type]}
                   classNames={{
                     trigger:
                       "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
                   }}
-                  onChange={(e) =>
-                    setForm({ ...form, type: e.target.value })
-                  }
+                  label="Tipo *"
+                  radius="lg"
+                  selectedKeys={[form.type]}
+                  variant="flat"
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
                   <SelectItem key="Consulta">Consulta</SelectItem>
                   <SelectItem key="Exame">Exame</SelectItem>
@@ -272,14 +287,14 @@ export default function CreateAppointmentsModal({
                 </Select>
 
                 <Select
-                  label="Nível de Risco *"
-                  variant="flat"
-                  radius="lg"
-                  selectedKeys={[form.risk_level]}
                   classNames={{
                     trigger:
                       "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
                   }}
+                  label="Nível de Risco *"
+                  radius="lg"
+                  selectedKeys={[form.risk_level]}
+                  variant="flat"
                   onChange={(e) =>
                     setForm({ ...form, risk_level: e.target.value })
                   }
@@ -290,16 +305,15 @@ export default function CreateAppointmentsModal({
                 </Select>
 
                 <Textarea
-                  label="Descrição"
-                  variant="flat"
-                  radius="lg"
-                  minRows={3}
                   classNames={{
-                    inputWrapper:
-                      "bg-transparent  dark:bg-gray-800",
+                    inputWrapper: "bg-transparent  dark:bg-gray-800",
                     input: "dark:text-gray-100",
                   }}
+                  label="Descrição"
+                  minRows={3}
+                  radius="lg"
                   value={form.description}
+                  variant="flat"
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
@@ -307,9 +321,9 @@ export default function CreateAppointmentsModal({
 
                 <div className="flex justify-end gap-3 pt-4">
                   <Button
-                    variant="flat"
-                    radius="full"
                     className=" dark:text-gray-200"
+                    radius="full"
+                    variant="flat"
                     onPress={() => onOpenChange(false)}
                   >
                     Cancelar
@@ -317,9 +331,9 @@ export default function CreateAppointmentsModal({
 
                   <Button
                     color="primary"
+                    isLoading={create.isPending}
                     radius="full"
                     onPress={onSubmit}
-                    isLoading={create.isPending}
                   >
                     Criar Agendamento
                   </Button>
