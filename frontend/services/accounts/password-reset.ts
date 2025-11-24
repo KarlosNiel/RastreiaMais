@@ -35,7 +35,7 @@ export interface PasswordResetConfirmResponse {
 export function requestPasswordReset(data: PasswordResetRequestData) {
   return apiPost<PasswordResetRequestResponse>(
     "/api/password-reset/request/",
-    data
+    data,
   );
 }
 
@@ -45,7 +45,7 @@ export function requestPasswordReset(data: PasswordResetRequestData) {
 export function validateResetToken(data: PasswordResetValidateData) {
   return apiPost<PasswordResetValidateResponse>(
     "/api/password-reset/validate/",
-    data
+    data,
   );
 }
 
@@ -55,6 +55,6 @@ export function validateResetToken(data: PasswordResetValidateData) {
 export function confirmPasswordReset(data: PasswordResetConfirmData) {
   return apiPost<PasswordResetConfirmResponse>(
     "/api/password-reset/confirm/",
-    data
+    data,
   );
 }

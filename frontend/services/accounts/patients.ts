@@ -23,4 +23,3 @@ export function deletePatient(id: number) {
 export function restorePatient(id: number) {
   return apiPatch(`/api/v1/accounts/patients/${id}/restore`, {});
 }
-

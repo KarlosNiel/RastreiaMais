@@ -33,7 +33,6 @@ import {
   type RegistroPacienteCreate,
   type RegistroPacienteEdit,
 } from "@/schemas/paciente";
-
 // Helpers de API
 import { createDM, createHAS, updateDM, updateHAS } from "@/lib/api/conditions";
 import { createPaciente, updatePaciente } from "@/lib/api/pacientes";
@@ -399,16 +398,6 @@ export default function PatientForm(props: Props) {
     notifyWarn("Revise os campos destacados antes de continuar.");
   }
 
-  function toISOWithFixedHour(value: unknown, hour = 8): string | null {
-    if (!value) return null;
-    const d = new Date(value as any);
-
-    if (Number.isNaN(d.getTime())) return null;
-    d.setHours(hour, 0, 0, 0);
-
-    return d.toISOString();
-  }
-
   async function onValid(rawData: CreateFormInput | EditFormInput) {
     try {
       const parsed = schema.parse(rawData);
@@ -419,11 +408,6 @@ export default function PatientForm(props: Props) {
       try {
         professionalId = await resolveProfessionalId();
         isProfessional = professionalId !== null;
-
-        console.debug("resolveProfessionalId =>", {
-          professionalId,
-          isProfessional,
-        });
       } catch (e) {
         console.warn(
           "Falha ao resolver professionalId; pulando agendamento automático.",
@@ -554,6 +538,8 @@ export default function PatientForm(props: Props) {
                   await createAppointment({
                     ...appointmentPayload,
                     scheduled_datetime: retornoISO,
+                    // força o segundo agendamento a ser do tipo "Retorno"
+                    type: "Retorno",
                     description:
                       (appointmentPayload.description ?? "") +
                       "\n\n(Agendamento de retorno)",

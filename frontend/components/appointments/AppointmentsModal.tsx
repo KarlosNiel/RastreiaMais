@@ -107,8 +107,9 @@ export default function AppointmentsModal({
             onChange={(e) => setForm({ ...form, type: e.target.value })}
           >
             <SelectItem key="Consulta">Consulta</SelectItem>
-            <SelectItem key="Exame">Exame</SelectItem>
-            <SelectItem key="Evento">Evento</SelectItem>
+            <SelectItem key="Retorno">Retorno</SelectItem>
+            <SelectItem key="Avaliação">Avaliação</SelectItem>
+            <SelectItem key="Outro">Outro</SelectItem>
           </Select>
 
           {/* Risco */}

@@ -33,6 +33,13 @@ function addDays(d: Date, days: number) {
   return nd;
 }
 
+const TIPO_LABEL_MAP: Record<string, string> = {
+  consulta: "consulta",
+  retorno: "retorno",
+  avaliacao: "avaliação",
+  outro: "atendimento",
+};
+
 export default function Step5Plano() {
   const { getValues, getFieldState, setValue, watch } = useFormContext();
 
@@ -128,8 +135,8 @@ export default function Step5Plano() {
 
       localStorage.setItem("rastreia:paciente:draft", JSON.stringify(data));
       notifySuccess("Rascunho salvo no navegador.");
-    } catch (e) {
-      console.error("Falha ao salvar rascunho", e);
+    } catch {
+      // falha silenciosa: não trava o usuário se o localStorage falhar
     }
   }, [getValues]);
 
@@ -163,21 +170,29 @@ export default function Step5Plano() {
     const hasConsulta = !!dataConsulta;
     const hasRetorno = !!dataRetorno;
 
+    // tipo bruto vindo do form (consulta | retorno | avaliacao | outro)
+    const tipo = (tipoConsulta as string | undefined) ?? "consulta";
+    const tipoLabel = TIPO_LABEL_MAP[tipo] ?? "consulta";
+
     if (hasConsulta && hasRetorno) {
-      return "Será criada uma consulta na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.";
+      return `Será criada uma ${tipoLabel} na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.`;
     }
 
     if (hasConsulta && !hasRetorno) {
-      return "Será criada apenas uma consulta na data indicada em “Agendar consulta”.";
+      return `Será criada apenas uma ${tipoLabel} na data indicada em “Agendar consulta”.`;
     }
 
     if (!hasConsulta && hasRetorno) {
-      return "Sem data de consulta: será criado um único agendamento usando a data informada em “Agendar retorno”.";
+      if (tipo === "retorno") {
+        return "Será criado um único agendamento de retorno na data informada em “Agendar retorno”.";
+      }
+
+      return `Sem data de consulta: será criado um único agendamento do tipo ${tipoLabel} usando a data informada em “Agendar retorno”.`;
     }
 
     // Nenhuma data
     return "Preencha ao menos a data de consulta ou de retorno para gerar agendamento.";
-  }, [dataConsulta, dataRetorno]);
+  }, [dataConsulta, dataRetorno, tipoConsulta]);
 
   return (
     <div className="space-y-6">

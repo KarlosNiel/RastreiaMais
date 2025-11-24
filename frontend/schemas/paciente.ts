@@ -7,7 +7,7 @@ const emptyToUndef = (v: unknown) =>
 // string opcional, já tratando "", null, undefined
 const StrOpt = z.preprocess(
   (v) => (v === "" || v === null || typeof v === "undefined" ? undefined : v),
-  z.string().optional()
+  z.string().optional(),
 );
 
 // NÚMEROS / DATA OPCIONAIS DE VERDADE
@@ -15,29 +15,29 @@ const StrOpt = z.preprocess(
 // - se vier algo preenchido, faz coerce e valida
 const NumOpt = z.preprocess(
   emptyToUndef,
-  z.union([z.coerce.number(), z.undefined()])
+  z.union([z.coerce.number(), z.undefined()]),
 );
 
 const IntOpt = z.preprocess(
   emptyToUndef,
-  z.union([z.coerce.number().int(), z.undefined()])
+  z.union([z.coerce.number().int(), z.undefined()]),
 );
 
 const DateOpt = z.preprocess(
   emptyToUndef,
-  z.union([z.coerce.date(), z.undefined()])
+  z.union([z.coerce.date(), z.undefined()]),
 );
 
 const NumPosOpt = (msg = "Valor inválido") =>
   z.preprocess(
     emptyToUndef,
-    z.union([z.coerce.number().positive(msg), z.undefined()])
+    z.union([z.coerce.number().positive(msg), z.undefined()]),
   );
 
 const IntPosOpt = (msg = "Valor inválido") =>
   z.preprocess(
     emptyToUndef,
-    z.union([z.coerce.number().int().positive(msg), z.undefined()])
+    z.union([z.coerce.number().int().positive(msg), z.undefined()]),
   );
 
 /** ========= Enums base ========= **/
@@ -105,7 +105,7 @@ const TelefoneZ = z
   .transform((s) => (s ?? "").replace(/\D+/g, ""))
   .refine(
     (s) => !s || (s.length >= 10 && s.length <= 11),
-    "Informe telefone válido"
+    "Informe telefone válido",
   );
 
 export const SocioZ = z
@@ -145,7 +145,7 @@ export const SocioZ = z
       uf: UfOptZ,
       cep: StrOpt.optional().refine(
         (v) => !v || /^\d{5}-?\d{3}$/.test(v),
-        "CEP inválido"
+        "CEP inválido",
       ),
     }),
 
@@ -170,7 +170,7 @@ export const SocioZ = z
     {
       path: ["genero_outro"],
       message: "Descreva o gênero",
-    }
+    },
   );
 /* ########################
  * STEP 2 — CONDIÇÕES CRÔNICAS
@@ -287,7 +287,7 @@ export const ClinicaDMZ = z.object({
         "orientacao",
         "encaminhamento_med",
         "outro",
-      ])
+      ]),
     )
     .optional(),
   conduta_outro: StrOpt.optional(),
@@ -319,7 +319,7 @@ export const MultiprofZ = z.object({
         "toxoplasmose",
         "esporotricose",
         "hanseniase",
-      ])
+      ]),
     )
     .optional(),
   ambi_doencas_outro: StrOpt.optional(),
@@ -345,7 +345,7 @@ export const MultiprofZ = z.object({
         "nutricionista",
         "cirurgia_dentista",
         "outro",
-      ])
+      ]),
     )
     .optional(),
   enc_multiprof_outro: StrOpt.optional(),
@@ -364,7 +364,7 @@ const PlanoZ = z
     data_retorno: DateOpt.optional(),
     hora_consulta: StrOpt.optional().refine(
       (v) => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
-      "Horário inválido (use HH:MM)."
+      "Horário inválido (use HH:MM).",
     ),
     local_id: NumOpt.optional(),
     assinatura: StrOpt.optional(),

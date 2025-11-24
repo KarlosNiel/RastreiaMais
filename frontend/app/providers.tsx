@@ -8,6 +8,10 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 import { AuthProvider } from "@/context/authContext";
 
+type ProvidersProps = {
+  children: ReactNode;
+};
+
 function getQueryClient() {
   const g = globalThis as unknown as { __rq?: QueryClient };
 
@@ -17,10 +21,12 @@ function getQueryClient() {
         queries: {
           refetchOnWindowFocus: false,
           retry: 1,
-          staleTime: 60_000,
-          gcTime: 5 * 60_000,
+          staleTime: 60_000, // 1 min
+          gcTime: 5 * 60_000, // 5 min
         },
-        mutations: { retry: 0 },
+        mutations: {
+          retry: 0,
+        },
       },
     });
   }
@@ -28,7 +34,9 @@ function getQueryClient() {
   return g.__rq;
 }
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({ children }: ProvidersProps) {
+  const queryClient = getQueryClient();
+
   return (
     <NextThemesProvider
       disableTransitionOnChange
@@ -37,8 +45,9 @@ export default function Providers({ children }: { children: ReactNode }) {
       defaultTheme="system"
       storageKey="rastreia-theme"
     >
-      <HeroUIProvider className="font-sans">
-        <QueryClientProvider client={getQueryClient()}>
+      {/* locale pt-BR -> DatePicker, textos, etc. em padrão brasileiro */}
+      <HeroUIProvider className="font-sans" locale="pt-BR">
+        <QueryClientProvider client={queryClient}>
           <AuthProvider>{children}</AuthProvider>
         </QueryClientProvider>
       </HeroUIProvider>

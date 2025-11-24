@@ -155,7 +155,7 @@ export type AppointmentApiPayload = {
   professional_id: number;
   local_id?: number | null;
   scheduled_datetime: string;
-  type: "Consulta" | "Exame" | "Evento";
+  type: "Consulta" | "Retorno" | "Avaliação" | "Outro";
   description?: string;
   risk_level: "Seguro" | "Moderado" | "Crítico";
   status?: "pendente" | "ativo" | "finalizado" | "cancelado";
@@ -230,9 +230,9 @@ export function formToAppointmentApi(
   // Mapeamento para o enum do backend
   const typeMap: Record<string, AppointmentApiPayload["type"]> = {
     consulta: "Consulta",
-    retorno: "Consulta", // domínio atual: retorno ainda é uma consulta
-    avaliacao: "Exame",
-    outro: "Evento",
+    retorno: "Retorno",
+    avaliacao: "Avaliação",
+    outro: "Outro",
   };
 
   const type = typeMap[rawType] ?? "Consulta";
@@ -294,7 +294,6 @@ export function formToAppointmentApi(
 export function formToPatientApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
   mode: "create" | "edit",
-  addressId?: number | null,
 ): PatientApiPayload {
   const socio: any = (data as any).socio ?? {};
   const multiprof: any = (data as any).multiprof ?? {};
