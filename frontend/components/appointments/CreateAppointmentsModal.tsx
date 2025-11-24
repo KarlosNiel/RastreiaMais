@@ -193,6 +193,7 @@ export default function CreateAppointmentsModal({
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0];
                     const prof = professionals.find((p: any) => String(p.id) === key);
+
                     setForm({
                       ...form,
                       professional_id: String(key),
@@ -202,12 +203,17 @@ export default function CreateAppointmentsModal({
                     });
                   }}
                 >
-                  {professionals.map((p: any) => (
-                    <SelectItem key={String(p.id)}>
-                      {p.user?.first_name} {p.user?.last_name}
-                      {p.specialty ? ` - ${p.specialty}` : ""}
-                    </SelectItem>
-                  ))}
+                  {professionals.map((p: any) => {
+                    const label = `${p.user?.first_name} ${p.user?.last_name}${
+                      p.specialty ? ` - ${p.specialty}` : ""
+                    }`;
+
+                    return (
+                      <SelectItem key={String(p.id)} textValue={label}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
                 </Select>
 
                 <Select
