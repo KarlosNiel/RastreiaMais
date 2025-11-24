@@ -1,15 +1,16 @@
 "use client";
 
-import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
-import {
-  validateResetToken,
-  confirmPasswordReset,
-} from "@/services/accounts/password-reset";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import {
+  validateResetToken,
+  confirmPasswordReset,
+} from "@/services/accounts/password-reset";
+import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
 
 interface PasswordRequirement {
   label: string;
@@ -62,6 +63,7 @@ function RedefinirSenhaContent() {
 
   const passwordsMatch = useMemo(() => {
     if (!passwordConfirm) return null;
+
     return password === passwordConfirm;
   }, [password, passwordConfirm]);
 
@@ -78,11 +80,13 @@ function RedefinirSenhaContent() {
       if (!token) {
         setValidating(false);
         setTokenValid(false);
+
         return;
       }
 
       try {
         const response = await validateResetToken({ token });
+
         if (response && response.valid) {
           setTokenValid(true);
           setUserEmail(response.email || "");
@@ -120,6 +124,7 @@ function RedefinirSenhaContent() {
       }, 3000);
     } catch (err: any) {
       const msg = err?.message || "Erro ao redefinir senha. Tente novamente.";
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -128,9 +133,13 @@ function RedefinirSenhaContent() {
 
   if (validating) {
     return (
-      <AuthCard imageSrc="/auth/paciente.jpg" heading="Validando..." className="">
+      <AuthCard
+        className=""
+        heading="Validando..."
+        imageSrc="/auth/paciente.jpg"
+      >
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600" />
         </div>
       </AuthCard>
     );
@@ -139,9 +148,9 @@ function RedefinirSenhaContent() {
   if (!token || !tokenValid) {
     return (
       <AuthCard
-        imageSrc="/auth/paciente.jpg"
-        heading="Link Inválido"
         className=""
+        heading="Link Inválido"
+        imageSrc="/auth/paciente.jpg"
       >
         <div className="space-y-6">
           <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg p-4">
@@ -151,8 +160,8 @@ function RedefinirSenhaContent() {
             </p>
           </div>
           <Link
-            href="/auth/recuperar-senha"
             className="block text-center text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium transition"
+            href="/auth/recuperar-senha"
           >
             Solicitar novo link
           </Link>
@@ -164,20 +173,20 @@ function RedefinirSenhaContent() {
   if (success) {
     return (
       <AuthCard
-        imageSrc="/auth/paciente.jpg"
-        heading="Senha Alterada!"
         className=""
+        heading="Senha Alterada!"
+        imageSrc="/auth/paciente.jpg"
       >
         <div className="space-y-6">
           <div className="bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-lg p-4">
             <p className="text-success-800 dark:text-success-200 text-sm">
-              Sua senha foi alterada com sucesso! Você será redirecionado para
-              a página de login em instantes.
+              Sua senha foi alterada com sucesso! Você será redirecionado para a
+              página de login em instantes.
             </p>
           </div>
           <Link
-            href="/auth/login"
             className="block text-center text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium transition"
+            href="/auth/login"
           >
             Ir para o login agora
           </Link>
@@ -188,15 +197,15 @@ function RedefinirSenhaContent() {
 
   return (
     <AuthCard
-      imageSrc="/auth/paciente.jpg"
-      heading="Redefinir Senha"
       className=""
+      heading="Redefinir Senha"
+      imageSrc="/auth/paciente.jpg"
     >
       <form
-        className="flex flex-col gap-5"
         noValidate
-        onSubmit={handleSubmit}
         aria-label="Formulário de redefinição de senha"
+        className="flex flex-col gap-5"
+        onSubmit={handleSubmit}
       >
         {/* Email do usuário */}
         {userEmail && (
@@ -211,15 +220,7 @@ function RedefinirSenhaContent() {
         {/* Campo Nova Senha */}
         <div className="space-y-2">
           <TextField
-            label="Nova Senha"
-            type={showPassword ? "text" : "password"}
-            name="password"
-            value={password}
-            onValueChange={setPassword}
-            onBlur={() => setTouched({ ...touched, password: true })}
-            placeholder="Mínimo 8 caracteres"
             isRequired
-            autoFocus
             autoComplete="new-password"
             classNames={{
               input: "",
@@ -227,15 +228,15 @@ function RedefinirSenhaContent() {
                 "border transition-colors",
                 touched.password && password.length >= 8
                   ? "border-success-500"
-                  : "border-orange-600"
+                  : "border-orange-600",
               ),
             }}
             endContent={
               <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 className="text-foreground/60 hover:text-foreground focus-visible:outline-none"
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
               >
                 {showPassword ? (
                   <EyeOff className="size-4" />
@@ -244,6 +245,13 @@ function RedefinirSenhaContent() {
                 )}
               </button>
             }
+            label="Nova Senha"
+            name="password"
+            placeholder="Mínimo 8 caracteres"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onBlur={() => setTouched({ ...touched, password: true })}
+            onValueChange={setPassword}
           />
 
           {/* Requisitos da senha */}
@@ -260,7 +268,7 @@ function RedefinirSenhaContent() {
                       "flex items-center gap-2.5 text-xs transition-colors",
                       req.valid
                         ? "text-success-600 dark:text-success-500"
-                        : "text-foreground/50"
+                        : "text-foreground/50",
                     )}
                   >
                     {req.valid ? (
@@ -279,13 +287,6 @@ function RedefinirSenhaContent() {
         {/* Campo Confirmar Senha */}
         <div className="space-y-2 mt-2">
           <TextField
-            label="Confirmar Nova Senha"
-            type={showPasswordConfirm ? "text" : "password"}
-            name="password_confirm"
-            value={passwordConfirm}
-            onValueChange={setPasswordConfirm}
-            onBlur={() => setTouched({ ...touched, passwordConfirm: true })}
-            placeholder="Digite a senha novamente"
             isRequired
             autoComplete="new-password"
             classNames={{
@@ -296,17 +297,17 @@ function RedefinirSenhaContent() {
                   ? "border-success-500"
                   : touched.passwordConfirm && passwordsMatch === false
                     ? "border-danger-500"
-                    : "border-orange-600"
+                    : "border-orange-600",
               ),
             }}
             endContent={
               <button
-                type="button"
-                onClick={() => setShowPasswordConfirm((v) => !v)}
                 aria-label={
                   showPasswordConfirm ? "Ocultar senha" : "Mostrar senha"
                 }
                 className="text-foreground/60 hover:text-foreground focus-visible:outline-none"
+                type="button"
+                onClick={() => setShowPasswordConfirm((v) => !v)}
               >
                 {showPasswordConfirm ? (
                   <EyeOff className="size-4" />
@@ -315,6 +316,13 @@ function RedefinirSenhaContent() {
                 )}
               </button>
             }
+            label="Confirmar Nova Senha"
+            name="password_confirm"
+            placeholder="Digite a senha novamente"
+            type={showPasswordConfirm ? "text" : "password"}
+            value={passwordConfirm}
+            onBlur={() => setTouched({ ...touched, passwordConfirm: true })}
+            onValueChange={setPasswordConfirm}
           />
 
           {/* Feedback de confirmação */}
@@ -324,7 +332,7 @@ function RedefinirSenhaContent() {
                 "flex items-center gap-2.5 text-xs pt-1",
                 passwordsMatch
                   ? "text-success-600 dark:text-success-500"
-                  : "text-danger-600 dark:text-danger-500"
+                  : "text-danger-600 dark:text-danger-500",
               )}
             >
               {passwordsMatch ? (
@@ -345,8 +353,8 @@ function RedefinirSenhaContent() {
         {/* Mensagem de erro */}
         {error && (
           <div
-            role="alert"
             className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg p-4 mt-2"
+            role="alert"
           >
             <p className="text-danger-800 dark:text-danger-200 text-sm">
               {error}
@@ -356,7 +364,7 @@ function RedefinirSenhaContent() {
 
         {/* Botão submit */}
         <div className="mt-4">
-          <SubmitButton isLoading={loading} disabled={loading || !isFormValid}>
+          <SubmitButton disabled={loading || !isFormValid} isLoading={loading}>
             Redefinir senha
           </SubmitButton>
         </div>
@@ -369,9 +377,13 @@ export default function RedefinirSenhaPage() {
   return (
     <Suspense
       fallback={
-        <AuthCard imageSrc="/auth/paciente.jpg" heading="Carregando..." className="">
+        <AuthCard
+          className=""
+          heading="Carregando..."
+          imageSrc="/auth/paciente.jpg"
+        >
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600" />
           </div>
         </AuthCard>
       }

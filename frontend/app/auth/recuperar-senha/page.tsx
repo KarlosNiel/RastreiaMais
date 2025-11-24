@@ -1,11 +1,12 @@
 "use client";
 
-import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
-import { requestPasswordReset } from "@/services/accounts/password-reset";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+
+import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
+import { requestPasswordReset } from "@/services/accounts/password-reset";
+import { cn } from "@/lib/utils";
 
 export default function RecuperarSenhaPage() {
   const [identifier, setIdentifier] = useState("");
@@ -15,6 +16,7 @@ export default function RecuperarSenhaPage() {
 
   const isValidIdentifier = useMemo(() => {
     const trimmed = identifier.trim();
+
     return trimmed.length > 0;
   }, [identifier]);
 
@@ -36,6 +38,7 @@ export default function RecuperarSenhaPage() {
       const msg =
         err?.message ||
         "Erro ao solicitar recuperação de senha. Tente novamente.";
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -44,9 +47,9 @@ export default function RecuperarSenhaPage() {
 
   return (
     <AuthCard
-      imageSrc="/auth/paciente.jpg"
-      heading="Recuperar Senha"
       className=""
+      heading="Recuperar Senha"
+      imageSrc="/auth/paciente.jpg"
     >
       {success ? (
         <div className="flex flex-col gap-6 text-center">
@@ -83,13 +86,13 @@ export default function RecuperarSenhaPage() {
           {/* Botão voltar */}
           <div className="mt-2">
             <Link
-              href="/auth/login"
               className={cn(
                 "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg",
                 "text-sm font-medium transition-colors",
                 "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300",
-                "hover:bg-orange-50 dark:hover:bg-orange-900/10"
+                "hover:bg-orange-50 dark:hover:bg-orange-900/10",
               )}
+              href="/auth/login"
             >
               <ArrowLeft className="size-4" />
               Voltar para o login
@@ -98,10 +101,10 @@ export default function RecuperarSenhaPage() {
         </div>
       ) : (
         <form
-          className="flex flex-col gap-5"
           noValidate
-          onSubmit={handleSubmit}
           aria-label="Formulário de recuperação de senha"
+          className="flex flex-col gap-5"
+          onSubmit={handleSubmit}
         >
           {/* Descrição */}
           <div className="bg-default-100 dark:bg-default-50/10 rounded-lg p-4 mb-1">
@@ -115,35 +118,36 @@ export default function RecuperarSenhaPage() {
           {/* Campo de identificação */}
           <div className="space-y-2">
             <TextField
-              label="Email, CPF ou Usuário"
-              type="text"
-              name="identifier"
-              value={identifier}
-              onValueChange={setIdentifier}
-              placeholder="Digite seu email, CPF ou usuário"
               isRequired
-              autoFocus
-              autoComplete="username"
               autoCapitalize="none"
-              spellCheck="false"
+              autoComplete="username"
               classNames={{
                 input: "",
                 inputWrapper: cn(
                   "border transition-colors",
-                  isValidIdentifier ? "border-orange-600" : "border-default-200"
+                  isValidIdentifier
+                    ? "border-orange-600"
+                    : "border-default-200",
                 ),
               }}
+              label="Email, CPF ou Usuário"
+              name="identifier"
+              placeholder="Digite seu email, CPF ou usuário"
+              spellCheck="false"
               startContent={
                 <Mail className="size-4 text-foreground/40 flex-shrink-0" />
               }
+              type="text"
+              value={identifier}
+              onValueChange={setIdentifier}
             />
           </div>
 
           {/* Erro */}
           {error && (
             <div
-              role="alert"
               className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg p-4"
+              role="alert"
             >
               <p className="text-danger-800 dark:text-danger-200 text-sm">
                 {error}
@@ -154,8 +158,8 @@ export default function RecuperarSenhaPage() {
           {/* Botão submit */}
           <div className="mt-2">
             <SubmitButton
-              isLoading={loading}
               disabled={loading || !isValidIdentifier}
+              isLoading={loading}
             >
               {loading ? "Enviando..." : "Enviar instruções"}
             </SubmitButton>
@@ -164,11 +168,11 @@ export default function RecuperarSenhaPage() {
           {/* Link voltar */}
           <div className="mt-1">
             <Link
-              href="/auth/login"
               className={cn(
                 "flex items-center justify-center gap-2 text-sm font-medium transition-colors py-2",
-                "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
+                "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300",
               )}
+              href="/auth/login"
             >
               <ArrowLeft className="size-4" />
               Voltar para o login

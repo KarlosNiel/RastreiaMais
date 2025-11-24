@@ -1,10 +1,11 @@
 // frontend/app/auth/login/paciente/page.tsx
 "use client";
 
-import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
-import { loginAndAssertRole, setRoleCookie } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { AuthCard, SubmitButton, TextField } from "@/components/auth/AuthCard";
+import { loginAndAssertRole, setRoleCookie } from "@/lib/auth";
 
 export default function LoginPacientePage() {
   const router = useRouter();
@@ -20,12 +21,15 @@ export default function LoginPacientePage() {
     setError(null);
 
     const rawLogin = login.trim();
+
     if (!rawLogin) {
       setError("Informe CPF, e-mail ou usuário.");
+
       return;
     }
     if (!password) {
       setError("Informe sua senha.");
+
       return;
     }
 
@@ -50,6 +54,7 @@ export default function LoginPacientePage() {
         typeof err?.message === "string" && err.message.trim()
           ? err.message
           : "Falha no login. Verifique suas credenciais e tente novamente.";
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -58,78 +63,77 @@ export default function LoginPacientePage() {
 
   return (
     <AuthCard
-      imageSrc="/auth/paciente.jpg"
-      heading="Seja Bem-Vindo(a), Paciente!"
       className=""
+      heading="Seja Bem-Vindo(a), Paciente!"
+      imageSrc="/auth/paciente.jpg"
     >
       <form
-        className="stack-6"
         noValidate
-        onSubmit={handleSubmit}
         aria-label="Formulário de login do paciente"
+        className="stack-6"
+        onSubmit={handleSubmit}
       >
         <TextField
-          className="pb-6"
-          label="CPF ou e-mail"
-          type="text"
-          name="login"
-          value={login}
-          onValueChange={setLogin}
-          placeholder="Digite seu CPF ou e-mail"
           isRequired
-          autoFocus
-          autoComplete="username"
           autoCapitalize="none"
-          spellCheck="false"
-          enterKeyHint="next"
+          autoComplete="username"
+          className="pb-6"
           classNames={{
             input: "",
             inputWrapper: "border border-orange-600 transition",
           }}
+          enterKeyHint="next"
+          label="CPF ou e-mail"
+          name="login"
+          placeholder="Digite seu CPF ou e-mail"
+          spellCheck="false"
+          type="text"
+          value={login}
+          onValueChange={setLogin}
         />
 
         <TextField
-          className="pb-6"
-          label="Senha"
-          type="password"
-          name="password"
-          value={password}
-          onValueChange={setPassword}
-          placeholder="******"
           isRequired
           autoComplete="current-password"
-          enterKeyHint="done"
+          className="pb-6"
           classNames={{
             input: "",
             inputWrapper: "border border-orange-600 hover:shadow-sm transition",
           }}
+          enterKeyHint="done"
+          label="Senha"
+          name="password"
+          placeholder="******"
+          type="password"
+          value={password}
+          onValueChange={setPassword}
         />
 
         <div className="flex items-center justify-between pb-6">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
-              type="checkbox"
               checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
               className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+              type="checkbox"
+              onChange={(e) => setRememberMe(e.target.checked)}
             />
             <span>Lembrar-me</span>
           </label>
           <a
-            href="/auth/recuperar-senha"
             className="text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition"
+            href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
           </a>
         </div>
 
         {error && (
-          <div role="alert" className="text-danger-500 text-sm">
+          <div className="text-danger-500 text-sm" role="alert">
             {error}
           </div>
         )}
 
-        <SubmitButton isLoading={loading} disabled={loading}>
+        <SubmitButton disabled={loading} isLoading={loading}>
           Entrar
         </SubmitButton>
       </form>

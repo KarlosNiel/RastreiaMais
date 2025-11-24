@@ -1,24 +1,25 @@
 // frontend/app/gestor/page.tsx
 "use client";
 
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import CreateAlertModal from "@/components/gestor/CreateAlertModal";
-import { ProfissionaisTable, ProfRow } from "@/components/gestor/ProfissionaisTable";
-import { StatusChip } from "@/components/ui/StatusChip";
-import { apiGet } from "@/lib/api";
-import { KPI_ICONS } from "@/lib/gestor-kpis";
-import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
-import { useGestorKpis } from "@/lib/hooks/gestor/useGestorKpis";
-import {
-  BellAlertIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
+import { BellAlertIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import CreateAlertModal from "@/components/gestor/CreateAlertModal";
+import {
+  ProfissionaisTable,
+  ProfRow,
+} from "@/components/gestor/ProfissionaisTable";
+import { StatusChip } from "@/components/ui/StatusChip";
+import { apiGet } from "@/lib/api";
+import { KPI_ICONS } from "@/lib/gestor-kpis";
+import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
+import { useGestorKpis } from "@/lib/hooks/gestor/useGestorKpis";
 
 type RiskTone = "safe" | "moderate" | "critical";
 
@@ -32,14 +33,16 @@ export default function GestorPage() {
 
   //! Busca KPIs usando o novo hook
   const { data: KPIS = [], isLoading: isLoadingKpis } = useGestorKpis();
-  
+
   //! Busca alertas
   const { data: alerts, isLoading: isLoadingAlerts } = useAlertsQuery();
 
   const formatCpf = (cpf?: string) => {
     if (!cpf) return "—";
     const digits = cpf.replace(/\D/g, "");
+
     if (digits.length !== 11) return cpf;
+
     return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
@@ -94,36 +97,36 @@ export default function GestorPage() {
           <nav aria-label="Ações" className="flex items-center gap-2">
             <Button
               as={Link}
-              href="/pacientes"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
               color="primary"
-              variant="solid"
+              href="/pacientes"
               radius="lg"
               size="md"
-              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+              variant="solid"
             >
               Lista de Pacientes
             </Button>
 
             <Button
               as={Link}
-              href="/cadastros/novo"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
               color="primary"
-              variant="solid"
+              href="/cadastros/novo"
               radius="lg"
               size="md"
-              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+              variant="solid"
             >
               Novo Profissional
             </Button>
 
             <Button
               as={Link}
-              href="/pacientes/novo"
+              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
               color="primary"
-              variant="solid"
+              href="/pacientes/novo"
               radius="lg"
               size="md"
-              className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+              variant="solid"
             >
               Novo Paciente
             </Button>
@@ -142,16 +145,16 @@ export default function GestorPage() {
             KPIS.map((kpi) => (
               <KpiCard
                 key={kpi.key}
-                label={kpi.label}
-                value={kpi.value}
-                delta={kpi.delta}
                 accent={kpi.accent}
+                delta={kpi.delta}
+                footerText="Dados do sistema atualizados com as informações mais recentes."
                 icon={
                   (KPI_ICONS as Record<string, import("react").ReactNode>)[
                     kpi.key
                   ]
                 }
-                footerText="Dados do sistema atualizados com as informações mais recentes."
+                label={kpi.label}
+                value={kpi.value}
               />
             ))
           ) : (
@@ -171,24 +174,24 @@ export default function GestorPage() {
               </h2>
             </div>
             <Button
+              aria-label="Adicionar alerta"
+              className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
+              radius="lg"
+              size="sm"
+              variant="flat"
               onPress={() => {
                 setSelectedAlert(null);
                 setOpen(true);
               }}
-              variant="flat"
-              size="sm"
-              aria-label="Adicionar alerta"
-              radius="lg"
-              className="text-md text-orange-600 bg-transparent border border-orange-600 hover:bg-gray-100 dark:hover:bg-gray-900"
             >
               +
             </Button>
           </div>
 
           <CreateAlertModal
+            alertData={selectedAlert}
             open={open}
             onOpenChange={setOpen}
-            alertData={selectedAlert}
           />
 
           {isLoadingAlerts ? (
@@ -202,60 +205,66 @@ export default function GestorPage() {
                   .slice()
                   .reverse()
                   .map((a, i) => (
-                    <li
-                      onClick={() => {
-                        setSelectedAlert(a);
-                        setOpen(true);
-                      }}
-                      key={i}
-                      className={`cursor-pointer flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
-                        a.risk_level === "critical"
-                          ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
-                          : a.risk_level === "moderate"
-                            ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
-                            : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`grid size-10 place-items-center rounded-full ring-2 ${
-                            a.risk_level === "critical"
-                              ? "ring-rose-300"
-                              : a.risk_level === "moderate"
-                                ? "ring-amber-300"
-                                : "ring-emerald-300"
-                          } bg-white dark:bg-gray-800`}
-                        >
-                          <UserGroupIcon
-                            className={`h-5 w-5 ${
+                    <li key={i}>
+                      <button
+                        className={`w-full cursor-pointer flex items-center justify-between gap-4 rounded-md p-3 shadow-sm hover:shadow-lg transition-colors delay-150 duration-300 ease-in-out ${
+                          a.risk_level === "critical"
+                            ? "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-900/20"
+                            : a.risk_level === "moderate"
+                              ? "border-l-4 border-l-amber-400 bg-amber-50/30 dark:bg-amber-900/20"
+                              : "border-l-4 border-l-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/20"
+                        }`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAlert(a);
+                          setOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`grid size-10 place-items-center rounded-full ring-2 ${
                               a.risk_level === "critical"
-                                ? "text-rose-600 dark:text-rose-400"
+                                ? "ring-rose-300"
                                 : a.risk_level === "moderate"
-                                  ? "text-amber-600 dark:text-amber-400"
-                                  : "text-emerald-600 dark:text-emerald-400"
-                            }`}
-                          />
+                                  ? "ring-amber-300"
+                                  : "ring-emerald-300"
+                            } bg-white dark:bg-gray-800`}
+                          >
+                            <UserGroupIcon
+                              className={`h-5 w-5 ${
+                                a.risk_level === "critical"
+                                  ? "text-rose-600 dark:text-rose-400"
+                                  : a.risk_level === "moderate"
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-emerald-600 dark:text-emerald-400"
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              {a.patient?.user?.first_name ?? "—"}{" "}
+                              {a.patient?.user?.last_name ?? "—"}{" "}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                {formatCpf(a.patient?.cpf)}
+                              </span>
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                              {a.title} — {a.description}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            {a.patient?.user?.first_name ?? "—"}{" "}
-                            {a.patient?.user?.last_name ?? "—"}{" "}
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {formatCpf(a.patient?.cpf)}
-                            </span>
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                            {a.title} — {a.description}
-                          </p>
-                        </div>
-                      </div>
-                      <StatusChip size="sm" tone={mapRiskToChip(a.risk_level)}>
-                        {a.risk_level === "critical"
-                          ? "Crítico"
-                          : a.risk_level === "moderate"
-                            ? "Atenção"
-                            : "Seguro"}
-                      </StatusChip>
+
+                        <StatusChip
+                          size="sm"
+                          tone={mapRiskToChip(a.risk_level)}
+                        >
+                          {a.risk_level === "critical"
+                            ? "Crítico"
+                            : a.risk_level === "moderate"
+                              ? "Atenção"
+                              : "Seguro"}
+                        </StatusChip>
+                      </button>
                     </li>
                   ))}
               </ul>
@@ -286,9 +295,9 @@ export default function GestorPage() {
           </div>
         ) : (
           <ProfissionaisTable
-            rows={profissionais}
             initialPage={1}
             initialRowsPerPage={6}
+            rows={profissionais}
             onAction={(action, row) => {
               if (action === "edit" || action === "open") {
                 router.push(`/cadastros/${row.id}/editar`);
