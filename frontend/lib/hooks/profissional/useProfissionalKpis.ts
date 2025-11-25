@@ -58,7 +58,7 @@ export function useProfissionalKpis() {
   const totalPatients = pacientes.length;
 
   const riskPatients = appointments.filter(
-    (a: any) => a.risk_level === "Crítico" || a.risk_level === "Moderado",
+    (a: any) => a.risk_level === "Crítico",
   ).length;
 
   const appointmentsCount = appointments.length;
@@ -76,7 +76,7 @@ export function useProfissionalKpis() {
     },
     {
       key: "riskPatients",
-      label: "Pacientes em Risco",
+      label: "Agendamentos de Risco",
       value: riskPatients,
       accent: "amber",
     },

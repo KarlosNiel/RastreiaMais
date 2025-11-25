@@ -1,24 +1,35 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Alert } from "@heroui/alert";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 
 import {
   createProfissional,
   updateProfissional,
+  deleteProfissional,
+  restoreProfissional,
+  type ProfessionalRole,
+  type ProfessionalUserApiUser,
+  type ProfessionalApiPayload,
 } from "@/lib/api/profissionais";
 import { RHFInput } from "@/components/form/RHFInput";
 import { RHFChipGroup, type ChipOption } from "@/components/form/RHFChipGroup";
 
 /* ===== Tipos / Constantes ===== */
+
 const cargoOptions: ChipOption[] = [
   { label: "Odontologista", value: "Odontologista" },
   { label: "Enfermeiro", value: "Enfermeiro" },
   { label: "ACS", value: "ACS" },
+];
+
+const statusOptions: ChipOption[] = [
+  { label: "Ativo", value: "ativo" },
+  { label: "Inativo", value: "inativo" },
 ];
 
 export type ProfissionalFormValues = {
@@ -26,8 +37,8 @@ export type ProfissionalFormValues = {
   firstName: string;
   lastName: string;
   email: string;
-  telefone?: string;
-  cargo: string;
+  cargo: ProfessionalRole;
+  status?: "ativo" | "inativo";
   senha: string;
   repetirSenha: string;
 };
@@ -35,6 +46,7 @@ export type ProfissionalFormValues = {
 type ProfessionalFormProps = {
   mode: "create" | "edit";
   id?: number;
+  /** Valores vindos da API (Edit), já mapeados para o formato do form */
   defaultValues?: Partial<ProfissionalFormValues>;
 };
 
@@ -50,14 +62,15 @@ export default function ProfessionalForm({
   } | null>(null);
 
   const router = useRouter();
+  const isCreate = mode === "create";
 
   const baseDefaults: ProfissionalFormValues = {
     username: "",
     firstName: "",
     lastName: "",
     email: "",
-    telefone: "",
     cargo: "Enfermeiro",
+    status: "ativo",
     senha: "",
     repetirSenha: "",
   };
@@ -73,17 +86,19 @@ export default function ProfessionalForm({
   });
 
   const senhaValue = watch("senha");
-  const isCreate = mode === "create";
 
   async function onSubmit(values: ProfissionalFormValues) {
     setSubmitting(true);
+    setAlert(null);
+
     try {
       const username = values.username.trim();
       const firstName = values.firstName.trim();
       const lastName = values.lastName.trim();
       const email = values.email.trim();
 
-      const payloadUser: any = {
+      // Base para o objeto user da API
+      const payloadUser: Partial<ProfessionalUserApiUser> = {
         first_name: firstName,
         last_name: lastName,
         email,
@@ -98,25 +113,44 @@ export default function ProfessionalForm({
         if (!originalUsername || originalUsername !== username) {
           payloadUser.username = username;
         }
+
         if (values.senha) {
           payloadUser.password = values.senha;
         }
       }
 
-      const payload = {
-        user: payloadUser,
-        role: values.cargo as "Odontologista" | "Enfermeiro" | "ACS",
+      const payload: ProfessionalApiPayload = {
+        user: payloadUser as ProfessionalUserApiUser,
+        role: values.cargo,
       };
 
       if (isCreate) {
         await createProfissional(payload);
+
         setAlert({
           type: "success",
           message: "Profissional cadastrado com sucesso!",
         });
       } else {
-        if (!id) throw new Error("ID do profissional não informado.");
+        if (!id) {
+          throw new Error("ID do profissional não informado.");
+        }
+
+        // 1) Atualiza dados básicos (nome, e-mail, cargo, senha)
         await updateProfissional(id, payload);
+
+        // 2) Se o status tiver mudado, aplica soft delete / restore
+        const previousStatus = defaultValues?.status ?? "ativo";
+        const currentStatus = values.status ?? previousStatus;
+
+        if (currentStatus !== previousStatus) {
+          if (currentStatus === "inativo") {
+            await deleteProfissional(id);
+          } else {
+            await restoreProfissional(id);
+          }
+        }
+
         setAlert({
           type: "success",
           message: "Profissional atualizado com sucesso!",
@@ -124,12 +158,14 @@ export default function ProfessionalForm({
       }
 
       setTimeout(() => {
-        router.push("/gestor");
+        window.location.href = "/gestor";
       }, 1500);
     } catch (e: any) {
       setAlert({
         type: "danger",
-        message: e?.message ?? "Erro ao salvar profissional",
+        message:
+          e?.message ??
+          "Erro ao salvar profissional. Tente novamente mais tarde.",
       });
     } finally {
       setSubmitting(false);
@@ -150,8 +186,8 @@ export default function ProfessionalForm({
         </h1>
         <p className="mt-1 text-sm text-foreground/60">
           {isCreate
-            ? "Preencha os dados abaixo para concluir o cadastro"
-            : "Atualize os dados do profissional"}
+            ? "Preencha os dados abaixo para concluir o cadastro."
+            : "Atualize os dados do profissional e, se necessário, altere o status."}
         </p>
       </div>
 
@@ -223,29 +259,35 @@ export default function ProfessionalForm({
               type="email"
             />
 
-            <RHFInput
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
-              control={control}
-              label="Telefone vinculado"
-              name="telefone"
-              placeholder="(xx) 9xxxx-xxxx"
-              rules={{
-                pattern: {
-                  value: /^\(?\d{2}\)?9?\d{4}-?\d{3,4}$/,
-                  message: "Telefone inválido",
-                },
-              }}
-            />
-
-            <RHFChipGroup
-              single
-              className="md:col-span-2"
-              control={control}
-              label="Cargo"
-              name="cargo"
-              options={cargoOptions}
-              rules={{ required: "Selecione o cargo" }}
-            />
+            {isCreate ? (
+              <RHFChipGroup
+                single
+                className="md:col-span-2"
+                control={control}
+                label="Cargo"
+                name="cargo"
+                options={cargoOptions}
+                rules={{ required: "Selecione o cargo" }}
+              />
+            ) : (
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <RHFChipGroup
+                  single
+                  control={control}
+                  label="Cargo"
+                  name="cargo"
+                  options={cargoOptions}
+                  rules={{ required: "Selecione o cargo" }}
+                />
+                <RHFChipGroup
+                  single
+                  control={control}
+                  label="Status"
+                  name="status"
+                  options={statusOptions}
+                />
+              </div>
+            )}
 
             <RHFInput
               classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
@@ -295,7 +337,7 @@ export default function ProfessionalForm({
                 Cancelar
               </Button>
               <Button color="primary" isLoading={submitting} type="submit">
-                {isCreate ? "Finalizar Registro" : "Salvar alterações"}
+                {isCreate ? "Finalizar registro" : "Salvar alterações"}
               </Button>
             </div>
           </form>

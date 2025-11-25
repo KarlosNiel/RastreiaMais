@@ -3,11 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from rest_framework.viewsets import GenericViewSet
+from apps.commons.api.v1.permissions import BaseRolePermission
 
 
-class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.UpdateModelMixin, 
+class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.UpdateModelMixin,
                         mixins.RetrieveModelMixin, mixins.ListModelMixin, GenericViewSet):
-    
+
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
     queryset = None
     serializer_class = None
@@ -36,13 +37,14 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
     @action(detail=True, methods=["patch"], url_path='restore')
     def restore_object(self, request, pk=None):
         user = request.user
+        role_perm = BaseRolePermission()
 
-        if not user.is_superuser or not user.is_manager(self):
+        if not user.is_superuser and not role_perm.is_manager(request):
             return Response(
-                {"detail": "Apenas superusuários e gestores podem user o restore."},
-                status=status.HTTP_403_FORBIDDEN
+                {"detail": "Apenas superusuários e gestores podem usar o restore."},
+                status=status.HTTP_403_FORBIDDEN,
             )
-            
+
         instance = self.get_object()
         instance.restore(user=request.user)
         return Response({"detail": "Objeto restaurado com sucesso."}, status=status.HTTP_200_OK)
@@ -56,11 +58,10 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
                 {"detail": "Apenas superusuários podem realizar o hard-delete."},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         instance = self.get_object()
         instance.hard_delete()
         return Response(
-            {"detail": "Objeto Deletado Permanentemente!"}, 
+            {"detail": "Objeto Deletado Permanentemente!"},
             status=status.HTTP_200_OK
         )
-

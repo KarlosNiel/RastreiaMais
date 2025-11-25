@@ -85,7 +85,7 @@ export default function ProfessionalAppointmentDetailsModal({
               </div>
             </ModalHeader>
 
-            <ModalBody className="space-y-5">
+            <ModalBody className="space-y-1">
               {/* Paciente */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                 <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
@@ -121,35 +121,49 @@ export default function ProfessionalAppointmentDetailsModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Local */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                    <MapPinIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                      Local
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                      {data.local}
-                    </p>
-                  </div>
+              {/* Local */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
+                  <MapPinIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Local
+                  </p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                    {data.local}
+                  </p>
+                </div>
+              </div>
 
-                {/* Horário */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                    <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                      Horário
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 tabular-nums">
-                      {data.hora}
-                    </p>
-                  </div>
+              {/* Horário */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
+                  <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Horário
+                  </p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 tabular-nums">
+                    {data.hora}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tipo */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
+                  <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Tipo da Consulta
+                  </p>
+
+                  <StatusChip size="md" tone={"safe"}>
+                    {data.type}
+                  </StatusChip>
                 </div>
               </div>
 

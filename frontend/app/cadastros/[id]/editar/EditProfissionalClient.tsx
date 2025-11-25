@@ -2,23 +2,20 @@
 
 import { useEffect, useState } from "react";
 
-import { apiGet } from "@/lib/api";
 import ProfessionalForm, {
   ProfissionalFormValues,
 } from "@/components/profissional/ProfessionalForm";
+import { getProfissional, type ProfessionalApi } from "@/lib/api/profissionais";
 
 type Props = {
   id: number;
 };
 
-type LoadedData = {
-  defaultValues: ProfissionalFormValues;
-};
-
 export default function EditProfissionalClient({ id }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<LoadedData | null>(null);
+  const [defaultValues, setDefaultValues] =
+    useState<ProfissionalFormValues | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,34 +25,37 @@ export default function EditProfissionalClient({ id }: Props) {
       setError(null);
 
       try {
-        // 🔹 Busca o profissional na API
-        const profissionalApi = await apiGet<any>(
-          `/api/v1/accounts/professionals/${id}/`,
-        );
+        const profissionalApi = await getProfissional<ProfessionalApi>(id);
+
+        if (!profissionalApi) {
+          throw new Error("Profissional não encontrado.");
+        }
 
         const user = profissionalApi.user ?? {};
 
-        const defaultValues: ProfissionalFormValues = {
+        const mappedDefaults: ProfissionalFormValues = {
           username: user.username ?? "",
           firstName: user.first_name ?? "",
           lastName: user.last_name ?? "",
           email: user.email ?? "",
-          telefone: "",
-          cargo: profissionalApi.role ?? "Enfermeiro",
+          cargo: (profissionalApi.role ??
+            "Enfermeiro") as ProfissionalFormValues["cargo"],
+          status: profissionalApi.is_deleted ? "inativo" : "ativo",
           senha: "",
           repetirSenha: "",
         };
 
         if (!cancelled) {
-          setData({ defaultValues });
+          setDefaultValues(mappedDefaults);
         }
-      } catch (err: any) {
-        console.error("Erro ao carregar profissional para edição:", err);
+      } catch (err: unknown) {
         if (!cancelled) {
-          setError(
-            err?.message ||
-              "Não foi possível carregar os dados do profissional.",
-          );
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar os dados do profissional.";
+
+          setError(message);
         }
       } finally {
         if (!cancelled) {
@@ -81,7 +81,7 @@ export default function EditProfissionalClient({ id }: Props) {
     );
   }
 
-  if (error || !data) {
+  if (error || !defaultValues) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
         <p className="text-sm text-danger">
@@ -91,7 +91,5 @@ export default function EditProfissionalClient({ id }: Props) {
     );
   }
 
-  return (
-    <ProfessionalForm defaultValues={data.defaultValues} id={id} mode="edit" />
-  );
+  return <ProfessionalForm defaultValues={defaultValues} id={id} mode="edit" />;
 }

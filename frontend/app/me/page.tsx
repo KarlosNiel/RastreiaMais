@@ -20,6 +20,7 @@ import {
   type ConsultaRow,
 } from "@/components/portal/ConsultasTable";
 import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
+import ConfirmModal from "@/components/profissional/ConfirmModal";
 
 export default function MePage() {
   const { data: me, isLoading: isLoadingMe } = useMe();
@@ -132,6 +133,8 @@ export default function MePage() {
         if (a.time) horaStr = String(a.time);
       }
 
+      const tipo = a.type ?? "-";
+
       const status = a.status ?? "ativo";
 
       return {
@@ -141,6 +144,7 @@ export default function MePage() {
         local,
         data: dataStr,
         hora: horaStr,
+        tipo,
         status,
       };
     });

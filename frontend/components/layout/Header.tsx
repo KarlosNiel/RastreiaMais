@@ -1,6 +1,6 @@
 "use client";
 
-import { BellIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -55,19 +55,6 @@ export const Header = () => {
             {/* Só mostra se estiver logado */}
             {!loading && user && (
               <>
-                <Button
-                  isIconOnly
-                  aria-label="Notificações"
-                  className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
-                  size="sm"
-                  variant="light"
-                >
-                  <BellIcon
-                    className="size-5 dark:text-white"
-                    strokeWidth={2}
-                  />
-                </Button>
-
                 {/* Menu do usuário com perfil e logout */}
                 <UserMenu user={user} />
               </>

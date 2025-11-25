@@ -13,6 +13,11 @@ ROLE_CHOICES = [
     ("Odontologista", "Odontologista"),
     ("Enfermeiro", "Enfermeiro"),
     ("ACS", "ACS"),
+    ("Psicólogo", "Psicólogo"),
+    ("Médico Veterinário", "Médico Veterinário"),
+    ("Fisioterapeuta", "Fisioterapeuta"),
+    ("Assistente Social", "Assistente Social"),
+    ("Nutricionista", "Nutricionista"),
 ]
 
 #Patient=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

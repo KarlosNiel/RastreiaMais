@@ -38,6 +38,7 @@ export type AgendaRow = {
   hora: string;
   local: string;
   risco: RiskTone;
+  type: string;
   status: string;
 };
 

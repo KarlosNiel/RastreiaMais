@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 interface AuthContextType {
   token: string | null;
@@ -8,7 +14,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -17,6 +25,7 @@ function isBrowser() {
 function getAccess(): string | null {
   try {
     if (!isBrowser()) return null;
+
     return localStorage.getItem("access") || sessionStorage.getItem("access");
   } catch {
     return null;
@@ -29,12 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedToken = getAccess();
+
     if (storedToken) setTokenState(storedToken);
     setLoading(false);
 
     // Escuta mudanças no localStorage para sincronizar entre abas
     const handleStorageChange = () => {
       const currentToken = getAccess();
+
       setTokenState(currentToken);
     };
 
@@ -73,16 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
+
   return context;
 }

@@ -73,6 +73,7 @@ export function createSlideIn(
 ): Variants {
   const from = axis === "x" ? { x: distance } : { y: distance };
   const to = axis === "x" ? { x: 0 } : { y: 0 };
+
   return {
     initial: { opacity: 0, ...from },
     animate: { opacity: 1, ...to, transition: rt(t) },
@@ -89,7 +90,7 @@ export function createSlideIn(
 
 export function createScaleIn(
   from = 0.96,
-  t: Transition = transitions.spring
+  t: Transition = transitions.spring,
 ): Variants {
   return {
     initial: { opacity: 0, scale: from },
@@ -111,6 +112,7 @@ export function createStaggerContainer(
 ) {
   const sc = prefersReducedMotion() ? 0 : staggerChildren;
   const dc = prefersReducedMotion() ? 0 : delayChildren;
+
   return {
     initial: {},
     animate: { transition: { staggerChildren: sc, delayChildren: dc } },

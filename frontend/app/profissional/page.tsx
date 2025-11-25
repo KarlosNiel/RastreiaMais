@@ -24,6 +24,7 @@ import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
 import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpis";
 import { KPI_ICONS } from "@/lib/profissional-kpis";
+import ConfirmModal from "@/components/profissional/ConfirmModal";
 
 type RiskTone = "safe" | "moderate" | "critical";
 type ChipTone = "safe" | "attention" | "critical" | "neutral";
@@ -64,6 +65,17 @@ const mapRiskToChip = (t?: RiskTone): ChipTone =>
   t === "moderate" ? "attention" : (t ?? "safe");
 
 export default function ProfissionalPage() {
+  const [confirmData, setConfirmData] = useState<{
+    open: boolean;
+    message: string;
+    tone?: "default" | "danger";
+    onConfirm: () => void;
+  }>({
+    open: false,
+    message: "",
+    tone: "default",
+    onConfirm: () => {},
+  });
   const { data: KPIS } = useProfissionalKpis();
   const [selectedAppointment, setSelectedAppointment] =
     useState<AgendaRow | null>(null);
@@ -155,6 +167,7 @@ export default function ProfissionalPage() {
         timeStyle: "short",
       }),
       local: a.local?.name ?? "UBS",
+      type: a.type ?? "-",
       risco: mapRiskLevel(a.risk_level),
       condicao: a.patient.conditions ?? "—",
       docMasked: "",
@@ -162,22 +175,38 @@ export default function ProfissionalPage() {
     })) ?? [];
 
   const handleAction = (action: "done" | "delete" | "open", row: AgendaRow) => {
-    switch (action) {
-      case "done":
-        if (confirm(`Confirma finalizar o agendamento de ${row.paciente}?`)) {
-          updateStatusMutation.mutate({ id: row.id, status: "finalizado" });
-        }
-        break;
-      case "delete":
-        if (confirm(`Confirma cancelar o agendamento de ${row.paciente}?`)) {
-          updateStatusMutation.mutate({ id: row.id, status: "cancelado" });
-        }
-        break;
-      case "open":
-        setSelectedAppointment(row);
-        setIsModalOpen(true);
-        break;
+    if (action === "open") {
+      setSelectedAppointment(row);
+      setIsModalOpen(true);
+
+      return;
     }
+
+    const config = {
+      done: {
+        msg: `Confirma finalizar o agendamento de ${row.paciente}?`,
+        tone: "default" as const,
+        status: "finalizado",
+      },
+      delete: {
+        msg: `Confirma cancelar o agendamento de ${row.paciente}?`,
+        tone: "danger" as const,
+        status: "cancelado",
+      },
+    }[action];
+
+    setConfirmData({
+      open: true,
+      message: config.msg,
+      tone: config.tone,
+      onConfirm: () => {
+        updateStatusMutation.mutate({
+          id: row.id,
+          status: config.status,
+        });
+        setConfirmData((p) => ({ ...p, open: false }));
+      },
+    });
   };
 
   return (
@@ -379,6 +408,15 @@ export default function ProfissionalPage() {
         data={selectedAppointment}
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <ConfirmModal
+        message={confirmData.message}
+        open={confirmData.open}
+        title="Confirmar ação"
+        tone={confirmData.tone}
+        onCancel={() => setConfirmData((p) => ({ ...p, open: false }))}
+        onConfirm={confirmData.onConfirm}
       />
     </div>
   );
