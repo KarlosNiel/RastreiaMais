@@ -1,54 +1,145 @@
 # RastreiaMais
-# Next.js & HeroUI Template
 
-This is a template for creating applications using Next.js 14 (app directory) and HeroUI (v2).
+RastreiaMais é uma plataforma completa de gestão em saúde projetada para otimizar agendamentos médicos, prontuários de pacientes e fluxos de trabalho clínicos.
 
-[Try it on CodeSandbox](https://githubbox.com/heroui-inc/heroui/next-app-template)
+## Visão Geral
 
-## Technologies Used
+Esta aplicação oferece uma solução completa para instituições de saúde gerenciarem informações de pacientes, agendarem consultas, acompanharem medicações, monitorarem condições médicas e gerarem relatórios. O sistema é construído com uma stack tecnológica moderna que garante escalabilidade, performance e manutenibilidade.
 
-- [Next.js 14](https://nextjs.org/docs/getting-started)
-- [HeroUI v2](https://heroui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [next-themes](https://github.com/pacocoursey/next-themes)
+## Arquitetura
 
-## How to Use
+O projeto segue uma arquitetura full-stack com clara separação de responsabilidades:
 
-### Use the template with create-next-app
+- **Frontend**: Aplicação web moderna construída com Next.js e React
+- **Backend**: API RESTful desenvolvida com Django e Python
+- **Banco de Dados**: SQLite para desenvolvimento (configurável para bancos de produção)
 
-To create a new project based on this template using `create-next-app`, run the following command:
+## Stack Tecnológica
 
-```bash
-npx create-next-app -e https://github.com/heroui-inc/next-app-template
+### Frontend
+- Next.js 14 (App Router)
+- TypeScript
+- HeroUI v2 (Biblioteca de Componentes)
+- Tailwind CSS
+- Framer Motion
+- Cypress (Testes E2E)
+
+### Backend
+- Python
+- Django
+- Django REST Framework
+- SQLite
+
+## Estrutura do Projeto
+
+```
+rastreiamais/
+├── frontend/          # Aplicação Next.js
+│   ├── app/          # Rotas e páginas da aplicação
+│   ├── components/   # Componentes reutilizáveis
+│   ├── services/     # Camada de integração com API
+│   ├── hooks/        # Hooks customizados do React
+│   └── types/        # Definições de tipos TypeScript
+│
+└── backend/          # Aplicação Django
+    ├── accounts/     # Gerenciamento de usuários
+    ├── appointments/ # Agendamento de consultas
+    ├── medications/  # Rastreamento de medicações
+    ├── conditions/   # Condições médicas
+    ├── reports/      # Geração de relatórios
+    └── manage.py     # Script de gerenciamento Django
 ```
 
-### Install dependencies
+## Começando
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+### Pré-requisitos
 
+- Node.js 18+ e npm
+- Python 3.8+
+- pip (gerenciador de pacotes Python)
+
+### Configuração do Frontend
+
+1. Navegue até o diretório frontend:
+```bash
+cd frontend
+```
+
+2. Instale as dependências:
 ```bash
 npm install
 ```
 
-### Run the development server
-
+3. Execute o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
 
-### Setup pnpm (optional)
+A aplicação frontend estará disponível em `http://localhost:3000`
 
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
+### Configuração do Backend
 
+1. Navegue até o diretório backend:
 ```bash
-public-hoist-pattern[]=*@heroui/*
+cd backend
 ```
 
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+2. Crie e ative um ambiente virtual:
+```bash
+python -m venv venv
+source venv/bin/activate  # No Windows: venv\Scripts\activate
+```
 
-## License
+3. Instale as dependências:
+```bash
+pip install -r requirements.txt
+```
 
-Licensed under the [MIT license](https://github.com/heroui-inc/next-app-template/blob/main/LICENSE).
+4. Execute as migrações do banco de dados:
+```bash
+python manage.py migrate
+```
+
+5. Inicie o servidor de desenvolvimento:
+```bash
+python manage.py runserver
+```
+
+A API backend estará disponível em `http://localhost:8000`
+
+## Desenvolvimento
+
+### Executando Testes
+
+Testes do frontend:
+```bash
+cd frontend
+npm run test
+```
+
+Testes end-to-end:
+```bash
+cd frontend
+npm run cypress:open
+```
+
+### Qualidade de Código
+
+O projeto utiliza ESLint para análise de código. Execute o linter:
+```bash
+cd frontend
+npm run lint
+```
+
+## Documentação da API
+
+Os endpoints e documentação da API podem ser acessados através da collection Insomnia/Postman incluída no repositório:
+- `rastreia+_insomnia-postman_Collection.json`
+
+## Contribuindo
+
+Por favor, siga o estilo de código estabelecido e garanta que todos os testes passem antes de submeter pull requests.
+
+## Licença
+
+Licenciado sob a licença MIT.
