@@ -11,7 +11,10 @@ def get_creator_profile(user):  #* retorna o tipo de user que criou o objeto
             try:
                 return model.objects.get(user=user.created_by)
             except model.DoesNotExist:
-                continue 
+                continue
+            except model.MultipleObjectsReturned:
+                # Se houver múltiplos registros, retorna o primeiro (mais antigo)
+                return model.objects.filter(user=user.created_by).first()
         return None
 
 def get_user_profile(user):
