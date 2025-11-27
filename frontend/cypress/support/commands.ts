@@ -143,6 +143,9 @@ Cypress.Commands.add(
       win.localStorage.setItem("access", "mock-token");
       win.localStorage.setItem("refresh", "mock-refresh");
     });
+
+    // 4. Seta cookie de role (necessário para middleware)
+    cy.setCookie("role", role, { path: "/", sameSite: "lax" });
   },
 );
 
