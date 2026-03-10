@@ -7,6 +7,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
+import { calculateFraminghamScore } from "@/lib/pacientes/framingham";
+import { calcAgeFromBirth } from "@/lib/pacientes/utils";
 
 /** ───────── helpers ───────── */
 const parseDecimal = (raw: string) =>
@@ -90,7 +92,7 @@ export default function Step3Clinica() {
  * BLOCO — HIPERTENSÃO (HAS)
  * =========================== */
 function BlocoHAS() {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, control } = useFormContext();
   const complicacoes = watch("clinica.has.complicacoes") as
     | string[]
     | undefined;
@@ -145,6 +147,92 @@ function BlocoHAS() {
       // silencioso
     }
   }, [pesoHas, alturaHas, setValue]);
+
+  // ===== Cálculo automático do Framingham =====
+  const watchedFields = useWatch({
+    control,
+    name: [
+      "socio.nascimento",
+      "socio.genero",
+      "clinica.has.col_total",
+      "clinica.has.hdl",
+      "clinica.has.pa1_sis",
+      "clinica.has.pa2_sis",
+      "clinica.has.usa_medicacao",
+      "clinica.has.tabagismo",
+      "condicoes.dm",
+    ],
+  });
+
+  const [
+    nascimento,
+    genero,
+    colTotal,
+    hdl,
+    pa1Sis,
+    pa2Sis,
+    usaMedicacao,
+    tabagismo,
+    isDm,
+  ] = watchedFields;
+
+  const { result: framinghamResult, reason: missingReason } = useMemo(() => {
+    const age = calcAgeFromBirth(nascimento);
+    const tc =
+      typeof colTotal === "string" ? Number(parseDecimal(colTotal)) : colTotal;
+    const hdlNum = typeof hdl === "string" ? Number(parseDecimal(hdl)) : hdl;
+    const sbp = Number(pa1Sis || pa2Sis);
+
+    if (!age) return { result: null, reason: "idade" };
+    if (age < 30 || age > 74) return { result: null, reason: "faixa_etaria" };
+    if (!genero || (genero !== "M" && genero !== "F"))
+      return { result: null, reason: "genero" };
+    if (!tc || !hdlNum) return { result: null, reason: "colesterol" };
+    if (!sbp) return { result: null, reason: "pressao" };
+
+    const res = calculateFraminghamScore({
+      age,
+      sex: genero as "M" | "F",
+      totalCholesterol: tc,
+      hdlCholesterol: hdlNum,
+      systolicBP: sbp,
+      isTreatedForHypertension: usaMedicacao === "sim",
+      isSmoker: tabagismo === "atual",
+      isDiabetic: !!isDm,
+    });
+
+    return { result: res, reason: null };
+  }, [
+    nascimento,
+    genero,
+    colTotal,
+    hdl,
+    pa1Sis,
+    pa2Sis,
+    usaMedicacao,
+    tabagismo,
+    isDm,
+  ]);
+
+  useEffect(() => {
+    if (framinghamResult) {
+      setValue("clinica.has.framingham", framinghamResult.category, {
+        shouldDirty: true,
+      });
+    }
+  }, [framinghamResult, setValue]);
+
+  const reasonLabel = useMemo(() => {
+    if (!missingReason) return null;
+    const map: Record<string, string> = {
+      idade: "Aguardando data de nascimento...",
+      faixa_etaria: "Idade fora do alcance (30-74 anos)",
+      genero: "Aguardando definição de gênero...",
+      colesterol: "Informe Colesterol e HDL",
+      pressao: "Informe a Pressão Arterial",
+    };
+    return map[missingReason] || "Aguardando dados...";
+  }, [missingReason]);
 
   return (
     <section className="space-y-6">
@@ -338,25 +426,6 @@ function BlocoHAS() {
               name="clinica.has.circ_abdominal"
               valueParser={parseDecimal}
             />
-
-            <RHFInput
-              inputMode="decimal"
-              label="Colesterol total (mg/dL)"
-              name="clinica.has.col_total"
-              valueParser={parseDecimal}
-            />
-            <RHFDate
-              label="Data col. total"
-              name="clinica.has.col_total_data"
-            />
-
-            <RHFInput
-              inputMode="decimal"
-              label="HDL colesterol (mg/dL)"
-              name="clinica.has.hdl"
-              valueParser={parseDecimal}
-            />
-            <RHFDate label="Data HDL" name="clinica.has.hdl_data" />
           </div>
         </div>
       </fieldset>
@@ -380,16 +449,57 @@ function BlocoHAS() {
               { value: "estagio3", label: "Estágio 3" },
             ]}
           />
-          <RHFChipGroup
-            single
-            label="Score de Framingham"
-            name="clinica.has.framingham"
-            options={[
-              { value: "<10", label: "<10% (Baixo)" },
-              { value: "10-20", label: "10–20% (Moderado)" },
-              { value: ">20", label: ">20% (Alto)" },
-            ]}
-          />
+
+          <div className="space-y-4 rounded-xl bg-primary-50/50 p-4 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                Calculadora de Framingham
+              </h4>
+              {framinghamResult ? (
+                <span className="text-xs font-bold px-2 py-1 bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 rounded-full">
+                  {framinghamResult.score.toFixed(1)}% de risco
+                </span>
+              ) : (
+                <span className="text-[10px] font-medium text-foreground-400 italic">
+                  {reasonLabel}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <RHFInput
+                inputMode="decimal"
+                label="Colesterol total (mg/dL)"
+                name="clinica.has.col_total"
+                valueParser={parseDecimal}
+              />
+              <RHFInput
+                inputMode="decimal"
+                label="HDL colesterol (mg/dL)"
+                name="clinica.has.hdl"
+                valueParser={parseDecimal}
+              />
+            </div>
+
+            <RHFChipGroup
+              single
+              label="Score de Framingham (auto)"
+              name="clinica.has.framingham"
+              options={[
+                { value: "<10", label: "<10% (Baixo)" },
+                { value: "10-20", label: "10–20% (Moderado)" },
+                { value: ">20", label: ">20% (Alto)" },
+              ]}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <RHFDate
+                label="Data Colesterol"
+                name="clinica.has.col_total_data"
+              />
+              <RHFDate label="Data HDL" name="clinica.has.hdl_data" />
+            </div>
+          </div>
 
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <RHFChipGroup

@@ -14,13 +14,10 @@ export const Presentation = () => {
     <section className="relative min-h-[90vh] flex items-center ">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="flex items-center w-full justify-center py-4">
-            <Image
-              alt={""}
-              height={200}
-              src={"/RastreiaCardio.png"}
-              width={200}
-            />
+          <div className="flex items-center w-full justify-center py-8">
+            <h1 className="text-5xl md:text-6xl font-black text-primary tracking-tighter">
+              RastreiaCardio
+            </h1>
           </div>
 
           <p className="text-xl sm:text-2xl text-default-600 dark:text-gray-300 mb-8 leading-relaxed">

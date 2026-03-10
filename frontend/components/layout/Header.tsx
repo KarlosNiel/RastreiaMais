@@ -30,13 +30,9 @@ export const Header = () => {
               radius="full"
               variant="light"
             >
-              <Image
-                alt={""}
-                height={250}
-                src={"/RastreiaCardio.png"}
-                width={100}
-                className="h-10 w-auto object-contain"
-              />
+              <span className="text-xl font-bold text-primary tracking-tight">
+                RastreiaCardio
+              </span>
             </Button>
           </div>
 

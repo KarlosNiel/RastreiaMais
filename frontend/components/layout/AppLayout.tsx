@@ -28,13 +28,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <Link className="flex items-center gap-2" href="/">
-              <div className="flex items-center w-full justify-center py-4">
-                <Image
-                  alt={""}
-                  height={200}
-                  src={"/RastreiaCardio.png"}
-                  width={200}
-                />
+              <div className="flex items-center py-2">
+                <span className="text-xl font-bold text-primary tracking-tight">
+                  RastreiaCardio
+                </span>
               </div>
             </Link>
 
