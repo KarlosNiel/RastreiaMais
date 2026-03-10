@@ -1,4 +1,5 @@
 // frontend/components/layout/Footer.tsx
+import Image from "next/image";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -13,9 +14,14 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="font-bold text-lg bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-                Rastreia+
-              </span>
+              <div className="flex items-start w-full justify-start ">
+                <Image
+                  alt={""}
+                  height={200}
+                  src={"/RastreiaCardio.png"}
+                  width={200}
+                />
+              </div>
             </div>
             <div className="w-[80%]">
               <p className="text-md text-gray-600 dark:text-gray-400">

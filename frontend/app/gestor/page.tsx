@@ -246,7 +246,7 @@ export default function GestorPage() {
                               }`}
                             />
                           </div>
-                          <div>
+                          <div className="flex flex-col items-start">
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                               {a.patient?.user?.first_name ?? "—"}{" "}
                               {a.patient?.user?.last_name ?? "—"}{" "}

@@ -145,7 +145,7 @@ export default function GlobalError({
                 color="default"
                 href={`mailto:${encodeURIComponent(
                   supportEmail,
-                )}?subject=${encodeURIComponent("Erro no Rastreia+")}${
+                )}?subject=${encodeURIComponent("Erro no RastreiaCardio")}${
                   error?.digest
                     ? `&body=${encodeURIComponent(
                         `ID do erro (digest): ${error.digest}`,

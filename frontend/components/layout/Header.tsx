@@ -4,6 +4,7 @@ import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import Image from "next/image";
 
 import { useAuth } from "@/lib/hooks/useAuth";
 import { UserMenu } from "@/components/navbar/UserMenu";
@@ -21,17 +22,21 @@ export const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center mb-2.5">
             <Button
               as={Link}
-              className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
               href="/"
               radius="full"
               variant="light"
             >
-              <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-                Rastreia+
-              </span>
+              <Image
+                alt={""}
+                height={250}
+                src={"/RastreiaCardio.png"}
+                width={100}
+                className="h-10 w-auto object-contain"
+              />
             </Button>
           </div>
 

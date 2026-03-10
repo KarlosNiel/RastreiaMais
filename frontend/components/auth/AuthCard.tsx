@@ -49,7 +49,7 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
         <div className="flex w-full flex-col justify-center items-center p-8 lg:w-1/2 md:p-12">
           {/* Marca */}
           <div className="mb-6 text-2xl font-bold tracking-tight text-primary select-none mx-auto ">
-            Rastreia<span className="text-orange-500">+</span>
+            RastreiaCardio
           </div>
 
           {/* Título */}
@@ -75,7 +75,7 @@ export function AuthCard({ children, imageSrc, heading, className }: Props) {
 
           <Divider className="my-8" />
           <p className="text-center text-sm text-foreground/60 ">
-            © <time>{new Date().getFullYear()}</time> Rastreia+. Todos os
+            © <time>{new Date().getFullYear()}</time> RastreiaCardio. Todos os
             direitos reservados.
           </p>
         </div>

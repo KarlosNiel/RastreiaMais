@@ -7,15 +7,21 @@ import {
   UserGroupIcon,
   ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 export const Presentation = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center ">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-red-400 bg-clip-text text-transparent leading-tight">
-            Rastreia+
-          </h1>
+          <div className="flex items-center w-full justify-center py-4">
+            <Image
+              alt={""}
+              height={200}
+              src={"/RastreiaCardio.png"}
+              width={200}
+            />
+          </div>
 
           <p className="text-xl sm:text-2xl text-default-600 dark:text-gray-300 mb-8 leading-relaxed">
             Plataforma completa para auxiliar UBS e APS no gerenciamento de

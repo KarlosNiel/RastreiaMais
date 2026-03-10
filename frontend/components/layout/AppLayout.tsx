@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 
 import Nav from "@/components/navbar/Nav";
+import Image from "next/image";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -27,9 +28,14 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <Link className="flex items-center gap-2" href="/">
-              <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-                Rastreia+
-              </span>
+              <div className="flex items-center w-full justify-center py-4">
+                <Image
+                  alt={""}
+                  height={200}
+                  src={"/RastreiaCardio.png"}
+                  width={200}
+                />
+              </div>
             </Link>
 
             {/* Navegação principal */}
