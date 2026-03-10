@@ -14,6 +14,15 @@ import { calcAgeFromBirth } from "@/lib/pacientes/utils";
 const parseDecimal = (raw: string) =>
   raw?.trim() ? Number(raw.replace(/\./g, "").replace(",", ".")) : raw;
 
+const getImcClassification = (imc: number) => {
+  if (imc < 18.5) return { label: "Baixo peso", color: "text-blue-500" };
+  if (imc < 25) return { label: "Eutrofia (Normal)", color: "text-green-500" };
+  if (imc < 30) return { label: "Sobrepeso", color: "text-yellow-500" };
+  if (imc < 35) return { label: "Obesidade Grau I", color: "text-orange-500" };
+  if (imc < 40) return { label: "Obesidade Grau II", color: "text-orange-600" };
+  return { label: "Obesidade Grau III", color: "text-red-500" };
+};
+
 /** Campos mínimos deste step (caso queira validar algo “macro”). */
 export const STEP3_FIELDS = ["clinica"] as const;
 
@@ -104,6 +113,13 @@ function BlocoHAS() {
   // ===== Cálculo automático do IMC (HAS) =====
   const pesoHas = watch("clinica.has.peso");
   const alturaHas = watch("clinica.has.altura");
+  const imcHas = watch("clinica.has.imc");
+
+  const imcClass = useMemo(() => {
+    const val = Number(imcHas);
+    if (!val || isNaN(val)) return null;
+    return getImcClassification(val);
+  }, [imcHas]);
 
   useEffect(() => {
     try {
@@ -416,6 +432,13 @@ function BlocoHAS() {
             />
             <RHFInput
               isReadOnly
+              description={
+                imcClass ? (
+                  <span className={`font-bold ${imcClass.color}`}>
+                    {imcClass.label}
+                  </span>
+                ) : null
+              }
               label="IMC (auto)"
               name="clinica.has.imc"
               placeholder="auto"
@@ -536,6 +559,13 @@ function BlocoDM() {
   // ===== Cálculo automático do IMC (DM) =====
   const pesoDm = watch("clinica.dm.peso");
   const alturaDm = watch("clinica.dm.altura");
+  const imcDm = watch("clinica.dm.imc");
+
+  const imcClassDm = useMemo(() => {
+    const val = Number(imcDm);
+    if (!val || isNaN(val)) return null;
+    return getImcClassification(val);
+  }, [imcDm]);
 
   useEffect(() => {
     try {
@@ -724,6 +754,13 @@ function BlocoDM() {
             />
             <RHFInput
               isReadOnly
+              description={
+                imcClassDm ? (
+                  <span className={`font-bold ${imcClassDm.color}`}>
+                    {imcClassDm.label}
+                  </span>
+                ) : null
+              }
               label="IMC (auto)"
               name="clinica.dm.imc"
               placeholder="auto"

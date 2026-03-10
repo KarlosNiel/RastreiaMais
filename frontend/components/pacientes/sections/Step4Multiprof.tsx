@@ -17,7 +17,7 @@ export default function Step4Multiprof() {
   // condicionais
   const usoPsico = watch("multiprof.psico_uso_psicofarmaco");
   const diagPsico = watch("multiprof.psico_diagnostico");
-  const animaisCasa = watch("multiprof.ambi_animais_domicilio");
+  const animaisCasa = watch("multiprof.ambi_animais_domicilio_v2");
   const praticaAF = watch("multiprof.fisico_atividade");
   const precisaEnc = watch("multiprof.precisa_enc_multiprof");
   const encMultiprof = watch("multiprof.enc_multiprof") as string[] | undefined;
@@ -160,17 +160,17 @@ export default function Step4Multiprof() {
 
           <Divider />
 
-          {/* Riscos Ambientais */}
+          {/* Condicionantes Sociais */}
           <section className="space-y-4">
             <h3 className="text-sm font-medium text-foreground/80">
-              Riscos ambientais
+              Condicionantes sociais
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 rounded-2xl border border-default-200 p-4">
               <div className="space-y-4">
                 <RHFChipGroup
                   single
-                  label="Presença de animais domésticos no domicílio?"
+                  label="Possui rede de esgoto ou saneamento básico?"
                   name="multiprof.ambi_animais_domicilio"
                   options={[
                     { value: "sim", label: "Sim" },
@@ -178,28 +178,21 @@ export default function Step4Multiprof() {
                     { value: "nao_sabe", label: "Não sabe" },
                   ]}
                 />
-                {animaisCasa === "sim" && (
-                  <RHFInput
-                    label=""
-                    labelPlacement="outside"
-                    name="multiprof.ambi_animais_quais"
-                    placeholder="Ex.: cachorro, gato"
-                  />
-                )}
-
+                
                 <RHFChipGroup
                   single
-                  label="Você já apresentou feridas que demoram a cicatrizar após arranhões ou mordidas de animais?"
+                  label="Possui abastecimento de água tratada em casa?"
                   name="multiprof.ambi_feridas_demoram"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
+                    { value: "nao_sabe", label: "Não sabe" },
                   ]}
                 />
 
                 <RHFChipGroup
                   single
-                  label="Seus animais estão vacinados (ex.: antirrábica, múltipla, etc.)?"
+                  label="Existe coleta de lixo regular na sua residência?"
                   name="multiprof.ambi_animais_vacinados"
                   options={[
                     { value: "sim", label: "Sim" },
@@ -207,6 +200,24 @@ export default function Step4Multiprof() {
                     { value: "nao_sabe", label: "Não sabe" },
                   ]}
                 />
+
+                <RHFChipGroup
+                  single
+                  label="Presença de animais domésticos no domicílio?"
+                  name="multiprof.ambi_animais_domicilio_v2"
+                  options={[
+                    { value: "sim", label: "Sim" },
+                    { value: "nao", label: "Não" },
+                  ]}
+                />
+                {animaisCasa === "sim" && (
+                   <RHFInput
+                     label=""
+                     labelPlacement="outside"
+                     name="multiprof.ambi_animais_quais"
+                     placeholder="Quais animais?"
+                   />
+                )}
               </div>
 
               <div className="space-y-4">
@@ -233,7 +244,7 @@ export default function Step4Multiprof() {
 
                 <RHFChipGroup
                   single
-                  label="Você costuma ter contato direto com sangue, fezes ou urina de animais?"
+                  label="Considera sua moradia em condições adequadas (ventilação, umidade, etc.)?"
                   name="multiprof.ambi_contato_sangue_fezes_urina"
                   options={[
                     { value: "sim", label: "Sim" },
@@ -244,7 +255,7 @@ export default function Step4Multiprof() {
 
                 <RHFChipGroup
                   single
-                  label="Já recebeu orientação sobre zoonoses durante seu acompanhamento de saúde?"
+                  label="Já recebeu orientação sobre prevenção de doenças ambientais/zoonoses?"
                   name="multiprof.ambi_orientacao_zoonoses"
                   options={[
                     { value: "sim", label: "Sim" },
