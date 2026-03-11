@@ -7,7 +7,6 @@ import {
   UserGroupIcon,
   ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
-import Image from "next/image";
 
 export const Presentation = () => {
   return (
@@ -21,8 +20,8 @@ export const Presentation = () => {
           </div>
 
           <p className="text-xl sm:text-2xl text-default-600 dark:text-gray-300 mb-8 leading-relaxed">
-            Plataforma completa para auxiliar UBS e APS no gerenciamento de
-            dados de pacientes com doenças crônicas não transmissíveis
+            Plataforma completa para auxiliar equipes no gerenciamento de dados
+            de pacientes com doenças crônicas não transmissíveis.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

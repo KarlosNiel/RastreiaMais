@@ -4,8 +4,8 @@ import { Card, CardBody } from "@heroui/react";
 import {
   HeartIcon,
   DocumentTextIcon,
-  CalendarIcon,
   WindowIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 export const Features = () => {
@@ -27,10 +27,10 @@ export const Features = () => {
       bgColor: "bg-secondary-100 dark:bg-secondary-500/10",
     },
     {
-      icon: CalendarIcon,
-      title: "Agendamento",
+      icon: UserGroupIcon,
+      title: "Avaliação Multiprofissional",
       description:
-        "Sistema integrado para gestão de consultas e acompanhamento",
+        "Avaliação integrada considerando os determinantes e condicionantes de saúde",
       color: "text-success",
       bgColor: "bg-success-100 dark:bg-success-500/10",
     },
