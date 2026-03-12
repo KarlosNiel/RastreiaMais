@@ -3,7 +3,7 @@ export const app = {
   name: "Rastreia+",
   description: "Monitoramento de DCNT na APS",
   links: {
-    supportEmail: "suporterastreia+@gmail.com",
+    supportEmail: "suporterastreiacardio@gmail.com",
   },
 };
 
