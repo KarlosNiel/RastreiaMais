@@ -10,7 +10,7 @@ type ToastColor = NonNullable<ButtonProps["color"]>;
 export function notify(
   title: string,
   description?: string,
-  opts?: { variant?: ToastVariant; color?: ToastColor }
+  opts?: { variant?: ToastVariant; color?: ToastColor },
 ) {
   addToast({
     title,

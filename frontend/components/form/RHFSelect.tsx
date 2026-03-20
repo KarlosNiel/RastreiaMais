@@ -1,9 +1,9 @@
-// components/form/RHFSelect.tsx
 "use client";
 
-import { Select, SelectItem, type SelectProps } from "@heroui/react";
 import type { Key } from "@react-types/shared";
-import { useMemo } from "react";
+
+import { Select, SelectItem, type SelectProps } from "@heroui/react";
+// ❌ removido: import { useMemo } from "react";
 import {
   Controller,
   useFormContext,
@@ -54,14 +54,15 @@ export function RHFSelect<T extends FieldValues>({
     <Controller
       control={control}
       name={name}
-      rules={rules}
       render={({ field, fieldState }) => {
         // ---- value -> selectedKeys (sempre Set<Key> com strings)
-        const selectedKeys = useMemo<Set<Key>>(() => {
+        const selectedKeys: Set<Key> = (() => {
           if (isMultiple) {
             const arr = Array.isArray(field.value) ? field.value : [];
+
             return new Set<Key>(arr.map((v) => String(v) as Key));
           }
+
           if (
             field.value === undefined ||
             field.value === null ||
@@ -69,15 +70,18 @@ export function RHFSelect<T extends FieldValues>({
           ) {
             return new Set<Key>();
           }
+
           return new Set<Key>([String(field.value) as Key]);
-        }, [field.value, isMultiple]);
+        })();
 
         // ---- onSelectionChange (HeroUI -> RHF)
         const handleSelection = (keys: "all" | Set<Key>) => {
           if (keys === "all") return; // não usamos 'all'
+
           // Set<Key> -> string[]
           const arr = Array.from(keys).map((k) => String(k));
           const next = isMultiple ? arr : arr[0];
+
           field.onChange(next);
           onValueChange?.(next);
         };
@@ -87,24 +91,22 @@ export function RHFSelect<T extends FieldValues>({
         return (
           <Select
             {...rest}
-            classNames={
-              {
-                trigger: "dark:bg-gray-800"
-              }
-            }
-            selectionMode={selectionMode}
-            selectedKeys={selectedKeys as Iterable<Key>}
-            onSelectionChange={handleSelection}
-            labelPlacement={labelPlacement}
-            isInvalid={!!fieldState.error}
+            classNames={{
+              trigger: "dark:bg-gray-800",
+            }}
             errorMessage={fieldState.error?.message}
+            isInvalid={!!fieldState.error}
+            labelPlacement={labelPlacement}
+            selectedKeys={selectedKeys as Iterable<Key>}
+            selectionMode={selectionMode}
+            onSelectionChange={handleSelection}
           >
             {items.map((opt) => (
               <SelectItem
                 key={opt.key}
-                textValue={opt.label}
-                isDisabled={opt.disabled}
                 description={opt.description}
+                isDisabled={opt.disabled}
+                textValue={opt.label}
               >
                 {opt.label}
               </SelectItem>
@@ -112,6 +114,7 @@ export function RHFSelect<T extends FieldValues>({
           </Select>
         );
       }}
+      rules={rules}
     />
   );
 }

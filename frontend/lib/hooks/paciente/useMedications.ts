@@ -1,5 +1,6 @@
 // lib/hooks/paciente/useMedications.ts
 import { useQuery } from "@tanstack/react-query";
+
 import { listMedications, type MedicationDto } from "@/lib/api/medications";
 
 export interface MedicationCardItem {
@@ -22,7 +23,9 @@ function mapToCardItems(items: MedicationDto[]): MedicationCardItem[] {
     .filter((med) => {
       if (!med.end_date) return true;
       const end = new Date(med.end_date);
+
       if (Number.isNaN(end.getTime())) return true;
+
       return end >= today;
     })
     .map((med) => ({
@@ -40,9 +43,11 @@ export function useMedications() {
     queryFn: async () => {
       try {
         const meds = await listMedications();
+
         return mapToCardItems(meds);
       } catch (error) {
         console.error("Erro ao buscar medicações:", error);
+
         return [];
       }
     },
@@ -50,6 +55,7 @@ export function useMedications() {
     staleTime: 1000 * 60 * 5,
     retry: (failureCount, error: any) => {
       if ((error as any)?.status === 401) return false;
+
       return failureCount < 2;
     },
   });

@@ -1,4 +1,5 @@
 // frontend/components/layout/Footer.tsx
+import Image from "next/image";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -13,8 +14,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="font-bold text-lg bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-                Rastreia+
+              <span className="text-2xl font-bold text-primary tracking-tight">
+                RastreiaCardio
               </span>
             </div>
             <div className="w-[80%]">
@@ -43,14 +44,6 @@ export const Footer = () => {
                   href="/#seguranca"
                 >
                   Segurança
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="/#planos"
-                >
-                  Preços
                 </Link>
               </li>
             </ul>

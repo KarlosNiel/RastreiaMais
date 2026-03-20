@@ -1,15 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@/lib/api";
 import type { KpiItem } from "@/lib/profissional-kpis";
+
+import { useQuery } from "@tanstack/react-query";
+
+import { apiGet } from "@/lib/api";
 
 export function useProfissionalKpis() {
   const pacientesQuery = useQuery({
     queryKey: ["pacientes"],
     queryFn: async () => {
       const resp = await apiGet("/api/v1/accounts/patients/");
-      return Array.isArray(resp) ? resp : resp?.results ?? [];
+
+      return Array.isArray(resp) ? resp : (resp?.results ?? []);
     },
   });
 
@@ -17,7 +20,8 @@ export function useProfissionalKpis() {
     queryKey: ["appointments"],
     queryFn: async () => {
       const resp = await apiGet("/api/v1/appointments/appointments/");
-      return Array.isArray(resp) ? resp : resp?.results ?? [];
+
+      return Array.isArray(resp) ? resp : (resp?.results ?? []);
     },
   });
 
@@ -25,7 +29,8 @@ export function useProfissionalKpis() {
     queryKey: ["alerts"],
     queryFn: async () => {
       const resp = await apiGet("/api/v1/alerts/alerts/");
-      return Array.isArray(resp) ? resp : resp?.results ?? [];
+
+      return Array.isArray(resp) ? resp : (resp?.results ?? []);
     },
   });
 
@@ -35,9 +40,7 @@ export function useProfissionalKpis() {
     alertsQuery.isLoading;
 
   const isError =
-    pacientesQuery.isError ||
-    appointmentsQuery.isError ||
-    alertsQuery.isError;
+    pacientesQuery.isError || appointmentsQuery.isError || alertsQuery.isError;
 
   if (isLoading) {
     return { isLoading: true, isError: false, data: [] as KpiItem[] };
@@ -55,13 +58,13 @@ export function useProfissionalKpis() {
   const totalPatients = pacientes.length;
 
   const riskPatients = appointments.filter(
-    (a: any) => a.risk_level === "Crítico" || a.risk_level === "Moderado"
+    (a: any) => a.risk_level === "Crítico",
   ).length;
 
   const appointmentsCount = appointments.length;
 
   const criticalAlerts = alerts.filter(
-    (a: any) => a.risk_level === "critical"
+    (a: any) => a.risk_level === "critical",
   ).length;
 
   const kpis: KpiItem[] = [
@@ -73,7 +76,7 @@ export function useProfissionalKpis() {
     },
     {
       key: "riskPatients",
-      label: "Pacientes em Risco",
+      label: "Agendamentos de Risco",
       value: riskPatients,
       accent: "amber",
     },

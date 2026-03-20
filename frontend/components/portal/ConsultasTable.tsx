@@ -1,7 +1,6 @@
 // components/paciente/ConsultasTable.tsx
 "use client";
 
-import { StatusChip } from "@/components/ui/StatusChip";
 import {
   Pagination,
   Table,
@@ -14,6 +13,8 @@ import {
 } from "@heroui/react";
 import { EyeIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+
+import { StatusChip } from "@/components/ui/StatusChip";
 
 export type ConsultaRow = {
   id: string;
@@ -30,7 +31,7 @@ type Props = {
   initialPage?: number;
   initialRowsPerPage?: number;
   className?: string;
-  onView?: (row: ConsultaRow) => void; 
+  onView?: (row: ConsultaRow) => void;
 };
 
 export function ConsultasTable({
@@ -46,19 +47,35 @@ export function ConsultasTable({
 
   const visible = useMemo(
     () => rows.slice((page - 1) * rowsPerPage, page * rowsPerPage),
-    [page, rows, rowsPerPage]
+    [page, rows, rowsPerPage],
   );
 
   return (
     <div className={className}>
-      <Table aria-label="Tabela de consultas do paciente" removeWrapper className="overflow-x-auto">
+      <Table
+        removeWrapper
+        aria-label="Tabela de consultas do paciente"
+        className="overflow-x-auto"
+      >
         <TableHeader>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Profissional</TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Cargo</TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Local</TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Horário</TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Data</TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">Status</TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Profissional
+          </TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Cargo
+          </TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Local
+          </TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Horário
+          </TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Data
+          </TableColumn>
+          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+            Status
+          </TableColumn>
           <TableColumn className="text-sm dark:text-white dark:bg-gray-800 w-[110px]">
             Ações
           </TableColumn>
@@ -77,10 +94,10 @@ export function ConsultasTable({
               <TableCell className="whitespace-nowrap">
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex size-7 items-center justify-center rounded-full border border-divider">
-                    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                    <svg aria-hidden className="size-4" viewBox="0 0 24 24">
                       <path
-                        fill="currentColor"
                         d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5Z"
+                        fill="currentColor"
                       />
                     </svg>
                   </span>
@@ -89,18 +106,20 @@ export function ConsultasTable({
               </TableCell>
 
               <TableCell>{r.cargo}</TableCell>
-              <TableCell className="max-w-[260px] truncate">{r.local}</TableCell>
+              <TableCell className="max-w-[260px] truncate">
+                {r.local}
+              </TableCell>
               <TableCell>{r.hora}</TableCell>
               <TableCell>{r.data}</TableCell>
 
               <TableCell className="">
                 <StatusChip
-                  size="sm"
                   className={`
                     ${r.status === "ativo" ? "bg-green-500/15 text-green-700 dark:text-green-300" : ""}
                     ${r.status === "finalizado" ? "bg-gray-500/15 text-gray-600 dark:text-gray-400" : ""}
                     ${r.status === "cancelado" ? "bg-red-500/15 text-red-600 dark:text-red-400" : ""}
                   `}
+                  size="sm"
                 >
                   {r.status}
                 </StatusChip>
@@ -108,8 +127,8 @@ export function ConsultasTable({
 
               <TableCell className="">
                 <Button
-                  className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
                   isIconOnly
+                  className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
                   onPress={() => onView?.(r)}
                 >
                   <EyeIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -122,13 +141,13 @@ export function ConsultasTable({
 
       <div className="mt-4 flex justify-center">
         <Pagination
+          isCompact
+          showControls
           classNames={{
             next: "dark:bg-gray-800",
             prev: "dark:bg-gray-800",
             item: "dark:bg-gray-800",
           }}
-          isCompact
-          showControls
           page={page}
           total={pages}
           onChange={setPage}

@@ -1,15 +1,27 @@
 "use client";
 
-import { RHFChipGroup } from "@/components/form/RHFChipGroup";
-import { RHFDate } from "@/components/form/RHFDate";
-import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
 import { useEffect, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
+import { RHFChipGroup } from "@/components/form/RHFChipGroup";
+import { RHFDate } from "@/components/form/RHFDate";
+import { RHFInput } from "@/components/form/RHFInput";
+import { calculateFraminghamScore } from "@/lib/pacientes/framingham";
+import { calcAgeFromBirth } from "@/lib/pacientes/utils";
+
 /** ───────── helpers ───────── */
 const parseDecimal = (raw: string) =>
   raw?.trim() ? Number(raw.replace(/\./g, "").replace(",", ".")) : raw;
+
+const getImcClassification = (imc: number) => {
+  if (imc < 18.5) return { label: "Baixo peso", color: "text-blue-500" };
+  if (imc < 25) return { label: "Eutrofia (Normal)", color: "text-green-500" };
+  if (imc < 30) return { label: "Sobrepeso", color: "text-yellow-500" };
+  if (imc < 35) return { label: "Obesidade Grau I", color: "text-orange-500" };
+  if (imc < 40) return { label: "Obesidade Grau II", color: "text-orange-600" };
+  return { label: "Obesidade Grau III", color: "text-red-500" };
+};
 
 /** Campos mínimos deste step (caso queira validar algo “macro”). */
 export const STEP3_FIELDS = ["clinica"] as const;
@@ -23,6 +35,7 @@ export function getStep3FieldsDynamic({
   dm: boolean;
 }) {
   const base: string[] = [];
+
   if (has) {
     base.push(
       "clinica.has.diag_has",
@@ -32,16 +45,17 @@ export function getStep3FieldsDynamic({
       "clinica.has.pa1_sis",
       "clinica.has.pa1_dia",
       "clinica.has.pa2_sis",
-      "clinica.has.pa2_dia"
+      "clinica.has.pa2_dia",
     );
   }
   if (dm) {
     base.push(
       "clinica.dm.diag_dm",
       "clinica.dm.usa_medicacao",
-      "clinica.dm.historico_familiar"
+      "clinica.dm.historico_familiar",
     );
   }
+
   return base as (keyof any)[];
 }
 
@@ -55,8 +69,8 @@ export default function Step3Clinica() {
   return (
     <div className="space-y-6">
       <Card
-        shadow="none"
         className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        shadow="none"
       >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">3. Avaliação Clínica</h2>
@@ -87,18 +101,25 @@ export default function Step3Clinica() {
  * BLOCO — HIPERTENSÃO (HAS)
  * =========================== */
 function BlocoHAS() {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, control } = useFormContext();
   const complicacoes = watch("clinica.has.complicacoes") as
     | string[]
     | undefined;
   const showOutra = useMemo(
     () => complicacoes?.includes("outra"),
-    [complicacoes]
+    [complicacoes],
   );
 
   // ===== Cálculo automático do IMC (HAS) =====
   const pesoHas = watch("clinica.has.peso");
   const alturaHas = watch("clinica.has.altura");
+  const imcHas = watch("clinica.has.imc");
+
+  const imcClass = useMemo(() => {
+    const val = Number(imcHas);
+    if (!val || isNaN(val)) return null;
+    return getImcClassification(val);
+  }, [imcHas]);
 
   useEffect(() => {
     try {
@@ -115,21 +136,25 @@ function BlocoHAS() {
           shouldDirty: true,
           shouldTouch: false,
         });
+
         return;
       }
 
       // se altura em cm (>3), converter para metros
       const alturaM = alturaNum > 3 ? alturaNum / 100 : alturaNum;
+
       if (alturaM <= 0) {
         setValue("clinica.has.imc", undefined, {
           shouldDirty: true,
           shouldTouch: false,
         });
+
         return;
       }
 
       const imc = pesoNum / (alturaM * alturaM);
       const imcRounded = Math.round(imc * 10) / 10;
+
       setValue("clinica.has.imc", imcRounded, {
         shouldDirty: true,
         shouldTouch: false,
@@ -138,6 +163,92 @@ function BlocoHAS() {
       // silencioso
     }
   }, [pesoHas, alturaHas, setValue]);
+
+  // ===== Cálculo automático do Framingham =====
+  const watchedFields = useWatch({
+    control,
+    name: [
+      "socio.nascimento",
+      "socio.genero",
+      "clinica.has.col_total",
+      "clinica.has.hdl",
+      "clinica.has.pa1_sis",
+      "clinica.has.pa2_sis",
+      "clinica.has.usa_medicacao",
+      "clinica.has.tabagismo",
+      "condicoes.dm",
+    ],
+  });
+
+  const [
+    nascimento,
+    genero,
+    colTotal,
+    hdl,
+    pa1Sis,
+    pa2Sis,
+    usaMedicacao,
+    tabagismo,
+    isDm,
+  ] = watchedFields;
+
+  const { result: framinghamResult, reason: missingReason } = useMemo(() => {
+    const age = calcAgeFromBirth(nascimento);
+    const tc =
+      typeof colTotal === "string" ? Number(parseDecimal(colTotal)) : colTotal;
+    const hdlNum = typeof hdl === "string" ? Number(parseDecimal(hdl)) : hdl;
+    const sbp = Number(pa1Sis || pa2Sis);
+
+    if (!age) return { result: null, reason: "idade" };
+    if (age < 30 || age > 74) return { result: null, reason: "faixa_etaria" };
+    if (!genero || (genero !== "M" && genero !== "F"))
+      return { result: null, reason: "genero" };
+    if (!tc || !hdlNum) return { result: null, reason: "colesterol" };
+    if (!sbp) return { result: null, reason: "pressao" };
+
+    const res = calculateFraminghamScore({
+      age,
+      sex: genero as "M" | "F",
+      totalCholesterol: tc,
+      hdlCholesterol: hdlNum,
+      systolicBP: sbp,
+      isTreatedForHypertension: usaMedicacao === "sim",
+      isSmoker: tabagismo === "atual",
+      isDiabetic: !!isDm,
+    });
+
+    return { result: res, reason: null };
+  }, [
+    nascimento,
+    genero,
+    colTotal,
+    hdl,
+    pa1Sis,
+    pa2Sis,
+    usaMedicacao,
+    tabagismo,
+    isDm,
+  ]);
+
+  useEffect(() => {
+    if (framinghamResult) {
+      setValue("clinica.has.framingham", framinghamResult.category, {
+        shouldDirty: true,
+      });
+    }
+  }, [framinghamResult, setValue]);
+
+  const reasonLabel = useMemo(() => {
+    if (!missingReason) return null;
+    const map: Record<string, string> = {
+      idade: "Aguardando data de nascimento...",
+      faixa_etaria: "Idade fora do alcance (30-74 anos)",
+      genero: "Aguardando definição de gênero...",
+      colesterol: "Informe Colesterol e HDL",
+      pressao: "Informe a Pressão Arterial",
+    };
+    return map[missingReason] || "Aguardando dados...";
+  }, [missingReason]);
 
   return (
     <section className="space-y-6">
@@ -152,60 +263,60 @@ function BlocoHAS() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.has.diag_has"
+              single
               label="Já foi diagnosticado com hipertensão?"
+              name="clinica.has.diag_has"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
+              single
               className="pb-4"
-              name="clinica.has.usa_medicacao"
               label="Usa medicação?"
+              name="clinica.has.usa_medicacao"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "irregular", label: "Irregular" },
                 { value: "nao_se_aplica", label: "N.S.A." },
               ]}
-              single
             />
             <RHFInput
-              name="clinica.has.medicamentos"
               label="Medicamentos (opcional)"
+              name="clinica.has.medicamentos"
               placeholder="Ex.: Losartana 50mg"
             />
           </div>
 
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.has.historico_familiar"
+              single
               label="Histórico familiar"
+              name="clinica.has.historico_familiar"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.has.complicacoes"
+              multiple
               label="Complicações relacionadas"
+              name="clinica.has.complicacoes"
               options={[
                 { value: "avc", label: "AVC" },
                 { value: "infarto", label: "Infarto" },
                 { value: "renal", label: "Doença renal" },
                 { value: "outra", label: "Outra" },
               ]}
-              multiple
             />
             {showOutra && (
               <RHFInput
-                name="clinica.has.complicacao_outra"
                 label="Descrever complicação"
+                name="clinica.has.complicacao_outra"
                 placeholder="Ex.: Retinopatia"
               />
             )}
@@ -223,48 +334,49 @@ function BlocoHAS() {
           {/* Lifestyle */}
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.has.estilo_alimentacao"
+              single
               label="Alimentação"
+              name="clinica.has.estilo_alimentacao"
               options={[
                 { value: "saudavel", label: "Saudável" },
                 { value: "parcial", label: "Parcialmente saudável" },
                 { value: "pouco", label: "Pouco saudável" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.has.sal"
+              single
               label="Consumo de sal"
+              name="clinica.has.sal"
               options={[
                 { value: "adequado", label: "Adequado" },
                 { value: "exagerado", label: "Exagerado" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.has.alcool"
+              single
               label="Álcool"
+              name="clinica.has.alcool"
               options={[
                 { value: "nao_bebe", label: "Não bebe" },
                 { value: "socialmente", label: "Socialmente" },
                 { value: "frequentemente", label: "Frequentemente" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.has.tabagismo"
+              single
               label="Tabagismo"
+              name="clinica.has.tabagismo"
               options={[
                 { value: "nunca", label: "Nunca" },
                 { value: "ex", label: "Ex-fumante" },
                 { value: "atual", label: "Atual" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.has.ultima_consulta_has"
+              single
               label="Última consulta (HAS)"
+              name="clinica.has.ultima_consulta_has"
               options={[
                 { value: "7d", label: "7 dias" },
                 { value: "15d", label: "15 dias" },
@@ -275,7 +387,6 @@ function BlocoHAS() {
                 { value: "1a", label: "1 ano" },
                 { value: ">1a", label: ">1 ano" },
               ]}
-              single
             />
           </div>
 
@@ -283,73 +394,61 @@ function BlocoHAS() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* PA em pares */}
             <RHFInput
-              name="clinica.has.pa1_sis"
+              numericOnly
+              inputMode="numeric"
               label="PA 1ª – Sistólica (mmHg)"
-              inputMode="numeric"
-              numericOnly
+              name="clinica.has.pa1_sis"
             />
             <RHFInput
-              name="clinica.has.pa1_dia"
+              numericOnly
+              inputMode="numeric"
               label="PA 1ª – Diastólica (mmHg)"
-              inputMode="numeric"
-              numericOnly
+              name="clinica.has.pa1_dia"
             />
             <RHFInput
-              name="clinica.has.pa2_sis"
+              numericOnly
+              inputMode="numeric"
               label="PA 2ª – Sistólica (mmHg)"
-              inputMode="numeric"
-              numericOnly
+              name="clinica.has.pa2_sis"
             />
             <RHFInput
-              name="clinica.has.pa2_dia"
-              label="PA 2ª – Diastólica (mmHg)"
-              inputMode="numeric"
               numericOnly
+              inputMode="numeric"
+              label="PA 2ª – Diastólica (mmHg)"
+              name="clinica.has.pa2_dia"
             />
 
             <RHFInput
-              name="clinica.has.peso"
+              inputMode="decimal"
               label="Peso (kg)"
-              inputMode="decimal"
+              name="clinica.has.peso"
               valueParser={parseDecimal}
             />
             <RHFInput
-              name="clinica.has.altura"
+              inputMode="decimal"
               label="Altura (cm)"
-              inputMode="decimal"
+              name="clinica.has.altura"
               valueParser={parseDecimal}
             />
             <RHFInput
-              name="clinica.has.imc"
-              label="IMC (auto)"
               isReadOnly
+              description={
+                imcClass ? (
+                  <span className={`font-bold ${imcClass.color}`}>
+                    {imcClass.label}
+                  </span>
+                ) : null
+              }
+              label="IMC (auto)"
+              name="clinica.has.imc"
               placeholder="auto"
             />
             <RHFInput
-              name="clinica.has.circ_abdominal"
+              inputMode="decimal"
               label="Circ. abdominal (cm)"
-              inputMode="decimal"
+              name="clinica.has.circ_abdominal"
               valueParser={parseDecimal}
             />
-
-            <RHFInput
-              name="clinica.has.col_total"
-              label="Colesterol total (mg/dL)"
-              inputMode="decimal"
-              valueParser={parseDecimal}
-            />
-            <RHFDate
-              name="clinica.has.col_total_data"
-              label="Data col. total"
-            />
-
-            <RHFInput
-              name="clinica.has.hdl"
-              label="HDL colesterol (mg/dL)"
-              inputMode="decimal"
-              valueParser={parseDecimal}
-            />
-            <RHFDate name="clinica.has.hdl_data" label="Data HDL" />
           </div>
         </div>
       </fieldset>
@@ -362,8 +461,9 @@ function BlocoHAS() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RHFChipGroup
-            name="clinica.has.classificacao_pa"
+            single
             label="Classificação da P.A"
+            name="clinica.has.classificacao_pa"
             options={[
               { value: "normal", label: "Normal" },
               { value: "pre_hipertenso", label: "Pré-hipertenso" },
@@ -371,34 +471,74 @@ function BlocoHAS() {
               { value: "estagio2", label: "Estágio 2" },
               { value: "estagio3", label: "Estágio 3" },
             ]}
-            single
           />
-          <RHFChipGroup
-            name="clinica.has.framingham"
-            label="Score de Framingham"
-            options={[
-              { value: "<10", label: "<10% (Baixo)" },
-              { value: "10-20", label: "10–20% (Moderado)" },
-              { value: ">20", label: ">20% (Alto)" },
-            ]}
-            single
-          />
+
+          <div className="space-y-4 rounded-xl bg-primary-50/50 p-4 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                Calculadora de Framingham
+              </h4>
+              {framinghamResult ? (
+                <span className="text-xs font-bold px-2 py-1 bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 rounded-full">
+                  {framinghamResult.score.toFixed(1)}% de risco
+                </span>
+              ) : (
+                <span className="text-[10px] font-medium text-foreground-400 italic">
+                  {reasonLabel}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <RHFInput
+                inputMode="decimal"
+                label="Colesterol total (mg/dL)"
+                name="clinica.has.col_total"
+                valueParser={parseDecimal}
+              />
+              <RHFInput
+                inputMode="decimal"
+                label="HDL colesterol (mg/dL)"
+                name="clinica.has.hdl"
+                valueParser={parseDecimal}
+              />
+            </div>
+
+            <RHFChipGroup
+              single
+              label="Score de Framingham (auto)"
+              name="clinica.has.framingham"
+              options={[
+                { value: "<10", label: "<10% (Baixo)" },
+                { value: "10-20", label: "10–20% (Moderado)" },
+                { value: ">20", label: ">20% (Alto)" },
+              ]}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <RHFDate
+                label="Data Colesterol"
+                name="clinica.has.col_total_data"
+              />
+              <RHFDate label="Data HDL" name="clinica.has.hdl_data" />
+            </div>
+          </div>
 
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <RHFChipGroup
-              name="clinica.has.condutas"
+              multiple
               label="Conduta adotada"
+              name="clinica.has.condutas"
               options={[
                 { value: "aps", label: "Acompanhamento na APS" },
                 { value: "encaminhamento", label: "Encaminhamento" },
                 { value: "grupo", label: "Grupo/educação" },
                 { value: "outro", label: "Outro" },
               ]}
-              multiple
             />
             <RHFInput
-              name="clinica.has.conduta_outro"
               label="Descrever (se 'Outro')"
+              name="clinica.has.conduta_outro"
               placeholder="Descreva"
             />
           </div>
@@ -419,6 +559,13 @@ function BlocoDM() {
   // ===== Cálculo automático do IMC (DM) =====
   const pesoDm = watch("clinica.dm.peso");
   const alturaDm = watch("clinica.dm.altura");
+  const imcDm = watch("clinica.dm.imc");
+
+  const imcClassDm = useMemo(() => {
+    const val = Number(imcDm);
+    if (!val || isNaN(val)) return null;
+    return getImcClassification(val);
+  }, [imcDm]);
 
   useEffect(() => {
     try {
@@ -434,20 +581,24 @@ function BlocoDM() {
           shouldDirty: true,
           shouldTouch: false,
         });
+
         return;
       }
 
       const alturaM = alturaNum > 3 ? alturaNum / 100 : alturaNum;
+
       if (alturaM <= 0) {
         setValue("clinica.dm.imc", undefined, {
           shouldDirty: true,
           shouldTouch: false,
         });
+
         return;
       }
 
       const imc = pesoNum / (alturaM * alturaM);
       const imcRounded = Math.round(imc * 10) / 10;
+
       setValue("clinica.dm.imc", imcRounded, {
         shouldDirty: true,
         shouldTouch: false,
@@ -470,59 +621,60 @@ function BlocoDM() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.dm.diag_dm"
+              single
               label="Já foi diagnosticado com diabetes?"
+              name="clinica.dm.diag_dm"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.usa_medicacao"
+              single
               label="Usa medicação?"
+              name="clinica.dm.usa_medicacao"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "irregular", label: "Irregular" },
                 { value: "nao_se_aplica", label: "N.S.A." },
               ]}
-              single
             />
             <RHFChipGroup
+              multiple
               className="pb-4"
-              name="clinica.dm.tipo_tratamento"
               label="Tipo de tratamento"
+              name="clinica.dm.tipo_tratamento"
               options={[
                 { value: "medicamentoso", label: "Medicamentoso (oral)" },
                 { value: "insulina", label: "Insulina" },
                 { value: "alimentar", label: "Alimentar/estilo de vida" },
                 { value: "outro", label: "Outro" },
               ]}
-              multiple
             />
             <RHFInput
-              name="clinica.dm.medicamentos"
               label="Medicamentos (opcional)"
+              name="clinica.dm.medicamentos"
               placeholder="Descreva"
             />
           </div>
 
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.dm.historico_familiar"
+              single
               label="Histórico familiar"
+              name="clinica.dm.historico_familiar"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.comorbidades"
+              multiple
               label="Comorbidades"
+              name="clinica.dm.comorbidades"
               options={[
                 { value: "cardiaca", label: "Cardíaca" },
                 { value: "renal", label: "Renal" },
@@ -530,21 +682,20 @@ function BlocoDM() {
                 { value: "vascular", label: "Vascular" },
                 { value: "outra", label: "Outra" },
               ]}
-              multiple
             />
             <RHFChipGroup
-              name="clinica.dm.pe_diabetico"
+              single
               label="Pé diabético"
+              name="clinica.dm.pe_diabetico"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             {showMembro && (
               <RHFInput
-                name="clinica.dm.pe_diabetico_membro"
                 label="Membro acometido"
+                name="clinica.dm.pe_diabetico_membro"
                 placeholder="Ex.: D/E"
               />
             )}
@@ -562,55 +713,62 @@ function BlocoDM() {
           {/* Exames & medidas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <RHFInput
-              name="clinica.dm.glicemia_aleatoria"
-              label="Glicemia capilar (aleatória)"
-              placeholder="mg/dL"
               inputMode="decimal"
+              label="Glicemia capilar (aleatória)"
+              name="clinica.dm.glicemia_aleatoria"
+              placeholder="mg/dL"
               valueParser={parseDecimal}
             />
             <RHFInput
-              name="clinica.dm.glicemia_jejum"
-              label="Glicemia capilar em jejum"
-              placeholder="mg/dL"
               inputMode="decimal"
+              label="Glicemia capilar em jejum"
+              name="clinica.dm.glicemia_jejum"
+              placeholder="mg/dL"
               valueParser={parseDecimal}
             />
             <RHFDate
-              name="clinica.dm.glicemia_jejum_data"
               label="Data (jejum)"
+              name="clinica.dm.glicemia_jejum_data"
             />
 
             <RHFInput
-              name="clinica.dm.hba1c"
+              inputMode="decimal"
               label="Hemoglobina glicada (HbA1c)"
+              name="clinica.dm.hba1c"
               placeholder="%"
-              inputMode="decimal"
               valueParser={parseDecimal}
             />
-            <RHFDate name="clinica.dm.hba1c_data" label="Data HbA1c" />
+            <RHFDate label="Data HbA1c" name="clinica.dm.hba1c_data" />
 
             <RHFInput
-              name="clinica.dm.peso"
+              inputMode="decimal"
               label="Peso (kg)"
-              inputMode="decimal"
+              name="clinica.dm.peso"
               valueParser={parseDecimal}
             />
             <RHFInput
-              name="clinica.dm.altura"
+              inputMode="decimal"
               label="Altura (cm)"
-              inputMode="decimal"
+              name="clinica.dm.altura"
               valueParser={parseDecimal}
             />
             <RHFInput
-              name="clinica.dm.imc"
-              label="IMC (auto)"
               isReadOnly
+              description={
+                imcClassDm ? (
+                  <span className={`font-bold ${imcClassDm.color}`}>
+                    {imcClassDm.label}
+                  </span>
+                ) : null
+              }
+              label="IMC (auto)"
+              name="clinica.dm.imc"
               placeholder="auto"
             />
             <RHFInput
-              name="clinica.dm.circ_abdominal"
-              label="Circ. abdominal (cm)"
               inputMode="decimal"
+              label="Circ. abdominal (cm)"
+              name="clinica.dm.circ_abdominal"
               valueParser={parseDecimal}
             />
           </div>
@@ -618,48 +776,49 @@ function BlocoDM() {
           {/* Lifestyle */}
           <div className="space-y-4">
             <RHFChipGroup
-              name="clinica.dm.estilo_alimentacao"
+              single
               label="Alimentação"
+              name="clinica.dm.estilo_alimentacao"
               options={[
                 { value: "saudavel", label: "Saudável" },
                 { value: "parcial", label: "Parcialmente saudável" },
                 { value: "pouco", label: "Pouco saudável" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.sal"
+              single
               label="Consumo de sal"
+              name="clinica.dm.sal"
               options={[
                 { value: "adequado", label: "Adequado" },
                 { value: "exagerado", label: "Exagerado" },
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.alcool"
+              single
               label="Álcool"
+              name="clinica.dm.alcool"
               options={[
                 { value: "nao_bebe", label: "Não bebe" },
                 { value: "socialmente", label: "Socialmente" },
                 { value: "frequentemente", label: "Frequentemente" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.tabagismo"
+              single
               label="Tabagismo"
+              name="clinica.dm.tabagismo"
               options={[
                 { value: "nunca", label: "Nunca" },
                 { value: "ex", label: "Ex-fumante" },
                 { value: "atual", label: "Atual" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.ultima_consulta_dm"
+              single
               label="Última consulta (DM)"
+              name="clinica.dm.ultima_consulta_dm"
               options={[
                 { value: "7d", label: "7 dias" },
                 { value: "15d", label: "15 dias" },
@@ -670,73 +829,72 @@ function BlocoDM() {
                 { value: "1a", label: "1 ano" },
                 { value: ">1a", label: ">1 ano" },
               ]}
-              single
             />
 
             <RHFChipGroup
-              name="clinica.dm.risco_idade_45"
+              single
               label="Idade ≥ 45 anos"
+              name="clinica.dm.risco_idade_45"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_imc_25"
+              single
               label="Sobrepeso/obesidade (IMC ≥ 25)"
+              name="clinica.dm.risco_imc_25"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_sedentarismo"
+              single
               label="Sedentarismo"
+              name="clinica.dm.risco_sedentarismo"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_pa_elevada"
+              single
               label="P.A. elevada"
+              name="clinica.dm.risco_pa_elevada"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_lipidios_alterados"
+              single
               label="Colesterol/Triglicerídeos alterados"
+              name="clinica.dm.risco_lipidios_alterados"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_dm_gestacional"
+              single
               label="História de DM gestacional (mulheres)"
+              name="clinica.dm.risco_dm_gestacional"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_se_aplica", label: "N.S.A." },
               ]}
-              single
             />
             <RHFChipGroup
-              name="clinica.dm.risco_sop"
+              single
               label="Síndrome dos ovários policísticos (mulheres)"
+              name="clinica.dm.risco_sop"
               options={[
                 { value: "sim", label: "Sim" },
                 { value: "nao", label: "Não" },
                 { value: "nao_se_aplica", label: "N.S.A." },
               ]}
-              single
             />
           </div>
         </div>
@@ -750,8 +908,9 @@ function BlocoDM() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RHFChipGroup
-            name="clinica.dm.triagem_dm"
+            single
             label="Resultado da triagem"
+            name="clinica.dm.triagem_dm"
             options={[
               { value: "normal", label: "Normal" },
               { value: "glicemia_alterada", label: "Glicemia alterada" },
@@ -761,11 +920,11 @@ function BlocoDM() {
                 label: "Diagnóstico confirmado",
               },
             ]}
-            single
           />
           <RHFChipGroup
-            name="clinica.dm.condutas"
+            multiple
             label="Conduta adotada"
+            name="clinica.dm.condutas"
             options={[
               { value: "confirmacao_lab", label: "Confirmação laboratorial" },
               { value: "inicio_trat", label: "Início de tratamento" },
@@ -773,13 +932,12 @@ function BlocoDM() {
               { value: "encaminhamento_med", label: "Encaminhamento médico" },
               { value: "outro", label: "Outro" },
             ]}
-            multiple
           />
           <RHFInput
-            name="clinica.dm.conduta_outro"
-            label="Descrever (se 'Outro')"
-            placeholder="Descreva"
             className="lg:col-span-2"
+            label="Descrever (se 'Outro')"
+            name="clinica.dm.conduta_outro"
+            placeholder="Descreva"
           />
         </div>
       </fieldset>

@@ -9,7 +9,7 @@ import {
   Divider,
   Input,
 } from "@heroui/react";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
@@ -74,11 +74,14 @@ const ESTADOS_CIVIS = [
 export const STEP1_FIELDS = ["socio.nome", "socio.sus_cpf"] as const;
 
 export default function Step1Sociodemo() {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, setError, clearErrors } = useFormContext();
+  const [cpfWarning, setCpfWarning] = useState<string>("");
+  const [isCheckingCpf, setIsCheckingCpf] = useState(false);
 
   // campos usados aqui
   const nascimento = watch("socio.nascimento");
   const genero = watch("socio.genero");
+  const susCpf = watch("socio.sus_cpf");
 
   // idade calculada a partir do nascimento (aceita Date ou string parseável)
   const idade = useMemo(() => {
@@ -96,6 +99,48 @@ export default function Step1Sociodemo() {
     () => UF_LIST.map((uf) => ({ key: uf, label: uf })),
     []
   );
+
+  // Função para validar CPF quando o usuário sai do campo
+  const handleCpfBlur = useCallback(async () => {
+    if (!susCpf || susCpf.length < 11) {
+      setCpfWarning("");
+      return;
+    }
+
+    // Remove caracteres não numéricos
+    const cpfDigits = susCpf.replace(/\D/g, "");
+    
+    if (cpfDigits.length !== 11) {
+      setCpfWarning("");
+      return;
+    }
+
+    setIsCheckingCpf(true);
+    setCpfWarning("");
+
+    try {
+      const { checkCpfExists } = await import("@/lib/api/pacientes");
+      const result = await checkCpfExists(cpfDigits);
+
+      if (result?.exists) {
+        const patientName = result.patient?.name || "desconhecido";
+        const warning = `⚠️ Este CPF já está cadastrado (Paciente: ${patientName})`;
+        setCpfWarning(warning);
+        setError("socio.sus_cpf", {
+          type: "manual",
+          message: warning,
+        });
+      } else {
+        setCpfWarning("");
+        clearErrors("socio.sus_cpf");
+      }
+    } catch (error) {
+      console.error("Erro ao verificar CPF:", error);
+      // Não mostra erro ao usuário, apenas no console
+    } finally {
+      setIsCheckingCpf(false);
+    }
+  }, [susCpf, setError, clearErrors]);
 
   return (
     <div className="space-y-6">
@@ -204,6 +249,15 @@ export default function Step1Sociodemo() {
                 inputMode="numeric"
                 numericOnly
                 autoComplete="off"
+                onBlur={handleCpfBlur}
+                description={
+                  isCheckingCpf
+                    ? "Verificando CPF..."
+                    : cpfWarning
+                      ? cpfWarning
+                      : undefined
+                }
+                color={cpfWarning ? "warning" : undefined}
               />
             </div>
           </section>

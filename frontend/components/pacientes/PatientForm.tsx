@@ -35,7 +35,7 @@ import { z } from "zod";
 
 // Helpers de API
 import { createDM, createHAS, updateDM, updateHAS } from "@/lib/api/conditions";
-import { createPaciente, updatePaciente } from "@/lib/api/pacientes";
+import { checkCpfExists, createPaciente, updatePaciente } from "@/lib/api/pacientes";
 import {
   formToAppointmentApi,
   formToDmApi,
@@ -413,6 +413,27 @@ export default function PatientForm(props: Props) {
       }
 
       const socio: any = (parsed as any).socio ?? {};
+
+      // Verifica CPF duplicado antes de tentar criar (apenas no modo create)
+      if (isCreate && socio?.sus_cpf) {
+        const cpfDigits = socio.sus_cpf.replace(/\D/g, "");
+        if (cpfDigits.length === 11) {
+          try {
+            const cpfCheck = await checkCpfExists(cpfDigits);
+            if (cpfCheck?.exists) {
+              const patientName = cpfCheck.patient?.name || "desconhecido";
+              notifyError(
+                "CPF já cadastrado",
+                `Este CPF já pertence ao paciente: ${patientName}. Verifique a lista de pacientes antes de criar um novo registro.`
+              );
+              return; // Interrompe o envio
+            }
+          } catch (error) {
+            console.warn("Erro ao verificar CPF antes de salvar:", error);
+            // Continua mesmo com erro na verificação
+          }
+        }
+      }
       const endereco = socio?.endereco;
 
       // id do endereço que veio do backend (via patientApiToForm)
@@ -643,31 +664,82 @@ export default function PatientForm(props: Props) {
     } catch (err: any) {
       console.error("ERRO AO SALVAR PACIENTE", err);
 
-      let msg = "Não foi possível salvar. Tente novamente.";
+      let title = "Erro ao salvar paciente";
+      let description = "Não foi possível salvar. Verifique os dados e tente novamente.";
 
       const data = err?.response;
 
       if (data && typeof data === "object") {
-        // erro de username duplicado (CPF já usado)
-        const userErrors = (data as any).user;
-        const usernameErr =
-          userErrors && Array.isArray(userErrors.username)
-            ? userErrors.username[0]
-            : null;
+        const errors: string[] = [];
 
-        if (usernameErr) {
-          msg =
-            "Já existe um paciente/usuário com esse CPF. Verifique se ele já está cadastrado antes de criar um novo registro.";
-        } else if ((data as any).detail) {
-          msg = String((data as any).detail);
+        // Erro de username duplicado (CPF já usado)
+        const userErrors = (data as any).user;
+        if (userErrors) {
+          if (Array.isArray(userErrors.username) && userErrors.username.length > 0) {
+            errors.push("• " + userErrors.username[0]);
+          }
+          if (Array.isArray(userErrors.email) && userErrors.email.length > 0) {
+            errors.push("• E-mail: " + userErrors.email[0]);
+          }
+          if (Array.isArray(userErrors.first_name) && userErrors.first_name.length > 0) {
+            errors.push("• Nome: " + userErrors.first_name[0]);
+          }
+        }
+
+        // Erro de CPF duplicado
+        const cpfErrors = (data as any).cpf;
+        if (cpfErrors && Array.isArray(cpfErrors) && cpfErrors.length > 0) {
+          errors.push("• " + cpfErrors[0]);
+        }
+
+        // Erro de SUS duplicado
+        const susErrors = (data as any).sus;
+        if (susErrors && Array.isArray(susErrors) && susErrors.length > 0) {
+          errors.push("• Cartão SUS: " + susErrors[0]);
+        }
+
+        // Erro de endereço
+        const addressErrors = (data as any).address;
+        if (addressErrors && Array.isArray(addressErrors) && addressErrors.length > 0) {
+          errors.push("• Endereço: " + addressErrors[0]);
+        }
+
+        // Outros erros de campos
+        const fieldErrors = Object.keys(data).filter(
+          key => !['user', 'cpf', 'sus', 'address', 'detail', 'non_field_errors'].includes(key) && 
+                 Array.isArray((data as any)[key])
+        );
+        
+        fieldErrors.forEach(field => {
+          const fieldError = (data as any)[field];
+          if (Array.isArray(fieldError) && fieldError.length > 0) {
+            const fieldName = field.replace(/_/g, ' ');
+            errors.push(`• ${fieldName}: ${fieldError[0]}`);
+          }
+        });
+
+        // Erros não relacionados a campos específicos
+        const nonFieldErrors = (data as any).non_field_errors;
+        if (nonFieldErrors && Array.isArray(nonFieldErrors) && nonFieldErrors.length > 0) {
+          errors.push("• " + nonFieldErrors[0]);
+        }
+
+        // Erro genérico de detail
+        if ((data as any).detail && errors.length === 0) {
+          errors.push("• " + String((data as any).detail));
+        }
+
+        if (errors.length > 0) {
+          title = "Não foi possível salvar";
+          description = errors.join("\n");
         } else if (typeof err.message === "string") {
-          msg = err.message;
+          description = err.message;
         }
       } else if (typeof err.message === "string") {
-        msg = err.message;
+        description = err.message;
       }
 
-      notifyError("Erro ao salvar", msg);
+      notifyError(title, description);
     }
   }
 

@@ -22,3 +22,14 @@ export async function updatePaciente<T = unknown>(
 export async function getPaciente<T = unknown>(id: number): Promise<T | null> {
   return apiGet<T>(`/api/v1/accounts/patients/${id}/`);
 }
+
+/**
+ * Verifica se um CPF já está cadastrado no sistema
+ */
+export async function checkCpfExists(cpf: string): Promise<{
+  exists: boolean;
+  message: string;
+  patient?: { id: number; name: string };
+} | null> {
+  return apiGet(`/api/v1/accounts/patients/check-cpf/?cpf=${encodeURIComponent(cpf)}`);
+}

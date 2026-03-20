@@ -37,6 +37,7 @@ export async function listMedications(): Promise<MedicationDto[]> {
   if (resp && Array.isArray((resp as any).results)) {
     return (resp as any).results;
   }
+
   return [];
 }
 
@@ -47,7 +48,7 @@ export async function listMedications(): Promise<MedicationDto[]> {
  * Se a API retornar null, lança erro (para evitar seguir com dado indefinido).
  */
 export async function createMedication(
-  payload: Omit<MedicationDto, "id">
+  payload: Omit<MedicationDto, "id">,
 ): Promise<MedicationDto> {
   const resp = await apiPost<MedicationDto | null>(MEDICATIONS_URL, payload);
 
@@ -65,11 +66,11 @@ export async function createMedication(
  */
 export async function updateMedication(
   id: number,
-  payload: Partial<Omit<MedicationDto, "id" | "patient">>
+  payload: Partial<Omit<MedicationDto, "id" | "patient">>,
 ): Promise<MedicationDto> {
   const resp = await apiPatch<MedicationDto | null>(
     `${MEDICATIONS_URL}${id}/`,
-    payload
+    payload,
   );
 
   if (!resp) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import PatientForm from "@/components/pacientes/PatientForm";
 import { apiGet } from "@/lib/api";
 import { getAddress } from "@/lib/api/locations";
@@ -9,7 +11,6 @@ import {
   hasApiToForm,
   patientApiToForm,
 } from "@/lib/pacientes/mappers";
-import { useEffect, useState } from "react";
 
 type Props = {
   id: number;
@@ -25,6 +26,7 @@ function normalizeListResponse(raw: any): any[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (Array.isArray(raw?.results)) return raw.results;
+
   return [];
 }
 
@@ -43,11 +45,12 @@ export default function EditPatientClient({ id }: Props) {
       try {
         // 1) Dados principais do paciente
         const pacienteApi = await apiGet<any>(
-          `/api/v1/accounts/patients/${id}/`
+          `/api/v1/accounts/patients/${id}/`,
         );
 
         // 2) Buscar Address completo, se houver ID em paciente.address
         let addressObj: any = null;
+
         if (pacienteApi?.address) {
           try {
             addressObj = await getAddress<any>(Number(pacienteApi.address));
@@ -64,10 +67,10 @@ export default function EditPatientClient({ id }: Props) {
         // 3) Condições HAS/DM (listas)
         const [hasRaw, dmRaw] = await Promise.all([
           apiGet<any>(
-            `/api/v1/conditions/systolic-hypertension-cases/?patient=${id}`
+            `/api/v1/conditions/systolic-hypertension-cases/?patient=${id}`,
           ),
           apiGet<any>(
-            `/api/v1/conditions/diabetes-mellitus-cases/?patient=${id}`
+            `/api/v1/conditions/diabetes-mellitus-cases/?patient=${id}`,
           ),
         ]);
 
@@ -152,7 +155,7 @@ export default function EditPatientClient({ id }: Props) {
         console.error("Erro ao carregar paciente para edição:", err);
         if (!cancelled) {
           setError(
-            err?.message || "Não foi possível carregar os dados do paciente."
+            err?.message || "Não foi possível carregar os dados do paciente.",
           );
         }
       } finally {
@@ -191,11 +194,11 @@ export default function EditPatientClient({ id }: Props) {
 
   return (
     <PatientForm
-      mode="edit"
-      id={id}
       defaultValues={data.defaultValues}
-      hasId={data.hasId}
       dmId={data.dmId}
+      hasId={data.hasId}
+      id={id}
+      mode="edit"
     />
   );
 }

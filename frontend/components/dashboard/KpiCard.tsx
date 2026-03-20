@@ -1,9 +1,9 @@
 "use client";
 
 import { Card } from "@heroui/card";
-import { cn } from "@/lib/utils";
-import { StatusChip } from "@/components/ui/StatusChip";
 import React from "react";
+
+import { cn } from "@/lib/utils";
 
 export interface KpiCardProps {
   label: string;
@@ -12,7 +12,7 @@ export interface KpiCardProps {
   icon?: React.ReactNode;
   accent?: "brand" | "amber" | "blue" | "red" | "green";
   className?: string;
-  footerText?: string; 
+  footerText?: string;
 }
 
 export function KpiCard({
@@ -21,7 +21,7 @@ export function KpiCard({
   delta,
   icon,
   className,
-  footerText = "Dados relacionados à sua última checagem.", 
+  footerText = "Dados relacionados à sua última checagem.",
 }: KpiCardProps) {
   const showDelta = typeof delta === "number" && delta !== 0;
   const deltaTone: "safe" | "critical" | undefined =
@@ -29,13 +29,13 @@ export function KpiCard({
 
   return (
     <Card
-      shadow="sm"
       className={cn(
         "min-h-[132px] p-5 rounded-md transition-all hover:shadow-md border border-transparent",
         "bg-white text-gray-800 hover:border-gray-200",
         "dark:bg-gray-900 dark:text-gray-100 dark:hover:border-gray-800",
-        className
+        className,
       )}
+      shadow="sm"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="text-md text-gray-500 dark:text-gray-400">{label}</div>
@@ -51,7 +51,7 @@ export function KpiCard({
       </div>
 
       <p className="mt-2 text-[14px] text-gray-500 dark:text-gray-400">
-        {footerText} 
+        {footerText}
       </p>
     </Card>
   );

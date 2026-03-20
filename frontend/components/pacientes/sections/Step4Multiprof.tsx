@@ -1,11 +1,12 @@
 // frontend/components/pacientes/sections/Step4Multiprof.tsx
 "use client";
 
-import { RHFChipGroup } from "@/components/form/RHFChipGroup";
-import { RHFInput } from "@/components/form/RHFInput";
 import { Card, CardBody, Divider } from "@heroui/react";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+
+import { RHFInput } from "@/components/form/RHFInput";
+import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 
 /** Campos deste passo (útil para validação dirigida no Wizard) */
 export const STEP4_FIELDS = ["multiprof"] as const;
@@ -16,7 +17,7 @@ export default function Step4Multiprof() {
   // condicionais
   const usoPsico = watch("multiprof.psico_uso_psicofarmaco");
   const diagPsico = watch("multiprof.psico_diagnostico");
-  const animaisCasa = watch("multiprof.ambi_animais_domicilio");
+  const animaisCasa = watch("multiprof.ambi_animais_domicilio_v2");
   const praticaAF = watch("multiprof.fisico_atividade");
   const precisaEnc = watch("multiprof.precisa_enc_multiprof");
   const encMultiprof = watch("multiprof.enc_multiprof") as string[] | undefined;
@@ -58,8 +59,8 @@ export default function Step4Multiprof() {
   return (
     <div className="space-y-6">
       <Card
-        shadow="none"
         className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        shadow="none"
       >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">
@@ -75,9 +76,9 @@ export default function Step4Multiprof() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 rounded-2xl border border-default-200 p-4">
               <div className="space-y-4">
                 <RHFChipGroup
-                  name="multiprof.psico_uso_psicofarmaco"
-                  label="Faz uso de medicamento psicofármaco (ansiolítico, antidepressivo, etc.)?"
                   single
+                  label="Faz uso de medicamento psicofármaco (ansiolítico, antidepressivo, etc.)?"
+                  name="multiprof.psico_uso_psicofarmaco"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -85,17 +86,17 @@ export default function Step4Multiprof() {
                 />
                 {usoPsico === "sim" && (
                   <RHFInput
-                    name="multiprof.psico_psicofarmaco_qual"
                     label=""
                     labelPlacement="outside"
+                    name="multiprof.psico_psicofarmaco_qual"
                     placeholder="Ex.: Antidepressivo."
                   />
                 )}
 
                 <RHFChipGroup
-                  name="multiprof.psico_diagnostico"
-                  label="Possui algum diagnóstico psicológico/psiquiátrico?"
                   single
+                  label="Possui algum diagnóstico psicológico/psiquiátrico?"
+                  name="multiprof.psico_diagnostico"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -104,9 +105,9 @@ export default function Step4Multiprof() {
                 />
                 {diagPsico === "sim" && (
                   <RHFInput
-                    name="multiprof.psico_diagnostico_qual"
                     label=""
                     labelPlacement="outside"
+                    name="multiprof.psico_diagnostico_qual"
                     placeholder="Ex.: Depressão"
                   />
                 )}
@@ -114,9 +115,9 @@ export default function Step4Multiprof() {
 
               <div className="space-y-4">
                 <RHFChipGroup
-                  name="multiprof.psico_estresse_interfere"
+                  single
                   label="O estresse do dia a dia interfere no controle de sua pressão/glicemia?"
-                  single
+                  name="multiprof.psico_estresse_interfere"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -124,9 +125,9 @@ export default function Step4Multiprof() {
                 />
 
                 <RHFChipGroup
-                  name="multiprof.psico_fatores_economicos"
+                  single
                   label="Fatores econômicos interferem na continuidade do seu tratamento?"
-                  single
+                  name="multiprof.psico_fatores_economicos"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -134,9 +135,9 @@ export default function Step4Multiprof() {
                 />
 
                 <RHFChipGroup
-                  name="multiprof.psico_apoio_suficiente"
-                  label="Você sente que recebe apoio suficiente de sua família/amigos para manter o tratamento?"
                   single
+                  label="Você sente que recebe apoio suficiente de sua família/amigos para manter o tratamento?"
+                  name="multiprof.psico_apoio_suficiente"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -145,9 +146,9 @@ export default function Step4Multiprof() {
                 />
 
                 <RHFChipGroup
-                  name="multiprof.psico_cumpre_orientacoes"
-                  label="Você cumpre regularmente as orientações de saúde (meditação, alimentação, atividade física, etc.)?"
                   single
+                  label="Você cumpre regularmente as orientações de saúde (meditação, alimentação, atividade física, etc.)?"
+                  name="multiprof.psico_cumpre_orientacoes"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -159,61 +160,72 @@ export default function Step4Multiprof() {
 
           <Divider />
 
-          {/* Riscos Ambientais */}
+          {/* Condicionantes Sociais */}
           <section className="space-y-4">
             <h3 className="text-sm font-medium text-foreground/80">
-              Riscos ambientais
+              Condicionantes sociais
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 rounded-2xl border border-default-200 p-4">
               <div className="space-y-4">
                 <RHFChipGroup
-                  name="multiprof.ambi_animais_domicilio"
-                  label="Presença de animais domésticos no domicílio?"
                   single
+                  label="Possui rede de esgoto ou saneamento básico?"
+                  name="multiprof.ambi_animais_domicilio"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
                     { value: "nao_sabe", label: "Não sabe" },
+                  ]}
+                />
+                
+                <RHFChipGroup
+                  single
+                  label="Possui abastecimento de água tratada em casa?"
+                  name="multiprof.ambi_feridas_demoram"
+                  options={[
+                    { value: "sim", label: "Sim" },
+                    { value: "nao", label: "Não" },
+                    { value: "nao_sabe", label: "Não sabe" },
+                  ]}
+                />
+
+                <RHFChipGroup
+                  single
+                  label="Existe coleta de lixo regular na sua residência?"
+                  name="multiprof.ambi_animais_vacinados"
+                  options={[
+                    { value: "sim", label: "Sim" },
+                    { value: "nao", label: "Não" },
+                    { value: "nao_sabe", label: "Não sabe" },
+                  ]}
+                />
+
+                <RHFChipGroup
+                  single
+                  label="Presença de animais domésticos no domicílio?"
+                  name="multiprof.ambi_animais_domicilio_v2"
+                  options={[
+                    { value: "sim", label: "Sim" },
+                    { value: "nao", label: "Não" },
                   ]}
                 />
                 {animaisCasa === "sim" && (
-                  <RHFInput
-                    name="multiprof.ambi_animais_quais"
-                    label=""
-                    labelPlacement="outside"
-                    placeholder="Ex.: cachorro, gato"
-                  />
+                   <RHFInput
+                     label=""
+                     labelPlacement="outside"
+                     name="multiprof.ambi_animais_quais"
+                     placeholder="Quais animais?"
+                   />
                 )}
-
-                <RHFChipGroup
-                  name="multiprof.ambi_feridas_demoram"
-                  label="Você já apresentou feridas que demoram a cicatrizar após arranhões ou mordidas de animais?"
-                  single
-                  options={[
-                    { value: "sim", label: "Sim" },
-                    { value: "nao", label: "Não" },
-                  ]}
-                />
-
-                <RHFChipGroup
-                  name="multiprof.ambi_animais_vacinados"
-                  label="Seus animais estão vacinados (ex.: antirrábica, múltipla, etc.)?"
-                  single
-                  options={[
-                    { value: "sim", label: "Sim" },
-                    { value: "nao", label: "Não" },
-                    { value: "nao_sabe", label: "Não sabe" },
-                  ]}
-                />
               </div>
 
               <div className="space-y-4">
                 <RHFChipGroup
-                  name="multiprof.ambi_doencas_transmissiveis"
-                  label="Você ou alguém em sua casa já foi diagnosticado com alguma doença transmissível?"
                   multiple
                   chipsClassName="flex flex-wrap gap-2"
+                  label="Você ou alguém em sua casa já foi diagnosticado com alguma doença transmissível?"
+                  name="multiprof.ambi_doencas_transmissiveis"
                   options={[
                     { value: "chagas", label: "D. de Chagas" },
                     { value: "leishmaniose", label: "Leishmaniose" },
@@ -224,16 +236,16 @@ export default function Step4Multiprof() {
                   ]}
                 />
                 <RHFInput
-                  name="multiprof.ambi_doencas_outro"
                   label=""
                   labelPlacement="outside"
+                  name="multiprof.ambi_doencas_outro"
                   placeholder="Alguma outra?"
                 />
 
                 <RHFChipGroup
-                  name="multiprof.ambi_contato_sangue_fezes_urina"
-                  label="Você costuma ter contato direto com sangue, fezes ou urina de animais?"
                   single
+                  label="Considera sua moradia em condições adequadas (ventilação, umidade, etc.)?"
+                  name="multiprof.ambi_contato_sangue_fezes_urina"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -242,9 +254,9 @@ export default function Step4Multiprof() {
                 />
 
                 <RHFChipGroup
-                  name="multiprof.ambi_orientacao_zoonoses"
-                  label="Já recebeu orientação sobre zoonoses durante seu acompanhamento de saúde?"
                   single
+                  label="Já recebeu orientação sobre prevenção de doenças ambientais/zoonoses?"
+                  name="multiprof.ambi_orientacao_zoonoses"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -266,9 +278,9 @@ export default function Step4Multiprof() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 rounded-2xl border border-default-200 p-4">
               <div className="space-y-4">
                 <RHFChipGroup
-                  name="multiprof.fisico_atividade"
-                  label="Realiza alguma atividade física?"
                   single
+                  label="Realiza alguma atividade física?"
+                  name="multiprof.fisico_atividade"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -276,47 +288,47 @@ export default function Step4Multiprof() {
                 />
                 {praticaAF === "sim" && (
                   <RHFInput
-                    name="multiprof.fisico_atividade_freq_semana"
+                    inputMode="numeric"
                     label=""
                     labelPlacement="outside"
+                    name="multiprof.fisico_atividade_freq_semana"
                     placeholder="Se sim, quantas vezes na semana?"
-                    inputMode="numeric"
                   />
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <RHFChipGroup
-                  name="multiprof.fisico_edemas"
+                  single
                   label="Apresenta edemas?"
-                  single
+                  name="multiprof.fisico_edemas"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
                   ]}
                 />
                 <RHFChipGroup
-                  name="multiprof.fisico_dispneia"
+                  single
                   label="Apresenta dispneia?"
-                  single
+                  name="multiprof.fisico_dispneia"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
                   ]}
                 />
                 <RHFChipGroup
-                  name="multiprof.fisico_formigamento_caimbras"
+                  single
                   label="Apresenta queixas como formigamento, câimbras?"
-                  single
+                  name="multiprof.fisico_formigamento_caimbras"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
                   ]}
                 />
                 <RHFChipGroup
-                  name="multiprof.fisico_dificuldade_caminhar"
-                  label="Apresenta dificuldade para caminhar ou realizar alguma atividade?"
                   single
+                  label="Apresenta dificuldade para caminhar ou realizar alguma atividade?"
+                  name="multiprof.fisico_dificuldade_caminhar"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },
@@ -336,9 +348,9 @@ export default function Step4Multiprof() {
 
             <div className="space-y-4 rounded-2xl border border-default-200 p-4">
               <RHFChipGroup
-                name="multiprof.precisa_enc_multiprof"
-                label="Necessita encaminhamento multiprofissional?"
                 single
+                label="Necessita encaminhamento multiprofissional?"
+                name="multiprof.precisa_enc_multiprof"
                 options={[
                   { value: "sim", label: "Sim" },
                   { value: "nao", label: "Não" },
@@ -348,10 +360,10 @@ export default function Step4Multiprof() {
               {precisaEnc === "sim" && (
                 <>
                   <RHFChipGroup
-                    name="multiprof.enc_multiprof"
-                    label="Se sim, para qual (múltipla escolha)?"
                     multiple
                     chipsClassName="flex flex-wrap gap-2"
+                    label="Se sim, para qual (múltipla escolha)?"
+                    name="multiprof.enc_multiprof"
                     options={[
                       { value: "psicologo", label: "Psicólogo" },
                       { value: "medico_vet", label: "Médico Vet." },
@@ -372,9 +384,9 @@ export default function Step4Multiprof() {
 
                   {encMultiprof?.includes("outro") && (
                     <RHFInput
-                      name="multiprof.enc_multiprof_outro"
                       label="Outro?"
                       labelPlacement="outside"
+                      name="multiprof.enc_multiprof_outro"
                       placeholder="Descreva"
                     />
                   )}

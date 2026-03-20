@@ -1,11 +1,13 @@
 "use client";
 
-import { UserMenu } from "@/components/navbar/UserMenu";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { BellIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import Image from "next/image";
+
+import { useAuth } from "@/lib/hooks/useAuth";
+import { UserMenu } from "@/components/navbar/UserMenu";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -20,16 +22,16 @@ export const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center mb-2.5">
             <Button
               as={Link}
+              className="px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
               href="/"
-              variant="light"
               radius="full"
-              className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+              variant="light"
             >
-              <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-400 bg-clip-text text-transparent">
-                Rastreia+
+              <span className="text-xl font-bold text-primary tracking-tight">
+                RastreiaCardio
               </span>
             </Button>
           </div>
@@ -38,11 +40,11 @@ export const Header = () => {
             {/* Botão toggle dark mode */}
             <Button
               isIconOnly
+              aria-label="Alternar tema"
+              className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
               size="sm"
               variant="light"
               onPress={toggleTheme}
-              aria-label="Alternar tema"
-              className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
             >
               {theme === "dark" ? (
                 <SunIcon className="size-5 text-white" strokeWidth={2} />
@@ -54,19 +56,6 @@ export const Header = () => {
             {/* Só mostra se estiver logado */}
             {!loading && user && (
               <>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label="Notificações"
-                  className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <BellIcon
-                    className="size-5 dark:text-white"
-                    strokeWidth={2}
-                  />
-                </Button>
-
                 {/* Menu do usuário com perfil e logout */}
                 <UserMenu user={user} />
               </>

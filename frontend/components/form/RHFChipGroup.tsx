@@ -60,6 +60,7 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
 
   const isSingle = "single" in props && props.single === true;
   const isMultiple = "multiple" in props && props.multiple === true;
+
   if (!isSingle && !isMultiple) {
     throw new Error("RHFChipGroup: defina 'single' OU 'multiple'.");
   }
@@ -70,6 +71,7 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
   const moveFocus = useCallback(
     (currentIdx: number, dir: "prev" | "next" | "home" | "end") => {
       let idx = currentIdx;
+
       if (dir === "prev")
         idx = (currentIdx - 1 + options.length) % options.length;
       if (dir === "next") idx = (currentIdx + 1) % options.length;
@@ -77,35 +79,40 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
       if (dir === "end") idx = options.length - 1;
       chipRefs.current[idx]?.focus?.();
     },
-    [options.length]
+    [options.length],
   );
 
   const isSelected = useCallback(
     (currentValue: any, optValue: string) => {
       if (isSingle) return currentValue === optValue;
       if (Array.isArray(currentValue)) return currentValue.includes(optValue);
+
       return false;
     },
-    [isSingle]
+    [isSingle],
   );
 
   const toggleValue = useCallback(
     (currentValue: any, optValue: string) => {
       let next: any;
+
       if (isSingle) {
         const allowDeselect = (props as SingleProps<T>).allowDeselect ?? false;
+
         next =
           currentValue === optValue && allowDeselect ? undefined : optValue;
       } else {
         const arr = Array.isArray(currentValue) ? [...currentValue] : [];
         const idx = arr.indexOf(optValue);
+
         if (idx >= 0) arr.splice(idx, 1);
         else arr.push(optValue);
         next = arr;
       }
+
       return next;
     },
-    [isSingle, props]
+    [isSingle, props],
   );
 
   const ariaLabel = useMemo(() => label || name.toString(), [label, name]);
@@ -119,16 +126,15 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
       <Controller
         control={control}
         name={name}
-        rules={rules}
         render={({ field, fieldState }) => {
           const value = field.value;
 
           return (
             <>
               <div
-                role={role}
                 aria-label={ariaLabel}
                 className={clsx("flex flex-wrap gap-2.5", chipsClassName)}
+                role={role}
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (
@@ -154,11 +160,22 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
                         // importante: não retornar nada aqui (void)
                         chipRefs.current[i] = el;
                       }}
+                      aria-checked={selected}
                       as="button"
-                      type="button"
+                      className={clsx(
+                        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus/50 data-[hover=true]:opacity-90",
+                        opt.disabled && "opacity-60 cursor-not-allowed",
+                      )}
+                      color={color as any}
                       disabled={opt.disabled}
+                      radius="full"
+                      role={itemRole}
+                      size="md"
+                      type="button"
+                      variant={variant as any}
                       onClick={() => {
                         const next = toggleValue(value, opt.value);
+
                         field.onChange(next);
                         onValueChange?.(next);
                       }}
@@ -166,6 +183,7 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           const next = toggleValue(value, opt.value);
+
                           field.onChange(next);
                           onValueChange?.(next);
                         }
@@ -186,16 +204,6 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
                           moveFocus(i, "end");
                         }
                       }}
-                      aria-checked={selected}
-                      role={itemRole}
-                      variant={variant as any}
-                      color={color as any}
-                      size="md"
-                      radius="full"
-                      className={clsx(
-                        "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-focus/50 data-[hover=true]:opacity-90",
-                        opt.disabled && "opacity-60 cursor-not-allowed"
-                      )}
                     >
                       {opt.label}
                     </Chip>
@@ -211,6 +219,7 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
             </>
           );
         }}
+        rules={rules}
       />
     </div>
   );

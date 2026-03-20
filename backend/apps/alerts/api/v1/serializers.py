@@ -30,6 +30,13 @@ class AlertSerializer(serializers.ModelSerializer):
             patient = PatientUser.objects.get(cpf=cpf)
         except PatientUser.DoesNotExist:
             raise serializers.ValidationError({"cpf": "Paciente não encontrado."})
+        except PatientUser.MultipleObjectsReturned:
+            # Se houver múltiplos pacientes com o mesmo CPF, pega o mais recente
+            patient = PatientUser.objects.filter(cpf=cpf).order_by('-created_at').first()
 
-        alert = Alert.objects.create(patient=patient, **validated_data)
+        # Pega o created_by do contexto se disponível
+        created_by = validated_data.pop("created_by", None)
+        
+        alert = Alert(patient=patient, **validated_data)
+        alert.save(user=created_by)
         return alert

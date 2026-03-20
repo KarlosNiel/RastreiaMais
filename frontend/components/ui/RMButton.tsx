@@ -1,9 +1,10 @@
 // frontend/components/ui/RMButton.tsx
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@heroui/react";
 import { tv, type VariantProps } from "tailwind-variants";
+
+import { cn } from "@/lib/utils";
 
 /** Força branco em todos os slots (e anchors internos) do HeroUI */
 const SLOT_WHITE =
@@ -132,9 +133,10 @@ export function RMButton({
 
   return (
     <Button
-      radius="lg"
+      className={cn(btn({ look, tone, size, iconOnly }), className)}
       color={colorProp}
       isIconOnly={iconOnly === true}
+      radius="lg"
       variant={
         look === "solid"
           ? "solid"
@@ -144,7 +146,6 @@ export function RMButton({
               ? "flat"
               : "light" // ghost
       }
-      className={cn(btn({ look, tone, size, iconOnly }), className)}
       {...props}
     />
   );

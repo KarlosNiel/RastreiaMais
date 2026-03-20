@@ -6,7 +6,7 @@ describe('Login Completo com Mock', () => {
       
       cy.visit('/auth/login/paciente');
       
-      cy.get('input[name="email"]').type('paciente@teste.com');
+      cy.get('input[name="login"]').type('paciente@teste.com');
       cy.get('input[name="password"]').type('senha123');
       cy.get('button[type="submit"]').click();
       
@@ -31,7 +31,7 @@ describe('Login Completo com Mock', () => {
       
       cy.visit('/auth/login/paciente');
       
-      cy.get('input[name="email"]').type('paciente@invalido.com');
+      cy.get('input[name="login"]').type('paciente@invalido.com');
       cy.get('input[name="password"]').type('senhaerrada');
       cy.get('button[type="submit"]').click();
       
@@ -49,13 +49,13 @@ describe('Login Completo com Mock', () => {
       cy.get('button[type="submit"]').click();
       
       // Verifica mensagem de validação
-      cy.contains('Informe o e-mail').should('be.visible');
+      cy.contains('Informe CPF, e-mail ou usuário.').should('be.visible');
     });
 
     it('deve validar campo de senha vazio', () => {
       cy.visit('/auth/login/paciente');
       
-      cy.get('input[name="email"]').type('paciente@teste.com');
+      cy.get('input[name="login"]').type('paciente@teste.com');
       cy.get('button[type="submit"]').click();
       
       // Verifica mensagem de validação
@@ -161,7 +161,7 @@ describe('Login Completo com Mock', () => {
       
       cy.visit('/auth/login/paciente');
       
-      cy.get('input[name="email"]').type('paciente@teste.com');
+      cy.get('input[name="login"]').type('paciente@teste.com');
       cy.get('input[name="password"]').type('senha123');
       
       // Intercepta para adicionar delay

@@ -13,6 +13,7 @@ import {
   Textarea,
   Button,
 } from "@heroui/react";
+
 import { useCreateAlert } from "@/lib/hooks/alerts/useCreateAlert";
 import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 
@@ -31,7 +32,11 @@ interface Props {
   alertData?: AlertData | null;
 }
 
-export default function CreateAlertModal({ open, onOpenChange, alertData }: Props) {
+export default function CreateAlertModal({
+  open,
+  onOpenChange,
+  alertData,
+}: Props) {
   const [cpf, setCpf] = useState("");
   const [risk, setRisk] = useState<"safe" | "moderate" | "critical" | "">("");
   const [title, setTitle] = useState("");
@@ -83,32 +88,35 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
 
   return (
     <>
-      <Modal isOpen={open} onOpenChange={onOpenChange} backdrop="blur">
+      <Modal backdrop="blur" isOpen={open} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>{alertData ? "Detalhes do Alerta" : "Criar Novo Alerta"}</ModalHeader>
+              <ModalHeader>
+                {alertData ? "Detalhes do Alerta" : "Criar Novo Alerta"}
+              </ModalHeader>
 
               <ModalBody className="space-y-3">
                 <Input
+                  isDisabled={!!alertData}
                   label="CPF"
                   placeholder="Ex: 12345678900"
-                  variant="bordered"
                   value={cpf}
+                  variant="bordered"
                   onChange={(e) => {
                     const value = e.target.value;
+
                     if (/^[A-Za-z\s]+$/.test(value)) setCpf(value);
                     else if (/^\d*$/.test(value)) setCpf(value.slice(0, 11));
                   }}
-                  isDisabled={!!alertData}
                 />
 
                 <Select
-                  label="Nível de Risco"
-                  variant="bordered"
-                  selectedKeys={risk ? [risk] : []}
-                  onChange={(e) => setRisk(e.target.value as any)}
                   isDisabled={!!alertData}
+                  label="Nível de Risco"
+                  selectedKeys={risk ? [risk] : []}
+                  variant="bordered"
+                  onChange={(e) => setRisk(e.target.value as any)}
                 >
                   <SelectItem key="safe">Seguro</SelectItem>
                   <SelectItem key="moderate">Moderado</SelectItem>
@@ -116,21 +124,21 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
                 </Select>
 
                 <Input
+                  isDisabled={!!alertData}
                   label="Título"
                   placeholder="Ex: Falta de retorno da consulta"
-                  variant="bordered"
                   value={title}
+                  variant="bordered"
                   onChange={(e) => setTitle(e.target.value)}
-                  isDisabled={!!alertData}
                 />
 
                 <Textarea
+                  isDisabled={!!alertData}
                   label="Descrição"
                   placeholder="Descreva o motivo do alerta..."
-                  variant="bordered"
                   value={description}
+                  variant="bordered"
                   onChange={(e) => setDescription(e.target.value)}
-                  isDisabled={!!alertData}
                 />
               </ModalBody>
 
@@ -138,9 +146,9 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
                 <ModalFooter>
                   <Button
                     color="danger"
+                    isLoading={deleteAlert.isPending}
                     variant="flat"
                     onPress={() => setConfirmDeleteOpen(true)}
-                    isLoading={deleteAlert.isPending}
                   >
                     Excluir Alerta
                   </Button>
@@ -156,8 +164,8 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
                   </Button>
                   <Button
                     color="primary"
-                    onPress={handleSave}
                     isLoading={createAlert.isPending}
+                    onPress={handleSave}
                   >
                     Salvar
                   </Button>
@@ -172,10 +180,13 @@ export default function CreateAlertModal({ open, onOpenChange, alertData }: Prop
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="text-danger">Confirmar Exclusão</ModalHeader>
+              <ModalHeader className="text-danger">
+                Confirmar Exclusão
+              </ModalHeader>
 
               <ModalBody>
-                Tem certeza que deseja excluir este alerta? Essa ação não pode ser desfeita.
+                Tem certeza que deseja excluir este alerta? Essa ação não pode
+                ser desfeita.
               </ModalBody>
 
               <ModalFooter>

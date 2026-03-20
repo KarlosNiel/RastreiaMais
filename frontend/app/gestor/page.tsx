@@ -1,5 +1,6 @@
-// frontend/app/gestor/page.tsx
 "use client";
+
+import type { ProfessionalApi } from "@/lib/api/profissionais";
 
 import { BellAlertIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
@@ -54,25 +55,30 @@ export default function GestorPage() {
   } = useQuery<ProfRow[]>({
     queryKey: ["professionals"],
     queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+      const resp = await apiGet<
+        ProfessionalApi[] | { results: ProfessionalApi[] }
+      >("/api/v1/accounts/professionals/");
 
-      const list = Array.isArray(resp)
+      const list: ProfessionalApi[] = Array.isArray(resp)
         ? resp
-        : resp && "results" in resp && Array.isArray((resp as any).results)
-          ? (resp as any).results
+        : resp && "results" in resp && Array.isArray(resp.results)
+          ? resp.results
           : [];
 
-      const mapped: ProfRow[] = list.map((p: any) => {
+      const mapped: ProfRow[] = list.map((p) => {
         const first = p.user?.first_name ?? "";
         const last = p.user?.last_name ?? "";
         const nome = `${first} ${last}`.trim() || p.user?.username || "—";
+
+        // Status derivado de is_deleted (soft delete)
+        const status: ProfRow["status"] = p.is_deleted ? "Afastado" : "Ativo";
 
         return {
           id: String(p.id),
           profissional: nome,
           cargo: p.role ?? "—",
           local: "USF Maria Madalena",
-          status: "Ativo",
+          status,
         };
       });
 
@@ -240,7 +246,7 @@ export default function GestorPage() {
                               }`}
                             />
                           </div>
-                          <div>
+                          <div className="flex flex-col items-start">
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                               {a.patient?.user?.first_name ?? "—"}{" "}
                               {a.patient?.user?.last_name ?? "—"}{" "}

@@ -32,7 +32,6 @@ import {
   treatmentStatusBackToFront,
   treatmentStatusMap,
 } from "@/lib/pacientes/enums";
-
 import {
   boolToSimNao,
   boolToYesNoMaybe,
@@ -156,7 +155,7 @@ export type AppointmentApiPayload = {
   professional_id: number;
   local_id?: number | null;
   scheduled_datetime: string;
-  type: "Consulta" | "Exame" | "Evento";
+  type: "Consulta" | "Retorno" | "Avaliação" | "Outro";
   description?: string;
   risk_level: "Seguro" | "Moderado" | "Crítico";
   status?: "pendente" | "ativo" | "finalizado" | "cancelado";
@@ -169,21 +168,24 @@ export type AppointmentApiPayload = {
 export function toDateTimeISO(
   value: unknown,
   hour = 8,
-  minute = 0
+  minute = 0,
 ): string | null {
   if (!value) return null;
   const d = new Date(value as any);
+
   if (Number.isNaN(d.getTime())) return null;
   d.setHours(hour, minute, 0, 0);
+
   return d.toISOString();
 }
 
 export function formToAppointmentApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
   patientId: number,
-  professionalId: number
+  professionalId: number,
 ): AppointmentApiPayload | null {
   const plano: any = (data as any).plano ?? null;
+
   if (!plano) return null;
 
   /* ===========================
@@ -192,6 +194,7 @@ export function formToAppointmentApi(
 
   // Regra: prioriza data_consulta; se não tiver, usa data_retorno
   const rawDate = plano.data_consulta ?? plano.data_retorno;
+
   if (!rawDate) {
     // Sem data, não há como criar agendamento
     return null;
@@ -204,6 +207,7 @@ export function formToAppointmentApi(
   // Aceita apenas HH:MM 24h; se não bater, usa 08:00 padrão
   if (typeof rawTime === "string") {
     const match = rawTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+
     if (match) {
       hour = Number.parseInt(match[1], 10);
       minute = Number.parseInt(match[2], 10);
@@ -211,6 +215,7 @@ export function formToAppointmentApi(
   }
 
   const scheduled = toDateTimeISO(rawDate, hour, minute);
+
   if (!scheduled) {
     // Data inválida
     return null;
@@ -225,9 +230,9 @@ export function formToAppointmentApi(
   // Mapeamento para o enum do backend
   const typeMap: Record<string, AppointmentApiPayload["type"]> = {
     consulta: "Consulta",
-    retorno: "Consulta", // domínio atual: retorno ainda é uma consulta
-    avaliacao: "Exame",
-    outro: "Evento",
+    retorno: "Retorno",
+    avaliacao: "Avaliação",
+    outro: "Outro",
   };
 
   const type = typeMap[rawType] ?? "Consulta";
@@ -255,6 +260,7 @@ export function formToAppointmentApi(
     }
     if (resumo) return resumo;
     if (assinatura) return `Plano registrado por: ${assinatura}`;
+
     return "Plano registrado sem descrição detalhada.";
   })();
 
@@ -288,7 +294,6 @@ export function formToAppointmentApi(
 export function formToPatientApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
   mode: "create" | "edit",
-  addressId?: number | null
 ): PatientApiPayload {
   const socio: any = (data as any).socio ?? {};
   const multiprof: any = (data as any).multiprof ?? {};
@@ -302,6 +307,7 @@ export function formToPatientApi(
   const last_name = rest.join(" ");
   const rawEmail = optString(socio?.email);
   let password: string | undefined;
+
   if (mode === "create") {
     password = socio?.password || socio?.senha || generateSimplePassword();
   }
@@ -362,6 +368,7 @@ export function formToPatientApi(
     ) {
       return lastConsultationMap[lifeSrc.ultima_consulta_dm];
     }
+
     return null;
   })();
 
@@ -403,51 +410,53 @@ export function formToPatientApi(
 
     /** ───────── PsychosocialRisks (psico_*) ───────── */
     use_psychotropic_medication: yesNoMaybeToBool(
-      multiprof?.psico_uso_psicofarmaco
+      multiprof?.psico_uso_psicofarmaco,
     ),
     use_psychotropic_medication_answer:
       optString(multiprof?.psico_psicofarmaco_qual) ?? null,
     any_psychological_psychiatric_diagnosis: yesNoMaybeToBool(
-      multiprof?.psico_diagnostico
+      multiprof?.psico_diagnostico,
     ),
     any_psychological_psychiatric_diagnosis_answer:
       optString(multiprof?.psico_diagnostico_qual) ?? null,
     everyday_stress_interfere_with_your_BP_BS_control: yesNoMaybeToBool(
-      multiprof?.psico_estresse_interfere
+      multiprof?.psico_estresse_interfere,
     ),
     economic_factors_interfere_with_your_treatment: yesNoMaybeToBool(
-      multiprof?.psico_fatores_economicos
+      multiprof?.psico_fatores_economicos,
     ),
     feel_receive_support_from_family_friends_to_maintain_treatment:
       yesNoMaybeToBool(multiprof?.psico_apoio_suficiente),
     regularly_follow_health_guidelines: yesNoMaybeToBool(
-      multiprof?.psico_cumpre_orientacoes
+      multiprof?.psico_cumpre_orientacoes,
     ),
 
     /** ───────── EnvironmentalRisks (ambi_*) ───────── */
     presence_of_pets_at_home: yesNoMaybeToBool(
-      multiprof?.ambi_animais_domicilio
+      multiprof?.ambi_animais_domicilio,
     ),
     presence_of_pets_at_home_answer:
       optString(multiprof?.ambi_animais_quais) ?? null,
     your_animals_are_vaccinated: yesNoMaybeToBool(
-      multiprof?.ambi_animais_vacinados
+      multiprof?.ambi_animais_vacinados,
     ),
     delayed_wound_healing_after_scratches_or_bites: yesNoMaybeToBool(
-      multiprof?.ambi_feridas_demoram
+      multiprof?.ambi_feridas_demoram,
     ),
     diagnosed_transmissible_disease_in_household: (() => {
       const arr = multiprof?.ambi_doencas_transmissiveis as
         | string[]
         | undefined;
       const first = arr?.[0];
+
       if (!first) return null;
+
       return diseaseChoiceMap[first] ?? null;
     })(),
     direct_contact_with_animal_bodily_fluids:
       optString(multiprof?.ambi_contato_sangue_fezes_urina) ?? null,
     received_guidance_on_zoonoses: yesNoMaybeToBool(
-      multiprof?.ambi_orientacao_zoonoses
+      multiprof?.ambi_orientacao_zoonoses,
     ),
 
     /** ───────── PhysicalMotorRisks (fisico_*) ───────── */
@@ -460,21 +469,23 @@ export function formToPatientApi(
     has_edema: yesNoMaybeToBool(multiprof?.fisico_edemas),
     has_dyspnea: yesNoMaybeToBool(multiprof?.fisico_dispneia),
     has_paresthesia_or_cramps: yesNoMaybeToBool(
-      multiprof?.fisico_formigamento_caimbras
+      multiprof?.fisico_formigamento_caimbras,
     ),
     has_difficulty_walking_or_activity: yesNoMaybeToBool(
-      multiprof?.fisico_dificuldade_caminhar
+      multiprof?.fisico_dificuldade_caminhar,
     ),
 
     /** ───────── ClassificationConducmMultiProfessional ───────── */
     requires_multidisciplinary_referral: yesNoMaybeToBool(
-      multiprof?.precisa_enc_multiprof
+      multiprof?.precisa_enc_multiprof,
     ),
     requires_multidisciplinary_referral_choose: (() => {
       const arr = multiprof?.enc_multiprof as string[] | undefined;
+
       if (!arr || arr.length === 0) return null;
 
       const first = arr.find((v) => v !== "outro") ?? arr[0];
+
       return referralChoiceMap[first] ?? null;
     })(),
     /** ───────── LifeStyle ───────── */
@@ -558,49 +569,51 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
 
   // ─── Riscos Psicossociais ───
   multiprof.psico_uso_psicofarmaco = boolToSimNao(
-    api?.use_psychotropic_medication ?? null
+    api?.use_psychotropic_medication ?? null,
   );
   multiprof.psico_psicofarmaco_qual =
     api?.use_psychotropic_medication_answer ?? "";
 
   multiprof.psico_diagnostico = boolToYesNoMaybe(
-    api?.any_psychological_psychiatric_diagnosis
+    api?.any_psychological_psychiatric_diagnosis,
   );
   multiprof.psico_diagnostico_qual =
     api?.any_psychological_psychiatric_diagnosis_answer ?? "";
 
   multiprof.psico_estresse_interfere = boolToSimNao(
-    api?.everyday_stress_interfere_with_your_BP_BS_control ?? null
+    api?.everyday_stress_interfere_with_your_BP_BS_control ?? null,
   );
   multiprof.psico_fatores_economicos = boolToSimNao(
-    api?.economic_factors_interfere_with_your_treatment ?? null
+    api?.economic_factors_interfere_with_your_treatment ?? null,
   );
 
   multiprof.psico_apoio_suficiente = boolToYesNoMaybe(
-    api?.feel_receive_support_from_family_friends_to_maintain_treatment
+    api?.feel_receive_support_from_family_friends_to_maintain_treatment,
   );
   multiprof.psico_cumpre_orientacoes = boolToSimNao(
-    api?.regularly_follow_health_guidelines ?? null
+    api?.regularly_follow_health_guidelines ?? null,
   );
 
   // ─── Riscos Ambientais ───
   multiprof.ambi_animais_domicilio = boolToYesNoMaybe(
-    api?.presence_of_pets_at_home
+    api?.presence_of_pets_at_home,
   );
   multiprof.ambi_animais_quais = api?.presence_of_pets_at_home_answer ?? "";
 
   multiprof.ambi_animais_vacinados = boolToYesNoMaybe(
-    api?.your_animals_are_vaccinated
+    api?.your_animals_are_vaccinated,
   );
   multiprof.ambi_feridas_demoram = boolToSimNao(
-    api?.delayed_wound_healing_after_scratches_or_bites ?? null
+    api?.delayed_wound_healing_after_scratches_or_bites ?? null,
   );
 
   const diseaseCode = api?.diagnosed_transmissible_disease_in_household ?? null;
+
   if (diseaseCode) {
     const found = Object.entries(diseaseChoiceMap).find(
-      ([, back]) => back === diseaseCode
+      ([, back]) => back === diseaseCode,
     );
+
     multiprof.ambi_doencas_transmissiveis = found ? [found[0]] : undefined;
   } else {
     multiprof.ambi_doencas_transmissiveis = undefined;
@@ -608,15 +621,15 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   multiprof.ambi_doencas_outro = "";
 
   multiprof.ambi_contato_sangue_fezes_urina = boolToYesNoMaybe(
-    api?.direct_contact_with_animal_bodily_fluids
+    api?.direct_contact_with_animal_bodily_fluids,
   );
   multiprof.ambi_orientacao_zoonoses = boolToYesNoMaybe(
-    api?.received_guidance_on_zoonoses
+    api?.received_guidance_on_zoonoses,
   );
 
   // ─── Riscos Físico-Motores ───
   multiprof.fisico_atividade = boolToSimNao(
-    api?.performs_physical_activity ?? null
+    api?.performs_physical_activity ?? null,
   );
   multiprof.fisico_atividade_freq_semana =
     api?.performs_physical_activity_answer != null &&
@@ -627,22 +640,24 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
   multiprof.fisico_edemas = boolToSimNao(api?.has_edema ?? null);
   multiprof.fisico_dispneia = boolToSimNao(api?.has_dyspnea ?? null);
   multiprof.fisico_formigamento_caimbras = boolToSimNao(
-    api?.has_paresthesia_or_cramps ?? null
+    api?.has_paresthesia_or_cramps ?? null,
   );
   multiprof.fisico_dificuldade_caminhar = boolToSimNao(
-    api?.has_difficulty_walking_or_activity ?? null
+    api?.has_difficulty_walking_or_activity ?? null,
   );
 
   // ─── Encaminhamento Multiprofissional ───
   multiprof.precisa_enc_multiprof = boolToSimNao(
-    api?.requires_multidisciplinary_referral ?? null
+    api?.requires_multidisciplinary_referral ?? null,
   );
 
   const referralCode = api?.requires_multidisciplinary_referral_choose ?? null;
+
   if (referralCode) {
     const found = Object.entries(referralChoiceMap).find(
-      ([, back]) => back === referralCode
+      ([, back]) => back === referralCode,
     );
+
     multiprof.enc_multiprof = found ? [found[0]] : undefined;
   } else {
     multiprof.enc_multiprof = undefined;
@@ -697,7 +712,7 @@ function hasClinicaHasData(has: any | undefined | null): boolean {
 
 export function formToHasApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
-  patientId: number
+  patientId: number,
 ): HasApiPayload | null {
   const cond = (data as any).condicoes;
   const has = (data as any).clinica?.has;
@@ -767,16 +782,20 @@ export function formToHasApi(
 
   const conductAdopted = (() => {
     const arr = has?.condutas as string[] | undefined;
+
     if (!arr || arr.length === 0) return null;
     const first = arr.find((v) => v !== "outro") ?? arr[0];
+
     return conductHasMap[first] ?? null;
   })();
 
   const complicationEnum = (() => {
     const arr = has?.complicacoes as string[] | undefined;
+
     if (!arr || arr.length === 0) return null;
 
     const first = arr.find((v) => v !== "outra") ?? arr[0];
+
     return hasComplicationsMap[first] ?? null;
   })();
 
@@ -811,7 +830,7 @@ export function formToHasApi(
 /** FRONT → DM API (create/edit) */
 export function formToDmApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
-  patientId: number
+  patientId: number,
 ): DmApiPayload | null {
   const cond: any = (data as any).condicoes;
   const dm: any = (data as any).clinica?.dm;
@@ -887,12 +906,14 @@ export function hasApiToForm(api: any): any {
     condutas: (() => {
       if (!api.conduct_adopted) return [];
       const front = conductHasBackToFront[api.conduct_adopted];
+
       return front ? [front] : [];
     })(),
     conduta_outro: undefined,
     complicacoes: (() => {
       if (!api.any_complications_HBP) return [];
       const front = hasComplicationsBackToFront[api.any_complications_HBP];
+
       return front ? [front] : [];
     })(),
     complicacao_outra: undefined,
@@ -932,7 +953,7 @@ export function dmApiToForm(api: any): any {
 
 export function applyLifestyleFromPatientApiToClinica(
   defaultValues: any,
-  patientApi: any
+  patientApi: any,
 ) {
   if (!defaultValues || !patientApi) return;
 

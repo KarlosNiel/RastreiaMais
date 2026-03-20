@@ -89,7 +89,7 @@ export function PendenciasTable({
   const [filterValue, setFilterValue] = React.useState("");
   const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
   const [visibleColumns] = React.useState<Set<string>>(
-    () => new Set(columns.map((c) => String(c.uid)))
+    () => new Set(columns.map((c) => String(c.uid))),
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(initialRowsPerPage);
   const [page, setPage] = React.useState(initialPage);
@@ -114,13 +114,13 @@ export function PendenciasTable({
         (r) =>
           r.paciente.toLowerCase().includes(q) ||
           r.microarea.toLowerCase().includes(q) ||
-          r.pendencias.toLowerCase().includes(q)
+          r.pendencias.toLowerCase().includes(q),
       );
     }
 
     if (riskFilter !== "all" && (riskFilter as Set<Key>).size) {
       const sel = new Set<string>(
-        Array.from(riskFilter as Set<Key>).map(String)
+        Array.from(riskFilter as Set<Key>).map(String),
       );
 
       data = data.filter((r) => sel.has(r.risco));
@@ -240,13 +240,13 @@ export function PendenciasTable({
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
+                disallowEmptySelection
                 aria-label="Filtro de Risco"
                 closeOnSelect={false}
-                disallowEmptySelection
-                selectionMode="multiple"
                 selectedKeys={
                   riskFilter === "all" ? "all" : (riskFilter as Iterable<Key>)
                 }
+                selectionMode="multiple"
                 onSelectionChange={(keys) =>
                   setRiskFilter(keys as "all" | Set<Key>)
                 }
@@ -291,15 +291,15 @@ export function PendenciasTable({
     return (
       <div className="py-2 flex justify-center">
         <Pagination
+          isCompact
+          showControls
           classNames={{
             next: "dark:bg-gray-800",
             prev: "dark:bg-gray-800",
             item: "dark:bg-gray-800",
           }}
           color="primary"
-          isCompact
           page={page}
-          showControls
           total={pages}
           onChange={setPage}
         />

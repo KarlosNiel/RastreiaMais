@@ -17,7 +17,7 @@ export default function Error({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <Card shadow="none" className="border border-default-200">
+      <Card className="border border-default-200" shadow="none">
         <CardBody className="space-y-5">
           <h1 className="text-xl font-semibold">
             Não foi possível carregar o paciente

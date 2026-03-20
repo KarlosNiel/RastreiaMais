@@ -43,16 +43,13 @@ export function RHFSwitch<T extends FieldValues>({
     <Controller
       control={control}
       name={name}
-      rules={rules}
       render={({ field, fieldState }) => (
         <div>
           <Switch
             {...rest}
-            classNames={
-              {
-                wrapper: "dark:bg-gray-800"
-              }
-            }
+            classNames={{
+              wrapper: "dark:bg-gray-800",
+            }}
             isSelected={!!field.value}
             onValueChange={(v) => {
               field.onChange(v);
@@ -69,6 +66,7 @@ export function RHFSwitch<T extends FieldValues>({
           )}
         </div>
       )}
+      rules={rules}
     />
   );
 }

@@ -69,10 +69,11 @@ export function createFadeInDown(distance = 8, duration = 0.2): Variants {
 export function createSlideIn(
   axis: "x" | "y" = "y",
   distance = 12,
-  t: Transition = transitions.base
+  t: Transition = transitions.base,
 ): Variants {
   const from = axis === "x" ? { x: distance } : { y: distance };
   const to = axis === "x" ? { x: 0 } : { y: 0 };
+
   return {
     initial: { opacity: 0, ...from },
     animate: { opacity: 1, ...to, transition: rt(t) },
@@ -89,7 +90,7 @@ export function createSlideIn(
 
 export function createScaleIn(
   from = 0.96,
-  t: Transition = transitions.spring
+  t: Transition = transitions.spring,
 ): Variants {
   return {
     initial: { opacity: 0, scale: from },
@@ -107,10 +108,11 @@ export const stagger = (delay = 0.05) => ({
 
 export function createStaggerContainer(
   staggerChildren = 0.06,
-  delayChildren = 0
+  delayChildren = 0,
 ) {
   const sc = prefersReducedMotion() ? 0 : staggerChildren;
   const dc = prefersReducedMotion() ? 0 : delayChildren;
+
   return {
     initial: {},
     animate: { transition: { staggerChildren: sc, delayChildren: dc } },

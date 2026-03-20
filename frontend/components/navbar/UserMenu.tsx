@@ -8,13 +8,14 @@ import {
   Button,
   Avatar,
 } from "@heroui/react";
-import { 
-  UserIcon, 
-  Cog6ToothIcon, 
-  ArrowRightOnRectangleIcon 
+import {
+  UserIcon,
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
-import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+
+import { logout } from "@/lib/auth";
 import { MeResponse } from "@/lib/auth";
 
 interface UserMenuProps {
@@ -45,22 +46,22 @@ export function UserMenu({ user }: UserMenuProps) {
       <DropdownTrigger className="bg-transparent">
         <Button
           isIconOnly
-          size="sm"
-          variant="light"
           aria-label="Menu do usuário"
           className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
+          size="sm"
+          variant="light"
         >
           <Avatar
-            size="sm"
-            name={userInitials}
-            className="cursor-pointer w-5 h-5 bg-transparent"
             showFallback
+            className="cursor-pointer w-5 h-5 bg-transparent"
             fallback={<UserIcon className="h-5 w-5 dark:text-white stroke-2" />}
+            name={userInitials}
+            size="sm"
           />
         </Button>
       </DropdownTrigger>
-      
-      <DropdownMenu aria-label="Menu do usuário" variant="flat" >
+
+      <DropdownMenu aria-label="Menu do usuário" variant="flat">
         <DropdownItem
           key="profile"
           className="h-14 gap-2"
@@ -68,24 +69,26 @@ export function UserMenu({ user }: UserMenuProps) {
         >
           <div className="flex flex-col">
             <p className="font-semibold">{userName}</p>
-            <p className="text-small text-default-500">{user.email || user.username}</p>
+            <p className="text-small text-default-500">
+              {user.email || user.username}
+            </p>
           </div>
         </DropdownItem>
-        
+
         <DropdownItem
           key="view-profile"
           startContent={<UserIcon className="h-4 w-4" />}
         >
           Ver Perfil
         </DropdownItem>
-        
+
         <DropdownItem
           key="settings"
           startContent={<Cog6ToothIcon className="h-4 w-4" />}
         >
           Configurações
         </DropdownItem>
-        
+
         <DropdownItem
           key="logout"
           color="danger"

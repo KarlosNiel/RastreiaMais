@@ -7,6 +7,7 @@ export function yesNoMaybeToBool(v?: string | null): boolean | null {
   if (!v) return null;
   if (v === "sim") return true;
   if (v === "nao") return false;
+
   return null;
 }
 
@@ -14,10 +15,11 @@ export function yesNoMaybeToBool(v?: string | null): boolean | null {
  * Converte boolean em "sim" | "nao" | "nao_sabe"
  */
 export function boolToYesNoMaybe(
-  b?: boolean | null
+  b?: boolean | null,
 ): "sim" | "nao" | "nao_sabe" | undefined {
   if (b === true) return "sim";
   if (b === false) return "nao";
+
   return "nao_sabe";
 }
 
@@ -28,6 +30,7 @@ export function boolToYesNoMaybe(
 export function boolToSimNao(b?: boolean | null): "sim" | "nao" | undefined {
   if (b === true) return "sim";
   if (b === false) return "nao";
+
   return undefined;
 }
 
@@ -52,12 +55,14 @@ export function generateSimplePassword(): string {
 
   if (typeof window !== "undefined" && window.crypto?.getRandomValues) {
     const array = new Uint32Array(totalRandomSlots);
+
     window.crypto.getRandomValues(array);
 
     const l1 = letters[array[0] % letters.length];
     const l2 = letters[array[1] % letters.length];
 
     let numPart = "";
+
     for (let i = 2; i < totalRandomSlots; i++) {
       numPart += digits[array[i] % digits.length];
     }
@@ -72,6 +77,7 @@ export function generateSimplePassword(): string {
   const l2 = letters[randIndex(letters.length)];
 
   let numPart = "";
+
   for (let i = 0; i < PASSWORD_DIGITS; i++) {
     numPart += digits[randIndex(digits.length)];
   }
@@ -85,7 +91,9 @@ export function generateSimplePassword(): string {
 export function toDateISO(d?: Date | string | null): string | null {
   if (!d) return null;
   const dt = typeof d === "string" ? new Date(d) : d;
+
   if (Number.isNaN(dt.getTime())) return null;
+
   return dt.toISOString().slice(0, 10);
 }
 
@@ -96,6 +104,7 @@ export function calcAgeFromBirth(d?: Date | string | null): number | null {
   if (!d) return null;
 
   const dt = typeof d === "string" ? new Date(d) : d;
+
   if (Number.isNaN(dt.getTime())) return null;
 
   const now = new Date();
@@ -115,6 +124,7 @@ export function calcAgeFromBirth(d?: Date | string | null): number | null {
 export function optString(v: unknown): string | undefined {
   if (typeof v !== "string") return undefined;
   const s = v.trim();
+
   return s === "" ? undefined : s;
 }
 

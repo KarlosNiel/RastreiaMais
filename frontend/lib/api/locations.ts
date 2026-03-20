@@ -18,6 +18,7 @@ function ensureResponse<T>(res: T | null | undefined, msg: string): T {
   if (res == null) {
     throw new Error(msg);
   }
+
   return res;
 }
 
@@ -26,12 +27,13 @@ function ensureResponse<T>(res: T | null | undefined, msg: string): T {
  * e retorna o objeto criado (inclusive o `id`).
  */
 export async function createAddress<T = { id: number }>(
-  payload: AddressApiPayload
+  payload: AddressApiPayload,
 ): Promise<T> {
   const res = await apiPost<T>("/api/v1/locations/address/", payload);
+
   return ensureResponse(
     res,
-    "Falha ao criar endereço. A API retornou resposta vazia."
+    "Falha ao criar endereço. A API retornou resposta vazia.",
   );
 }
 
@@ -40,6 +42,7 @@ export async function createAddress<T = { id: number }>(
  */
 export async function getAddress<T = any>(id: number): Promise<T> {
   const res = await apiGet<T>(`/api/v1/locations/address/${id}/`);
+
   return ensureResponse(res, "Endereço não encontrado.");
 }
 
@@ -48,12 +51,13 @@ export async function getAddress<T = any>(id: number): Promise<T> {
  */
 export async function updateAddress<T = { id: number }>(
   id: number,
-  payload: AddressApiPayload
+  payload: AddressApiPayload,
 ): Promise<T> {
   const res = await apiPatch<T>(`/api/v1/locations/address/${id}/`, payload);
+
   return ensureResponse(
     res,
-    "Falha ao atualizar endereço. A API retornou resposta vazia."
+    "Falha ao atualizar endereço. A API retornou resposta vazia.",
   );
 }
 
@@ -70,8 +74,9 @@ export type InstitutionApi = {
  */
 export async function listInstitutions(): Promise<InstitutionApi[]> {
   const res = await apiGet<InstitutionApi[]>("/api/v1/locations/institutions/");
+
   return ensureResponse(
     res,
-    "Falha ao carregar instituições. A API retornou resposta vazia."
+    "Falha ao carregar instituições. A API retornou resposta vazia.",
   );
 }

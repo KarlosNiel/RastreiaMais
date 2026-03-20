@@ -1,10 +1,11 @@
 // frontend/components/pacientes/sections/Step2Condicoes.tsx
 "use client";
 
-import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { Card, CardBody, Checkbox, Divider, Input } from "@heroui/react";
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+
+import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 
 /** Campos validados neste passo  */
 export const STEP2_FIELDS = [
@@ -42,8 +43,8 @@ export default function Step2Condicoes() {
   return (
     <div className="space-y-6">
       <Card
-        shadow="none"
         className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        shadow="none"
       >
         <CardBody className="space-y-6">
           <h2 className="text-xl font-semibold">2. Condições Crônicas</h2>
@@ -57,34 +58,34 @@ export default function Step2Condicoes() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               <div className="md:col-span-12 flex flex-wrap gap-7 py-2">
                 <Controller
-                  name="condicoes.has"
                   control={control}
+                  name="condicoes.has"
                   render={({ field }) => (
                     <Checkbox
-                      isSelected={!!field.value}
-                      onValueChange={field.onChange}
                       classNames={{
                         base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
                         wrapper: "bg-gray-100 dark:bg-gray-800",
                       }}
+                      isSelected={!!field.value}
+                      onValueChange={field.onChange}
                     >
                       Hipertensão Arterial
                     </Checkbox>
                   )}
                 />
                 <Controller
-                  name="condicoes.dm"
                   control={control}
+                  name="condicoes.dm"
                   render={({ field }) => (
                     <Checkbox
-                      isSelected={!!field.value}
-                      onValueChange={field.onChange}
                       classNames={{
                         base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
                         label: "font-medium",
                         wrapper: "bg-gray-100 dark:bg-gray-800",
                       }}
+                      isSelected={!!field.value}
+                      onValueChange={field.onChange}
                     >
                       Diabetes Mellitus
                     </Checkbox>
@@ -109,36 +110,36 @@ export default function Step2Condicoes() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               {/* Usamos Controller + Input direto para garantir value string */}
               <Controller
-                name="condicoes.outras_dcnts"
                 control={control}
+                name="condicoes.outras_dcnts"
                 render={({ field, fieldState }) => (
                   <Input
                     className="md:col-span-8"
                     classNames={{
                       inputWrapper: "dark:bg-gray-800",
                     }}
-                    label="Descrever (opcional)"
-                    placeholder="Ex.: Asma, DPOC, Doença renal crônica"
                     description={
                       fieldState.error
                         ? undefined
                         : "Separe por vírgulas. Preencha aqui caso não marque HAS/DM."
                     }
+                    errorMessage={fieldState.error?.message}
+                    isInvalid={!!fieldState.error}
+                    label="Descrever (opcional)"
+                    placeholder="Ex.: Asma, DPOC, Doença renal crônica"
                     value={field.value ?? ""} // <- nunca undefined
                     onValueChange={(v) => field.onChange(v)}
-                    isInvalid={!!fieldState.error}
-                    errorMessage={fieldState.error?.message}
                   />
                 )}
               />
 
               <div className="md:col-span-4">
                 <RHFChipGroup
-                  name="condicoes.outras_em_acompanhamento"
-                  label="Em acompanhamento?"
                   single
-                  className="mt-1"
                   chipsClassName="flex flex-wrap gap-2"
+                  className="mt-1"
+                  label="Em acompanhamento?"
+                  name="condicoes.outras_em_acompanhamento"
                   options={[
                     { value: "sim", label: "Sim" },
                     { value: "nao", label: "Não" },

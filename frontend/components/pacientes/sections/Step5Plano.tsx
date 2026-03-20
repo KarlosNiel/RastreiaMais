@@ -16,18 +16,29 @@ import { listInstitutions } from "@/lib/api/locations";
 function shortName(full?: string) {
   if (!full) return "-";
   const parts = full.trim().split(/\s+/);
+
   if (parts.length === 1) return parts[0];
   const lastInitial = parts[parts.length - 1]?.[0];
+
   return `${parts[0]}${lastInitial ? ` ${lastInitial}.` : ""}`;
 }
 
 /** atalhos de data relativos ao “hoje” */
 function addDays(d: Date, days: number) {
   const nd = new Date(d);
+
   nd.setDate(nd.getDate() + days);
   nd.setHours(0, 0, 0, 0);
+
   return nd;
 }
+
+const TIPO_LABEL_MAP: Record<string, string> = {
+  consulta: "consulta",
+  retorno: "retorno",
+  avaliacao: "avaliação",
+  outro: "atendimento",
+};
 
 export default function Step5Plano() {
   const { getValues, getFieldState, setValue, watch } = useFormContext();
@@ -46,8 +57,10 @@ export default function Step5Plano() {
 
   const condicoesTxt = useMemo(() => {
     const arr: string[] = [];
+
     if (has) arr.push("HAS");
     if (dm) arr.push("DM");
+
     return arr.length ? arr.join(" e ") : "-";
   }, [has, dm]);
 
@@ -60,11 +73,13 @@ export default function Step5Plano() {
       estagio2: "HAS estágio 2",
       estagio3: "HAS estágio 3",
     };
+
     return map[classPA] ?? `classificação PA: ${classPA}`;
   }, [has, classPA]);
 
   const resumoDM = useMemo(() => {
     if (!dm) return null;
+
     return typeof hba1c !== "undefined" && hba1c !== null
       ? `HbA1c ${String(hba1c)}%`
       : null;
@@ -75,12 +90,13 @@ export default function Step5Plano() {
       queryKey: ["locations", "institutions"],
       queryFn: async () => {
         const items = await listInstitutions();
+
         return items.map((inst) => ({
           key: String(inst.id),
           label: inst.name,
         }));
       },
-    }
+    },
   );
 
   // Compose automático (valor “sugerido”)
@@ -116,10 +132,11 @@ export default function Step5Plano() {
   const salvarRascunho = useCallback(() => {
     try {
       const data = getValues();
+
       localStorage.setItem("rastreia:paciente:draft", JSON.stringify(data));
       notifySuccess("Rascunho salvo no navegador.");
-    } catch (e) {
-      console.error("Falha ao salvar rascunho", e);
+    } catch {
+      // falha silenciosa: não trava o usuário se o localStorage falhar
     }
   }, [getValues]);
 
@@ -142,37 +159,46 @@ export default function Step5Plano() {
   const quickSetDate = useCallback(
     (target: "plano.data_consulta" | "plano.data_retorno", days: number) => {
       const base = new Date();
+
       base.setHours(0, 0, 0, 0);
       setValue(target, addDays(base, days), { shouldDirty: true });
     },
-    [setValue]
+    [setValue],
   );
 
   const resumoAgendamento = useMemo(() => {
     const hasConsulta = !!dataConsulta;
     const hasRetorno = !!dataRetorno;
 
+    // tipo bruto vindo do form (consulta | retorno | avaliacao | outro)
+    const tipo = (tipoConsulta as string | undefined) ?? "consulta";
+    const tipoLabel = TIPO_LABEL_MAP[tipo] ?? "consulta";
+
     if (hasConsulta && hasRetorno) {
-      return "Será criada uma consulta na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.";
+      return `Será criada uma ${tipoLabel} na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.`;
     }
 
     if (hasConsulta && !hasRetorno) {
-      return "Será criada apenas uma consulta na data indicada em “Agendar consulta”.";
+      return `Será criada apenas uma ${tipoLabel} na data indicada em “Agendar consulta”.`;
     }
 
     if (!hasConsulta && hasRetorno) {
-      return "Sem data de consulta: será criado um único agendamento usando a data informada em “Agendar retorno”.";
+      if (tipo === "retorno") {
+        return "Será criado um único agendamento de retorno na data informada em “Agendar retorno”.";
+      }
+
+      return `Sem data de consulta: será criado um único agendamento do tipo ${tipoLabel} usando a data informada em “Agendar retorno”.`;
     }
 
     // Nenhuma data
     return "Preencha ao menos a data de consulta ou de retorno para gerar agendamento.";
-  }, [dataConsulta, dataRetorno]);
+  }, [dataConsulta, dataRetorno, tipoConsulta]);
 
   return (
     <div className="space-y-6">
       <Card
-        shadow="none"
         className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        shadow="none"
       >
         <CardBody className="space-y-8">
           <h2 className="text-xl font-semibold">5. Plano & Agendamentos</h2>
@@ -185,10 +211,10 @@ export default function Step5Plano() {
               </h3>
 
               <RHFInput
-                name="plano.resumo"
                 label=""
-                placeholder="Resumo do plano (edite, se necessário)"
                 labelPlacement="outside"
+                name="plano.resumo"
+                placeholder="Resumo do plano (edite, se necessário)"
               />
 
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 mt-4 text-sm">
@@ -223,45 +249,45 @@ export default function Step5Plano() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <RHFSelect
                   className="md:col-span-4"
-                  name="plano.tipo_consulta"
                   label="Tipo"
                   labelPlacement="outside"
-                  placeholder="Selecione…"
+                  name="plano.tipo_consulta"
                   options={[
                     { key: "consulta", label: "Consulta" },
                     { key: "retorno", label: "Retorno" },
                     { key: "avaliacao", label: "Avaliação" },
                     { key: "outro", label: "Outro" },
                   ]}
+                  placeholder="Selecione…"
                 />
 
                 <RHFInput
                   className="md:col-span-4"
-                  name="plano.hora_consulta"
-                  label="Horário"
-                  placeholder="08:00"
-                  labelPlacement="outside"
                   inputMode="numeric"
+                  label="Horário"
+                  labelPlacement="outside"
+                  name="plano.hora_consulta"
+                  placeholder="08:00"
                 />
 
                 <RHFSelect
                   className="md:col-span-4"
-                  name="plano.local_id"
                   label="Local"
                   labelPlacement="outside"
+                  name="plano.local_id"
+                  options={institutionOptions ?? []}
                   placeholder={
                     institutionsLoading
                       ? "Carregando unidades..."
                       : "Selecione a unidade"
                   }
-                  options={institutionOptions ?? []}
                 />
 
                 <div className="md:col-span-4">
                   <RHFDate
-                    name="plano.data_consulta"
                     label="Agendar consulta"
                     labelPlacement="outside"
+                    name="plano.data_consulta"
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Button
@@ -290,9 +316,9 @@ export default function Step5Plano() {
 
                 <div className="md:col-span-4">
                   <RHFDate
-                    name="plano.data_retorno"
                     label="Agendar retorno"
                     labelPlacement="outside"
+                    name="plano.data_retorno"
                   />
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Button
@@ -321,9 +347,9 @@ export default function Step5Plano() {
 
                 <RHFInput
                   className="md:col-span-12"
-                  name="plano.assinatura"
                   label="Assinatura"
                   labelPlacement="outside"
+                  name="plano.assinatura"
                   placeholder="Assinatura simples (opcional)"
                 />
               </div>

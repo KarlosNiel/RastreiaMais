@@ -2,13 +2,16 @@
 
 import { Button, Card, CardBody } from "@heroui/react";
 import { useRouter } from "next/navigation";
-import {UserCircleIcon, CogIcon} from "@heroicons/react/24/outline";
+import { UserCircleIcon, CogIcon } from "@heroicons/react/24/outline";
 
 export const RoleCards = () => {
   const router = useRouter();
 
   return (
-    <section className="py-20  dark:bg-gray-950 transition-colors duration-300" id="entrar">
+    <section
+      className="py-20  dark:bg-gray-950 transition-colors duration-300"
+      id="entrar"
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground dark:text-white">
@@ -49,11 +52,11 @@ export const RoleCards = () => {
                 ))}
               </ul>
 
-              <Button 
-                onPress={() => router.push("/auth/login/profissional")}
-                color="primary" 
-                size="lg" 
+              <Button
                 className="w-full font-semibold"
+                color="primary"
+                size="lg"
+                onPress={() => router.push("/auth/login/profissional")}
               >
                 Entrar como Profissional
               </Button>
@@ -89,11 +92,11 @@ export const RoleCards = () => {
                 ))}
               </ul>
 
-              <Button 
-                onPress={() => router.push("/auth/login/paciente")}
-                color="secondary" 
-                size="lg" 
+              <Button
                 className="w-full font-semibold"
+                color="secondary"
+                size="lg"
+                onPress={() => router.push("/auth/login/paciente")}
               >
                 Entrar como Paciente
               </Button>
