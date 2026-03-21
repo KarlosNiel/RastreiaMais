@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from apps.accounts.models import *
 from apps.commons.api.v1.serializers import BaseSerializer
 from apps.locations.api.v1.serializers import AddressSerializer
@@ -72,6 +73,7 @@ class PatientUserSerializer(BaseSerializer):
                 )
         return value
 
+    @extend_schema_field(serializers.CharField())
     def get_conditions(self, obj):
         conditions = []
         try:
