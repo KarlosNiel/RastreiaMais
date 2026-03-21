@@ -22,7 +22,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center mb-2.5">
+          <div className="flex items-center ">
             <Button
               as={Link}
               className="px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
