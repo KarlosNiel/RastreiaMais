@@ -5,6 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
+
 
 
 class LogoutView(APIView):
@@ -14,6 +17,13 @@ class LogoutView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=inline_serializer(
+            name="LogoutRequest",
+            fields={"refresh": serializers.CharField()}
+        ),
+        responses={200: inline_serializer(name="LogoutResponse", fields={"detail": serializers.CharField()})}
+    )
     def post(self, request):
         try:
             refresh_token = request.data.get("refresh")
