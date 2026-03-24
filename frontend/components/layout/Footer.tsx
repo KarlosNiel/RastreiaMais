@@ -1,5 +1,4 @@
 // frontend/components/layout/Footer.tsx
-import Image from "next/image";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -33,7 +32,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Recursos
                 </Link>
@@ -41,7 +40,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Segurança
                 </Link>
@@ -57,7 +56,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Documentação
                 </Link>
@@ -65,7 +64,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   FAQ
                 </Link>
@@ -73,7 +72,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Contato
                 </Link>
@@ -89,7 +88,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Privacidade
                 </Link>
@@ -97,7 +96,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   Termos de Uso
                 </Link>
@@ -105,7 +104,7 @@ export const Footer = () => {
               <li>
                 <Link
                   className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href="#"
+                  href=""
                 >
                   LGPD
                 </Link>
