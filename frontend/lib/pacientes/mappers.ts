@@ -180,6 +180,67 @@ export function toDateTimeISO(
   return d.toISOString();
 }
 
+/**
+ * Calcula o nível de risco do agendamento com base nos dados clínicos
+ * preenchidos durante o cadastro (Framingham, classificação PA e HbA1c).
+ *
+ * Prioridade: Framingham > classificação PA (HAS) e HbA1c (DM).
+ * Quando ambas as condições existem, prevalece o maior risco.
+ * Sem dados clínicos suficientes → fallback "Moderado".
+ */
+export function calculateRiskFromClinicalData(
+  data: RegistroPacienteCreate | RegistroPacienteEdit,
+): AppointmentApiPayload["risk_level"] {
+  const clinica: any = (data as any).clinica ?? {};
+  const condicoes: any = (data as any).condicoes ?? {};
+  const has: any = clinica?.has;
+  const dm: any = clinica?.dm;
+
+  // 0 = sem dados, 1 = Seguro, 2 = Moderado, 3 = Crítico
+  let maxRisk = 0;
+
+  /* ── HAS: Framingham (prioridade) ou classificação PA ── */
+  if (condicoes.has && has) {
+    const framingham = has.framingham as string | undefined;
+
+    if (framingham) {
+      // Score de Framingham (calculado automaticamente no Step 3)
+      if (framingham === "<10") maxRisk = Math.max(maxRisk, 1); // Baixo
+      else if (framingham === "10-20") maxRisk = Math.max(maxRisk, 2); // Moderado
+      else if (framingham === ">20") maxRisk = Math.max(maxRisk, 3); // Alto
+    } else {
+      // Fallback: classificação da PA
+      const pa = has.classificacao_pa as string | undefined;
+
+      if (pa === "normal") maxRisk = Math.max(maxRisk, 1);
+      else if (pa === "pre_hipertenso" || pa === "estagio1")
+        maxRisk = Math.max(maxRisk, 2);
+      else if (pa === "estagio2" || pa === "estagio3")
+        maxRisk = Math.max(maxRisk, 3);
+    }
+  }
+
+  /* ── DM: HbA1c ── */
+  if (condicoes.dm && dm) {
+    const hba1cRaw = dm.hba1c;
+    const hba1c = typeof hba1cRaw === "number" ? hba1cRaw : Number(hba1cRaw);
+
+    if (!Number.isNaN(hba1c) && hba1c > 0) {
+      if (hba1c < 7) maxRisk = Math.max(maxRisk, 1); // Controlada
+      else if (hba1c <= 9) maxRisk = Math.max(maxRisk, 2); // Parcial
+      else maxRisk = Math.max(maxRisk, 3); // Descontrolada
+    }
+  }
+
+  const riskMap: Record<number, AppointmentApiPayload["risk_level"]> = {
+    1: "Seguro",
+    2: "Moderado",
+    3: "Crítico",
+  };
+
+  return riskMap[maxRisk] ?? "Moderado";
+}
+
 export function formToAppointmentApi(
   data: RegistroPacienteCreate | RegistroPacienteEdit,
   patientId: number,
@@ -279,10 +340,10 @@ export function formToAppointmentApi(
   const description = descParts.join("\n");
 
   /* ===========================
-   * 5) RISCO / OUTROS CAMPOS
+   * 5) RISCO AUTOMÁTICO (baseado nos scores clínicos)
    * =========================== */
 
-  const risk_level: AppointmentApiPayload["risk_level"] = "Moderado";
+  const risk_level = calculateRiskFromClinicalData(data);
 
   // Converte valores do front para códigos do back (ReferralProfessionChoices)
   const profCodeMap: Record<string, string> = {

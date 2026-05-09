@@ -47,11 +47,11 @@ export default function ProfessionalAppointmentDetailsModal({
   const getRiskLabel = (risco: string) => {
     switch (risco) {
       case "critical":
-        return "Crítico";
+        return "Alto risco";
       case "moderate":
-        return "Atenção";
+        return "Risco moderado";
       default:
-        return "Seguro";
+        return "Baixo risco";
     }
   };
 

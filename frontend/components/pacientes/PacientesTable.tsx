@@ -53,9 +53,9 @@ type Column = {
 };
 
 const RISK_OPTIONS = [
-  { name: "Seguro", uid: "safe" },
-  { name: "Atenção", uid: "moderate" },
-  { name: "Crítico", uid: "critical" },
+  { name: "Baixo risco", uid: "safe" },
+  { name: "Risco moderado", uid: "moderate" },
+  { name: "Alto risco", uid: "critical" },
 ] as const;
 
 const COLUMNS: Column[] = [

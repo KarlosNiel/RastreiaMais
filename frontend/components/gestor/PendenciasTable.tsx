@@ -34,9 +34,9 @@ export type PendenciasRow = {
 };
 
 const RISK_OPTIONS = [
-  { name: "Seguro", uid: "safe" },
-  { name: "Atenção", uid: "moderate" },
-  { name: "Crítico", uid: "critical" },
+  { name: "Baixo risco", uid: "safe" },
+  { name: "Risco moderado", uid: "moderate" },
+  { name: "Alto risco", uid: "critical" },
 ] as const;
 
 type Column = {
@@ -54,7 +54,7 @@ const columns: readonly Column[] = [
   { name: "Status", uid: "risco", sortable: true, align: "start" },
 ] as const;
 
-// ordem semântica para risco (↑ ascendente: Seguro < Atenção < Crítico)
+// ordem semântica para risco (↑ ascendente: Baixo risco < Risco moderado < Alto risco)
 const riskWeight: Record<RiskTone, number> = {
   safe: 0,
   moderate: 1,
@@ -175,10 +175,10 @@ export function PendenciasTable({
               tone={row.risco === "moderate" ? "attention" : row.risco}
             >
               {row.risco === "critical"
-                ? "Crítico"
+                ? "Alto risco"
                 : row.risco === "moderate"
-                  ? "Atenção"
-                  : "Seguro"}
+                  ? "Risco moderado"
+                  : "Baixo risco"}
             </StatusChip>
           </div>
         );

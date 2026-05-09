@@ -51,9 +51,9 @@ type Column = {
 
 /* ===== Config ===== */
 const RISK_OPTIONS = [
-  { name: "Seguro", uid: "safe" },
-  { name: "Atenção", uid: "moderate" },
-  { name: "Crítico", uid: "critical" },
+  { name: "Baixo risco", uid: "safe" },
+  { name: "Risco moderado", uid: "moderate" },
+  { name: "Alto risco", uid: "critical" },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -284,10 +284,10 @@ export function AgendaTable({
             <div className="flex justify-center">
               <StatusChip size="sm" tone={mapRiskToChip(row.risco)}>
                 {row.risco === "critical"
-                  ? "Crítico"
+                  ? "Alto risco"
                   : row.risco === "moderate"
-                    ? "Atenção"
-                    : "Seguro"}
+                    ? "Risco moderado"
+                    : "Baixo risco"}
               </StatusChip>
             </div>
           );

@@ -3,6 +3,7 @@ from apps.commons.api.v1.serializers import BaseSerializer
 from apps.accounts.models import PatientUser, ProfessionalUser
 from apps.locations.models import Institution
 from apps.appointments.models import Appointment
+from apps.appointments.utils import calculate_risk_from_patient
 from apps.accounts.api.v1.serializers import (
     PatientUserSerializer,
     ProfessionalUserSerializer,
@@ -49,3 +50,19 @@ class AppointmentSerializer(BaseSerializer):
             "created_by",
             "updated_by",
         ]
+
+    def create(self, validated_data):
+        """
+        Ao criar um agendamento, calcula automaticamente o risk_level
+        baseado nos dados clínicos do paciente se não foi definido
+        explicitamente pelo frontend.
+        """
+        patient = validated_data.get("patient")
+
+        if patient:
+            calculated_risk = calculate_risk_from_patient(patient)
+
+            # Usa o risco calculado pelo backend (mais confiável)
+            validated_data["risk_level"] = calculated_risk
+
+        return super().create(validated_data)

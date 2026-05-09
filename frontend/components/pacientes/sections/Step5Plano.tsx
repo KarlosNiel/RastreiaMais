@@ -12,6 +12,7 @@ import { RHFInput } from "@/components/form/RHFInput";
 import { RHFSelect } from "@/components/form/RHFSelect";
 import { notifySuccess } from "@/components/ui/notify";
 import { listInstitutions } from "@/lib/api/locations";
+import { calculateRiskFromClinicalData } from "@/lib/pacientes/mappers";
 
 /** Util: abrevia "João Silva Santos" -> "João S." */
 function shortName(full?: string) {
@@ -42,6 +43,7 @@ export default function Step5Plano() {
   const has = watch("condicoes.has");
   const dm = watch("condicoes.dm");
   const classPA = watch("clinica.has.classificacao_pa");
+  const framingham = watch("clinica.has.framingham");
   const hba1c = watch("clinica.dm.hba1c");
 
   /* ========= DADOS ESPECÍFICOS DO AGENDAMENTO ========= */
@@ -77,6 +79,35 @@ export default function Step5Plano() {
       ? `HbA1c ${String(hba1c)}%`
       : null;
   }, [dm, hba1c]);
+
+  /* ========= RISCO CALCULADO AUTOMATICAMENTE ========= */
+  const riscoCalculado = useMemo(() => {
+    const formData = getValues();
+
+    return calculateRiskFromClinicalData(formData);
+  }, [getValues, has, dm, classPA, framingham, hba1c]);
+
+  const riscoConfig = useMemo(() => {
+    const map: Record<string, { label: string; color: string; bg: string }> = {
+      Seguro: {
+        label: "Baixo risco",
+        color: "text-green-700 dark:text-green-400",
+        bg: "bg-green-100 dark:bg-green-900/30",
+      },
+      Moderado: {
+        label: "Risco moderado",
+        color: "text-orange-700 dark:text-orange-400",
+        bg: "bg-orange-100 dark:bg-orange-900/30",
+      },
+      Crítico: {
+        label: "Alto risco",
+        color: "text-red-700 dark:text-red-400",
+        bg: "bg-red-100 dark:bg-red-900/30",
+      },
+    };
+
+    return map[riscoCalculado] ?? map["Moderado"];
+  }, [riscoCalculado]);
 
   const { data: institutionOptions, isLoading: institutionsLoading } = useQuery(
     {
@@ -225,6 +256,23 @@ export default function Step5Plano() {
                   <p className="text-foreground-500">DM</p>
                   <p className="font-medium">{resumoDM ?? "-"}</p>
                 </div>
+              </div>
+
+              {/* Badge de risco automático */}
+              <div
+                className={`mt-4 rounded-xl px-4 py-3 flex items-center justify-between ${riscoConfig.bg}`}
+              >
+                <div>
+                  <p className="text-xs text-foreground-500">Risco do agendamento (automático)</p>
+                  <p className={`text-sm font-bold ${riscoConfig.color}`}>
+                    {riscoConfig.label}
+                  </p>
+                </div>
+                <span
+                  className={`text-xs font-semibold px-3 py-1 rounded-full ${riscoConfig.bg} ${riscoConfig.color} border border-current/20`}
+                >
+                  {riscoCalculado}
+                </span>
               </div>
             </section>
 

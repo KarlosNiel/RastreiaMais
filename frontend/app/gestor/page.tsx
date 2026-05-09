@@ -265,10 +265,10 @@ export default function GestorPage() {
                           tone={mapRiskToChip(a.risk_level)}
                         >
                           {a.risk_level === "critical"
-                            ? "Crítico"
+                            ? "Alto risco"
                             : a.risk_level === "moderate"
-                              ? "Atenção"
-                              : "Seguro"}
+                              ? "Risco moderado"
+                              : "Baixo risco"}
                         </StatusChip>
                       </button>
                     </li>
