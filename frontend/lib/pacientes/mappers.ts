@@ -205,8 +205,10 @@ export function calculateRiskFromClinicalData(
 
     if (framingham) {
       // Score de Framingham (calculado automaticamente no Step 3)
-      if (framingham === "<10") maxRisk = Math.max(maxRisk, 1); // Baixo
-      else if (framingham === "10-20") maxRisk = Math.max(maxRisk, 2); // Moderado
+      if (framingham === "<10")
+        maxRisk = Math.max(maxRisk, 1); // Baixo
+      else if (framingham === "10-20")
+        maxRisk = Math.max(maxRisk, 2); // Moderado
       else if (framingham === ">20") maxRisk = Math.max(maxRisk, 3); // Alto
     } else {
       // Fallback: classificação da PA
@@ -226,8 +228,10 @@ export function calculateRiskFromClinicalData(
     const hba1c = typeof hba1cRaw === "number" ? hba1cRaw : Number(hba1cRaw);
 
     if (!Number.isNaN(hba1c) && hba1c > 0) {
-      if (hba1c < 7) maxRisk = Math.max(maxRisk, 1); // Controlada
-      else if (hba1c <= 9) maxRisk = Math.max(maxRisk, 2); // Parcial
+      if (hba1c < 7)
+        maxRisk = Math.max(maxRisk, 1); // Controlada
+      else if (hba1c <= 9)
+        maxRisk = Math.max(maxRisk, 2); // Parcial
       else maxRisk = Math.max(maxRisk, 3); // Descontrolada
     }
   }
@@ -358,9 +362,7 @@ export function formToAppointmentApi(
 
   const referralProfessionals =
     profArr.length > 0
-      ? profArr
-          .map((p: string) => profCodeMap[p] ?? p.toUpperCase())
-          .join(",")
+      ? profArr.map((p: string) => profCodeMap[p] ?? p.toUpperCase()).join(",")
       : null;
 
   return {
@@ -830,28 +832,28 @@ export function formToHasApi(
     has && typeof has.peso === "number"
       ? has.peso.toFixed(2)
       : has?.peso != null
-        ? String(has.peso)
+        ? String(has.peso).replace(",", ".")
         : null;
 
   const height =
     has && typeof has.altura === "number"
       ? has.altura.toFixed(2)
       : has?.altura != null
-        ? String(has.altura)
+        ? String(has.altura).replace(",", ".")
         : null;
 
   const imc =
     has && typeof has.imc === "number"
       ? has.imc.toFixed(2)
       : has?.imc != null
-        ? String(has.imc)
+        ? String(has.imc).replace(",", ".")
         : null;
 
   const abdominalCirc =
     has && typeof has.circ_abdominal === "number"
       ? has.circ_abdominal.toFixed(2)
       : has?.circ_abdominal != null
-        ? String(has.circ_abdominal)
+        ? String(has.circ_abdominal).replace(",", ".")
         : null;
 
   // Colesterol (ClinicalEvaluationHAS)
@@ -951,9 +953,16 @@ export function formToDmApi(
         ? dm.medicamentos.trim()
         : null,
     family_history: yesNoMaybeToBool(dm?.historico_familiar),
-    capillary_blood_glucose_random: dm?.glicemia_aleatoria ?? null,
-    fasting_capillary_blood_glucose: dm?.glicemia_jejum ?? null,
-    glycated_hemoglobin: dm?.hba1c ?? null,
+    capillary_blood_glucose_random:
+      dm?.glicemia_aleatoria != null
+        ? String(dm.glicemia_aleatoria).replace(",", ".")
+        : null,
+    fasting_capillary_blood_glucose:
+      dm?.glicemia_jejum != null
+        ? String(dm.glicemia_jejum).replace(",", ".")
+        : null,
+    glycated_hemoglobin:
+      dm?.hba1c != null ? String(dm.hba1c).replace(",", ".") : null,
   };
 }
 

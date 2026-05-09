@@ -20,7 +20,6 @@ import {
   type ConsultaRow,
 } from "@/components/portal/ConsultasTable";
 import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
-import ConfirmModal from "@/components/profissional/ConfirmModal";
 
 export default function MePage() {
   const { data: me, isLoading: isLoadingMe } = useMe();

@@ -178,7 +178,7 @@ export default function Step4Multiprof() {
                     { value: "nao_sabe", label: "Não sabe" },
                   ]}
                 />
-                
+
                 <RHFChipGroup
                   single
                   label="Possui abastecimento de água tratada em casa?"
@@ -211,12 +211,12 @@ export default function Step4Multiprof() {
                   ]}
                 />
                 {animaisCasa === "sim" && (
-                   <RHFInput
-                     label=""
-                     labelPlacement="outside"
-                     name="multiprof.ambi_animais_quais"
-                     placeholder="Quais animais?"
-                   />
+                  <RHFInput
+                    label=""
+                    labelPlacement="outside"
+                    name="multiprof.ambi_animais_quais"
+                    placeholder="Quais animais?"
+                  />
                 )}
               </div>
 

@@ -77,5 +77,6 @@ export function calculateFraminghamScore(input: FraminghamInput): {
 function getCategory(percentage: number): FraminghamCategory {
   if (percentage < 10) return "<10";
   if (percentage <= 20) return "10-20";
+
   return ">20";
 }

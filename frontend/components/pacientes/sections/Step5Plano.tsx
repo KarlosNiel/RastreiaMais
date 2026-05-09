@@ -263,7 +263,9 @@ export default function Step5Plano() {
                 className={`mt-4 rounded-xl px-4 py-3 flex items-center justify-between ${riscoConfig.bg}`}
               >
                 <div>
-                  <p className="text-xs text-foreground-500">Risco do agendamento (automático)</p>
+                  <p className="text-xs text-foreground-500">
+                    Risco do agendamento (automático)
+                  </p>
                   <p className={`text-sm font-bold ${riscoConfig.color}`}>
                     {riscoConfig.label}
                   </p>

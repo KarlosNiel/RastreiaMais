@@ -1,22 +1,6 @@
 // components/pacientes/PatientForm.tsx
 "use client";
 
-import PatientWizard from "@/components/pacientes/PatientWizard";
-import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
-import { apiGet } from "@/lib/api";
-import { createAppointment } from "@/lib/api/appointments";
-import {
-  createAddress,
-  updateAddress,
-  type AddressApiPayload,
-} from "@/lib/api/locations";
-import { meFetch } from "@/lib/auth";
-import {
-  RegistroPacienteCreateZ,
-  RegistroPacienteEditZ,
-  type RegistroPacienteCreate,
-  type RegistroPacienteEdit,
-} from "@/schemas/paciente";
 import {
   Button,
   Card,
@@ -33,9 +17,30 @@ import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import PatientWizard from "@/components/pacientes/PatientWizard";
+import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
+import { apiGet } from "@/lib/api";
+import { createAppointment } from "@/lib/api/appointments";
+import {
+  createAddress,
+  updateAddress,
+  type AddressApiPayload,
+} from "@/lib/api/locations";
+import { meFetch } from "@/lib/auth";
+import {
+  RegistroPacienteCreateZ,
+  RegistroPacienteEditZ,
+  type RegistroPacienteCreate,
+  type RegistroPacienteEdit,
+} from "@/schemas/paciente";
+
 // Helpers de API
 import { createDM, createHAS, updateDM, updateHAS } from "@/lib/api/conditions";
-import { checkCpfExists, createPaciente, updatePaciente } from "@/lib/api/pacientes";
+import {
+  checkCpfExists,
+  createPaciente,
+  updatePaciente,
+} from "@/lib/api/pacientes";
 import {
   formToAppointmentApi,
   formToDmApi,
@@ -112,8 +117,10 @@ const BASE_DRAFT_KEY = "rastreia:paciente:draft";
 function decodeJwtPayload(token: string): any | null {
   try {
     const [, payload] = token.split(".");
+
     if (!payload) return null;
     const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+
     return JSON.parse(json);
   } catch {
     return null;
@@ -130,10 +137,12 @@ function getUserScopedDraftKey(): string {
   try {
     const token =
       localStorage.getItem("access") || sessionStorage.getItem("access");
+
     if (!token) return `${BASE_DRAFT_KEY}:anon`;
 
     const payload = decodeJwtPayload(token) ?? {};
     const uid = payload.user_id ?? payload.sub ?? payload.username ?? "anon";
+
     return `${BASE_DRAFT_KEY}:${uid}`;
   } catch {
     return `${BASE_DRAFT_KEY}:anon`;
@@ -146,6 +155,7 @@ function getLoggedProfessionalId(): number | null {
   try {
     const token =
       localStorage.getItem("access") || sessionStorage.getItem("access");
+
     if (!token) return null;
 
     const payload = decodeJwtPayload(token) ?? {};
@@ -187,6 +197,7 @@ type ProfessionalFromApi = {
 async function resolveProfessionalId(): Promise<number | null> {
   // 1) Caminho rápido: se um dia o token tiver professional_id, usamos direto.
   const fromToken = getLoggedProfessionalId();
+
   if (fromToken) return fromToken;
 
   try {
@@ -213,6 +224,7 @@ async function resolveProfessionalId(): Promise<number | null> {
     return prof?.id ?? null;
   } catch (err) {
     console.error("Não foi possível resolver o professional_id:", err);
+
     return null;
   }
 }
@@ -231,9 +243,11 @@ function splitStreetAndNumber(raw: string | undefined | null): {
 
   // Padrões comuns: "Rua X, 123" ou "Rua X 123"
   const m = trimmed.match(/^(.*?)[,\s]+(\d+)\s*$/);
+
   if (m) {
     const street = m[1].trim();
     const num = Number(m[2]);
+
     return {
       street: street || trimmed,
       number: Number.isFinite(num) && num > 0 ? num : 1,
@@ -297,6 +311,7 @@ export default function PatientForm(props: Props) {
     if (!draftKeyRef.current) {
       draftKeyRef.current = getUserScopedDraftKey();
     }
+
     return draftKeyRef.current;
   };
 
@@ -309,8 +324,10 @@ export default function PatientForm(props: Props) {
 
     try {
       const raw = window.localStorage.getItem(draftKey);
+
       if (!raw) {
         hasMountedRef.current = true;
+
         return;
       }
 
@@ -324,13 +341,13 @@ export default function PatientForm(props: Props) {
 
       // tenta validar o draft; se estiver muito zoado, ainda assim carrega o merge cru
       const parsed = schema.safeParse(merged);
+
       reset((parsed.success ? parsed.data : merged) as any);
     } catch (e) {
       console.error("Falha ao carregar rascunho", e);
     } finally {
       hasMountedRef.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreate, reset]);
 
   // Autosave de rascunho (apenas create, escopado por usuário)
@@ -346,6 +363,7 @@ export default function PatientForm(props: Props) {
     autosaveTimeoutRef.current = window.setTimeout(() => {
       try {
         const draftKey = getDraftKey();
+
         window.localStorage.setItem(draftKey, JSON.stringify(watchAll));
       } catch (e) {
         console.error("Falha ao salvar rascunho", e);
@@ -357,7 +375,6 @@ export default function PatientForm(props: Props) {
         window.clearTimeout(autosaveTimeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchAll, isCreate]);
 
   function onInvalid() {
@@ -365,17 +382,21 @@ export default function PatientForm(props: Props) {
       for (const k of Object.keys(obj ?? {})) {
         const path = prefix ? `${prefix}.${k}` : k;
         const val = obj[k];
+
         if (val && typeof val === "object" && !("type" in val)) {
           const deep = findFirstPath(val, path);
+
           if (deep) return deep;
         } else {
           return path;
         }
       }
+
       return null;
     };
 
     const first = findFirstPath(errors as any);
+
     if (first) {
       setFocus(first as any, { shouldSelect: true });
     }
@@ -385,8 +406,10 @@ export default function PatientForm(props: Props) {
   function toISOWithFixedHour(value: unknown, hour = 8): string | null {
     if (!value) return null;
     const d = new Date(value as any);
+
     if (Number.isNaN(d.getTime())) return null;
     d.setHours(hour, 0, 0, 0);
+
     return d.toISOString();
   }
 
@@ -408,7 +431,7 @@ export default function PatientForm(props: Props) {
       } catch (e) {
         console.warn(
           "Falha ao resolver professionalId; pulando agendamento automático.",
-          e
+          e,
         );
       }
 
@@ -417,15 +440,19 @@ export default function PatientForm(props: Props) {
       // Verifica CPF duplicado antes de tentar criar (apenas no modo create)
       if (isCreate && socio?.sus_cpf) {
         const cpfDigits = socio.sus_cpf.replace(/\D/g, "");
+
         if (cpfDigits.length === 11) {
           try {
             const cpfCheck = await checkCpfExists(cpfDigits);
+
             if (cpfCheck?.exists) {
               const patientName = cpfCheck.patient?.name || "desconhecido";
+
               notifyError(
                 "CPF já cadastrado",
-                `Este CPF já pertence ao paciente: ${patientName}. Verifique a lista de pacientes antes de criar um novo registro.`
+                `Este CPF já pertence ao paciente: ${patientName}. Verifique a lista de pacientes antes de criar um novo registro.`,
               );
+
               return; // Interrompe o envio
             }
           } catch (error) {
@@ -472,8 +499,9 @@ export default function PatientForm(props: Props) {
         if (isCreate || !existingAddressId) {
           // CREATE ou paciente antigo que ainda não tinha address
           const createdAddress = await createAddress<{ id: number }>(
-            addressPayload
+            addressPayload,
           );
+
           addressId = (createdAddress as any)?.id ?? null;
         } else {
           // EDIT com address já existente → faz UPDATE
@@ -488,13 +516,15 @@ export default function PatientForm(props: Props) {
       // Monta payload principal do paciente
       const apiPayload = formToPatientApi(
         parsed as RegistroPacienteCreate | RegistroPacienteEdit,
-        isCreate ? "create" : "edit"
+        isCreate ? "create" : "edit",
       );
 
       // 🔐 captura a senha gerada (se for create)
       let generatedPassword: string | null = null;
+
       if (isCreate) {
         const userPayload = (apiPayload as any).user;
+
         if (userPayload && typeof userPayload.password === "string") {
           generatedPassword = userPayload.password;
         }
@@ -527,7 +557,7 @@ export default function PatientForm(props: Props) {
             const appointmentPayload = formToAppointmentApi(
               createData,
               patientId,
-              professionalId
+              professionalId,
             );
 
             if (appointmentPayload) {
@@ -543,7 +573,7 @@ export default function PatientForm(props: Props) {
                 const retornoISO = toDateTimeISO(
                   dataRetorno,
                   base.getHours(),
-                  base.getMinutes()
+                  base.getMinutes(),
                 );
 
                 if (
@@ -562,22 +592,23 @@ export default function PatientForm(props: Props) {
             }
           } else {
             console.warn(
-              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático não será criado."
+              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático não será criado.",
             );
             notifyWarn(
-              "Paciente salvo, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois."
+              "Paciente salvo, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois.",
             );
           }
         } catch (e) {
           console.error("Falha ao criar agendamento a partir do plano:", e);
           notifyWarn(
-            "Paciente salvo, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois."
+            "Paciente salvo, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois.",
           );
         }
 
         // 3) limpa rascunho deste usuário
         if (typeof window !== "undefined") {
           const draftKey = getDraftKey();
+
           window.localStorage.removeItem(draftKey);
         }
 
@@ -638,23 +669,24 @@ export default function PatientForm(props: Props) {
             const appointmentPayload = formToAppointmentApi(
               editData,
               id,
-              professionalId
+              professionalId,
             );
+
             if (appointmentPayload) {
               await createAppointment(appointmentPayload);
             }
           } else {
             console.warn(
-              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático (edição) não será criado."
+              "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático (edição) não será criado.",
             );
             notifyWarn(
-              "Dados do paciente foram atualizados, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois."
+              "Dados do paciente foram atualizados, mas não foi possível vincular o agendamento automático ao profissional logado. Verifique a agenda depois.",
             );
           }
         } catch (e) {
           console.error("Falha ao criar agendamento ao editar paciente:", e);
           notifyWarn(
-            "Dados do paciente foram atualizados, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois."
+            "Dados do paciente foram atualizados, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois.",
           );
         }
 
@@ -665,7 +697,8 @@ export default function PatientForm(props: Props) {
       console.error("ERRO AO SALVAR PACIENTE", err);
 
       let title = "Erro ao salvar paciente";
-      let description = "Não foi possível salvar. Verifique os dados e tente novamente.";
+      let description =
+        "Não foi possível salvar. Verifique os dados e tente novamente.";
 
       const data = err?.response;
 
@@ -674,53 +707,81 @@ export default function PatientForm(props: Props) {
 
         // Erro de username duplicado (CPF já usado)
         const userErrors = (data as any).user;
+
         if (userErrors) {
-          if (Array.isArray(userErrors.username) && userErrors.username.length > 0) {
+          if (
+            Array.isArray(userErrors.username) &&
+            userErrors.username.length > 0
+          ) {
             errors.push("• " + userErrors.username[0]);
           }
           if (Array.isArray(userErrors.email) && userErrors.email.length > 0) {
             errors.push("• E-mail: " + userErrors.email[0]);
           }
-          if (Array.isArray(userErrors.first_name) && userErrors.first_name.length > 0) {
+          if (
+            Array.isArray(userErrors.first_name) &&
+            userErrors.first_name.length > 0
+          ) {
             errors.push("• Nome: " + userErrors.first_name[0]);
           }
         }
 
         // Erro de CPF duplicado
         const cpfErrors = (data as any).cpf;
+
         if (cpfErrors && Array.isArray(cpfErrors) && cpfErrors.length > 0) {
           errors.push("• " + cpfErrors[0]);
         }
 
         // Erro de SUS duplicado
         const susErrors = (data as any).sus;
+
         if (susErrors && Array.isArray(susErrors) && susErrors.length > 0) {
           errors.push("• Cartão SUS: " + susErrors[0]);
         }
 
         // Erro de endereço
         const addressErrors = (data as any).address;
-        if (addressErrors && Array.isArray(addressErrors) && addressErrors.length > 0) {
+
+        if (
+          addressErrors &&
+          Array.isArray(addressErrors) &&
+          addressErrors.length > 0
+        ) {
           errors.push("• Endereço: " + addressErrors[0]);
         }
 
         // Outros erros de campos
         const fieldErrors = Object.keys(data).filter(
-          key => !['user', 'cpf', 'sus', 'address', 'detail', 'non_field_errors'].includes(key) && 
-                 Array.isArray((data as any)[key])
+          (key) =>
+            ![
+              "user",
+              "cpf",
+              "sus",
+              "address",
+              "detail",
+              "non_field_errors",
+            ].includes(key) && Array.isArray((data as any)[key]),
         );
-        
-        fieldErrors.forEach(field => {
+
+        fieldErrors.forEach((field) => {
           const fieldError = (data as any)[field];
+
           if (Array.isArray(fieldError) && fieldError.length > 0) {
-            const fieldName = field.replace(/_/g, ' ');
+            const fieldName = field.replace(/_/g, " ");
+
             errors.push(`• ${fieldName}: ${fieldError[0]}`);
           }
         });
 
         // Erros não relacionados a campos específicos
         const nonFieldErrors = (data as any).non_field_errors;
-        if (nonFieldErrors && Array.isArray(nonFieldErrors) && nonFieldErrors.length > 0) {
+
+        if (
+          nonFieldErrors &&
+          Array.isArray(nonFieldErrors) &&
+          nonFieldErrors.length > 0
+        ) {
           errors.push("• " + nonFieldErrors[0]);
         }
 
@@ -746,15 +807,15 @@ export default function PatientForm(props: Props) {
   return (
     <FormProvider {...methods}>
       <form
-        id="patient-form"
-        onSubmit={submitHandler}
         noValidate
         aria-busy={isSubmitting}
+        id="patient-form"
+        onSubmit={submitHandler}
       >
         <Card
-          shadow="none"
           className="border-none shadow-soft bg-transparent"
           classNames={{ base: "overflow-visible" }}
+          shadow="none"
         >
           <CardBody className="p-0">
             <PatientWizard onSubmit={submitHandler} />
@@ -762,10 +823,10 @@ export default function PatientForm(props: Props) {
         </Card>
 
         {/* Submit “fantasma” para Enter em inputs */}
-        <button type="submit" className="hidden" disabled={isSubmitting} />
+        <button className="hidden" disabled={isSubmitting} type="submit" />
 
         {/* A11y live region */}
-        <span className="sr-only" aria-live="polite">
+        <span aria-live="polite" className="sr-only">
           {isSubmitting
             ? "Enviando…"
             : isDirty

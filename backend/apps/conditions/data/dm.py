@@ -10,8 +10,8 @@ class ClinicalEvaluationDM(models.Model):
     fasting_capillary_blood_glucose = models.CharField(
         "Glicemia Capilar em Jejum (mg/dL)", max_length=50, null=True, blank=True
     )
-    glycated_hemoglobin = models.CharField(
-        "Hemoglobina Glicada (%)", max_length=50, null=True, blank=True
+    glycated_hemoglobin = models.DecimalField(
+        "Hemoglobina Glicada (%)", max_digits=5, decimal_places=2, null=True, blank=True
     )
     weight = models.DecimalField(
         "Peso (kg)", max_digits=5, decimal_places=2, null=True, blank=True

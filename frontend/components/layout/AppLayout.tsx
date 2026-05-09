@@ -7,7 +7,6 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 
 import Nav from "@/components/navbar/Nav";
-import Image from "next/image";
 
 interface AppLayoutProps {
   children: ReactNode;

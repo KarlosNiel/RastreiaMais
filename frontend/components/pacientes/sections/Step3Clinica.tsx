@@ -11,8 +11,12 @@ import { calculateFraminghamScore } from "@/lib/pacientes/framingham";
 import { calcAgeFromBirth } from "@/lib/pacientes/utils";
 
 /** ───────── helpers ───────── */
-const parseDecimal = (raw: string) =>
-  raw?.trim() ? Number(raw.replace(/\./g, "").replace(",", ".")) : raw;
+const parseDecimal = (raw: string) => {
+  if (!raw) return raw;
+
+  // Keep string but allow only numbers, commas, and dots
+  return raw.replace(/[^\d.,]/g, "");
+};
 
 const getImcClassification = (imc: number) => {
   if (imc < 18.5) return { label: "Baixo peso", color: "text-blue-500" };
@@ -20,6 +24,7 @@ const getImcClassification = (imc: number) => {
   if (imc < 30) return { label: "Sobrepeso", color: "text-yellow-500" };
   if (imc < 35) return { label: "Obesidade Grau I", color: "text-orange-500" };
   if (imc < 40) return { label: "Obesidade Grau II", color: "text-orange-600" };
+
   return { label: "Obesidade Grau III", color: "text-red-500" };
 };
 
@@ -117,7 +122,9 @@ function BlocoHAS() {
 
   const imcClass = useMemo(() => {
     const val = Number(imcHas);
+
     if (!val || isNaN(val)) return null;
+
     return getImcClassification(val);
   }, [imcHas]);
 
@@ -128,8 +135,13 @@ function BlocoHAS() {
       const alturaRaw =
         typeof alturaHas === "string" ? parseDecimal(alturaHas) : alturaHas;
 
-      const pesoNum = Number(peso);
-      const alturaNum = Number(alturaRaw);
+      const parseNumberStr = (v: any) =>
+        typeof v === "string"
+          ? Number(v.replace(/\./g, "").replace(",", "."))
+          : Number(v);
+
+      const pesoNum = parseNumberStr(peso);
+      const alturaNum = parseNumberStr(alturaRaw);
 
       if (!pesoNum || !alturaNum) {
         setValue("clinica.has.imc", undefined, {
@@ -194,9 +206,12 @@ function BlocoHAS() {
 
   const { result: framinghamResult, reason: missingReason } = useMemo(() => {
     const age = calcAgeFromBirth(nascimento);
-    const tc =
-      typeof colTotal === "string" ? Number(parseDecimal(colTotal)) : colTotal;
-    const hdlNum = typeof hdl === "string" ? Number(parseDecimal(hdl)) : hdl;
+    const parseNumberStr = (v: any) =>
+      typeof v === "string"
+        ? Number(v.replace(/\./g, "").replace(",", "."))
+        : Number(v);
+    const tc = parseNumberStr(colTotal);
+    const hdlNum = parseNumberStr(hdl);
     const sbp = Number(pa1Sis || pa2Sis);
 
     if (!age) return { result: null, reason: "idade" };
@@ -247,6 +262,7 @@ function BlocoHAS() {
       colesterol: "Informe Colesterol e HDL",
       pressao: "Informe a Pressão Arterial",
     };
+
     return map[missingReason] || "Aguardando dados...";
   }, [missingReason]);
 
@@ -564,7 +580,9 @@ function BlocoDM() {
 
   const imcClassDm = useMemo(() => {
     const val = Number(imcDm);
+
     if (!val || isNaN(val)) return null;
+
     return getImcClassification(val);
   }, [imcDm]);
 
@@ -574,8 +592,13 @@ function BlocoDM() {
       const alturaRaw =
         typeof alturaDm === "string" ? parseDecimal(alturaDm) : alturaDm;
 
-      const pesoNum = Number(peso);
-      const alturaNum = Number(alturaRaw);
+      const parseNumberStr = (v: any) =>
+        typeof v === "string"
+          ? Number(v.replace(/\./g, "").replace(",", "."))
+          : Number(v);
+
+      const pesoNum = parseNumberStr(peso);
+      const alturaNum = parseNumberStr(alturaRaw);
 
       if (!pesoNum || !alturaNum) {
         setValue("clinica.dm.imc", undefined, {

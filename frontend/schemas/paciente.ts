@@ -1,8 +1,16 @@
 import { z } from "zod";
 
-/** ========= Helpers ========= **/
 const emptyToUndef = (v: unknown) =>
   v === "" || v === null || typeof v === "undefined" ? undefined : v;
+
+const parseDecimalString = (v: unknown) => {
+  if (v === "" || v === null || typeof v === "undefined") return undefined;
+  if (typeof v === "string") {
+    const parsed = Number(v.replace(/\./g, "").replace(",", "."));
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return v;
+};
 
 // string opcional, já tratando "", null, undefined
 const StrOpt = z.preprocess(
@@ -14,12 +22,12 @@ const StrOpt = z.preprocess(
 // - se vier "", null ou undefined => vira undefined e passa sem erro
 // - se vier algo preenchido, faz coerce e valida
 const NumOpt = z.preprocess(
-  emptyToUndef,
+  parseDecimalString,
   z.union([z.coerce.number(), z.undefined()]),
 );
 
 const IntOpt = z.preprocess(
-  emptyToUndef,
+  parseDecimalString,
   z.union([z.coerce.number().int(), z.undefined()]),
 );
 
@@ -30,13 +38,13 @@ const DateOpt = z.preprocess(
 
 const NumPosOpt = (msg = "Valor inválido") =>
   z.preprocess(
-    emptyToUndef,
+    parseDecimalString,
     z.union([z.coerce.number().positive(msg), z.undefined()]),
   );
 
 const IntPosOpt = (msg = "Valor inválido") =>
   z.preprocess(
-    emptyToUndef,
+    parseDecimalString,
     z.union([z.coerce.number().int().positive(msg), z.undefined()]),
   );
 

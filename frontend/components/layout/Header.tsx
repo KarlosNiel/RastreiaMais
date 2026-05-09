@@ -4,7 +4,6 @@ import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import Image from "next/image";
 
 import { useAuth } from "@/lib/hooks/useAuth";
 import { UserMenu } from "@/components/navbar/UserMenu";
