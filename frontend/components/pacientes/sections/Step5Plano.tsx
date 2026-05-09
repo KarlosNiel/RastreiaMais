@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
+import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { RHFSelect } from "@/components/form/RHFSelect";
@@ -23,7 +24,7 @@ function shortName(full?: string) {
   return `${parts[0]}${lastInitial ? ` ${lastInitial}.` : ""}`;
 }
 
-/** atalhos de data relativos ao “hoje” */
+/** atalhos de data relativos ao "hoje" */
 function addDays(d: Date, days: number) {
   const nd = new Date(d);
 
@@ -32,13 +33,6 @@ function addDays(d: Date, days: number) {
 
   return nd;
 }
-
-const TIPO_LABEL_MAP: Record<string, string> = {
-  consulta: "consulta",
-  retorno: "retorno",
-  avaliacao: "avaliação",
-  outro: "atendimento",
-};
 
 export default function Step5Plano() {
   const { getValues, getFieldState, setValue, watch } = useFormContext();
@@ -51,7 +45,6 @@ export default function Step5Plano() {
   const hba1c = watch("clinica.dm.hba1c");
 
   /* ========= DADOS ESPECÍFICOS DO AGENDAMENTO ========= */
-  const tipoConsulta = watch("plano.tipo_consulta");
   const dataConsulta = watch("plano.data_consulta") as Date | null | undefined;
   const dataRetorno = watch("plano.data_retorno") as Date | null | undefined;
 
@@ -99,7 +92,7 @@ export default function Step5Plano() {
     },
   );
 
-  // Compose automático (valor “sugerido”)
+  // Compose automático (valor "sugerido")
   const resumoAuto = useMemo(() => {
     const nomeTxt = shortName(nome);
 
@@ -161,7 +154,10 @@ export default function Step5Plano() {
       const base = new Date();
 
       base.setHours(0, 0, 0, 0);
-      setValue(target, addDays(base, days), { shouldDirty: true });
+      setValue(target, addDays(base, days), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     },
     [setValue],
   );
@@ -170,29 +166,21 @@ export default function Step5Plano() {
     const hasConsulta = !!dataConsulta;
     const hasRetorno = !!dataRetorno;
 
-    // tipo bruto vindo do form (consulta | retorno | avaliacao | outro)
-    const tipo = (tipoConsulta as string | undefined) ?? "consulta";
-    const tipoLabel = TIPO_LABEL_MAP[tipo] ?? "consulta";
-
     if (hasConsulta && hasRetorno) {
-      return `Será criada uma ${tipoLabel} na data indicada em “Agendar consulta” e um segundo agendamento de retorno na data escolhida em “Agendar retorno”.`;
+      return "Será criado um agendamento de consulta e um segundo de retorno nas datas indicadas.";
     }
 
     if (hasConsulta && !hasRetorno) {
-      return `Será criada apenas uma ${tipoLabel} na data indicada em “Agendar consulta”.`;
+      return "Será criado um agendamento de consulta na data indicada.";
     }
 
     if (!hasConsulta && hasRetorno) {
-      if (tipo === "retorno") {
-        return "Será criado um único agendamento de retorno na data informada em “Agendar retorno”.";
-      }
-
-      return `Sem data de consulta: será criado um único agendamento do tipo ${tipoLabel} usando a data informada em “Agendar retorno”.`;
+      return "Será criado um agendamento de retorno na data informada.";
     }
 
     // Nenhuma data
     return "Preencha ao menos a data de consulta ou de retorno para gerar agendamento.";
-  }, [dataConsulta, dataRetorno, tipoConsulta]);
+  }, [dataConsulta, dataRetorno]);
 
   return (
     <div className="space-y-6">
@@ -247,22 +235,8 @@ export default function Step5Plano() {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <RHFSelect
-                  className="md:col-span-4"
-                  label="Tipo"
-                  labelPlacement="outside"
-                  name="plano.tipo_consulta"
-                  options={[
-                    { key: "consulta", label: "Consulta" },
-                    { key: "retorno", label: "Retorno" },
-                    { key: "avaliacao", label: "Avaliação" },
-                    { key: "outro", label: "Outro" },
-                  ]}
-                  placeholder="Selecione…"
-                />
-
                 <RHFInput
-                  className="md:col-span-4"
+                  className="md:col-span-6"
                   inputMode="numeric"
                   label="Horário"
                   labelPlacement="outside"
@@ -271,7 +245,7 @@ export default function Step5Plano() {
                 />
 
                 <RHFSelect
-                  className="md:col-span-4"
+                  className="md:col-span-6"
                   label="Local"
                   labelPlacement="outside"
                   name="plano.local_id"
@@ -283,38 +257,39 @@ export default function Step5Plano() {
                   }
                 />
 
-                <div className="md:col-span-4">
+                <div className="md:col-span-6">
                   <RHFDate
                     label="Agendar consulta"
                     labelPlacement="outside"
                     name="plano.data_consulta"
                   />
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="flat"
-                      onPress={() => quickSetDate("plano.data_consulta", 0)}
-                    >
-                      hoje
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="flat"
-                      onPress={() => quickSetDate("plano.data_consulta", 15)}
-                    >
-                      +15d
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="flat"
-                      onPress={() => quickSetDate("plano.data_consulta", 30)}
-                    >
-                      +30d
-                    </Button>
+                  <div className="mt-3">
+                    <RHFChipGroup
+                      multiple
+                      chipsClassName="flex flex-wrap gap-2"
+                      label="Profissionais"
+                      name="plano.profissionais_consulta"
+                      options={[
+                        { value: "psicologo", label: "Psicólogo" },
+                        { value: "medico_vet", label: "Médico Vet." },
+                        { value: "fisioterapeuta", label: "Fisioterapeuta" },
+                        { value: "nutricionista", label: "Nutricionista" },
+                        { value: "enfermeira", label: "Enfermeira" },
+                        {
+                          value: "assistente_social",
+                          label: "Assist. Social",
+                        },
+                        {
+                          value: "cirurgia_dentista",
+                          label: "Cirurgião Dentista",
+                        },
+                        { value: "outro", label: "Outro" },
+                      ]}
+                    />
                   </div>
                 </div>
 
-                <div className="md:col-span-4">
+                <div className="md:col-span-6">
                   <RHFDate
                     label="Agendar retorno"
                     labelPlacement="outside"

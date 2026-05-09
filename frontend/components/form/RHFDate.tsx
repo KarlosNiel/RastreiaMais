@@ -2,7 +2,7 @@
 "use client";
 
 import { DatePicker, type DatePickerProps } from "@heroui/react";
-import { CalendarDate, parseDate } from "@internationalized/date";
+import { CalendarDate, type DateValue, parseDate } from "@internationalized/date";
 import * as React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -81,6 +81,8 @@ export function RHFDate({
       name={name as any}
       render={({ field, fieldState }) => {
         const { onChange, value, ref, ...restField } = field;
+        // Sempre produz CalendarDate | null — nunca undefined —
+        // para manter o DatePicker permanentemente em modo controlled.
         const dateValue = toCalendarDate(value);
 
         return (
@@ -97,11 +99,16 @@ export function RHFDate({
             isRequired={isRequired}
             label={label}
             labelPlacement={labelPlacement ?? "outside"}
-            value={dateValue as any}
-            onChange={(dv) => {
-              const jsDate = calendarDateToDate(dv as CalendarDate | null);
+            value={dateValue}
+            onChange={(dv: DateValue | null) => {
+              if (!dv) {
+                onChange(undefined);
 
-              onChange(jsDate);
+                return;
+              }
+              // DateValue pode ser CalendarDate, CalendarDateTime ou ZonedDateTime
+              // extraímos apenas ano/mês/dia para manter consistência
+              onChange(new Date(dv.year, dv.month - 1, dv.day));
             }}
           />
         );

@@ -14,6 +14,7 @@ class AppointmentAdmin(BaseModelAdmin):
         'local',
         'colored_risk',
         'status',
+        'referral_professionals',
         'scheduled_datetime',
         'created_by',
         'is_deleted',

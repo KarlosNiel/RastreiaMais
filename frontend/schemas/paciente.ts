@@ -358,8 +358,19 @@ export const MultiprofZ = z.object({
 const PlanoZ = z
   .object({
     resumo: StrOpt.optional(),
-    tipo_consulta: z
-      .enum(["consulta", "retorno", "avaliacao", "outro"])
+    profissionais_consulta: z
+      .array(
+        z.enum([
+          "psicologo",
+          "medico_vet",
+          "fisioterapeuta",
+          "assistente_social",
+          "enfermeira",
+          "nutricionista",
+          "cirurgia_dentista",
+          "outro",
+        ]),
+      )
       .optional(),
     data_consulta: DateOpt.optional(),
     data_retorno: DateOpt.optional(),
@@ -375,7 +386,7 @@ const PlanoZ = z
     // dá pra avisar que precisa de ao menos uma.
     const algumCampoPreenchido =
       plano.resumo ||
-      plano.tipo_consulta ||
+      (plano.profissionais_consulta && plano.profissionais_consulta.length > 0) ||
       plano.hora_consulta ||
       plano.local_id ||
       plano.assinatura;

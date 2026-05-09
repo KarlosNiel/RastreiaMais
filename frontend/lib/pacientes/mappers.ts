@@ -159,6 +159,7 @@ export type AppointmentApiPayload = {
   description?: string;
   risk_level: "Seguro" | "Moderado" | "Crítico";
   status?: "pendente" | "ativo" | "finalizado" | "cancelado";
+  referral_professionals?: string | null;
 };
 
 /**
@@ -225,30 +226,34 @@ export function formToAppointmentApi(
    * 2) TIPO DO AGENDAMENTO
    * =========================== */
 
-  const rawType: string = plano.tipo_consulta ?? "consulta";
-
-  // Mapeamento para o enum do backend
-  const typeMap: Record<string, AppointmentApiPayload["type"]> = {
-    consulta: "Consulta",
-    retorno: "Retorno",
-    avaliacao: "Avaliação",
-    outro: "Outro",
-  };
-
-  const type = typeMap[rawType] ?? "Consulta";
-
-  // Label amigável para aparecer na descrição
-  const tipoLabelMap: Record<string, string> = {
-    consulta: "Consulta",
-    retorno: "Retorno",
-    avaliacao: "Avaliação",
-    outro: "Outro",
-  };
-
-  const tipoLabel = tipoLabelMap[rawType] ?? "Consulta";
+  // Sem tipo_consulta: inferimos pelo campo de data usado
+  const type: AppointmentApiPayload["type"] = plano.data_consulta
+    ? "Consulta"
+    : "Retorno";
 
   /* ===========================
-   * 3) DESCRIÇÃO
+   * 3) PROFISSIONAIS SELECIONADOS
+   * =========================== */
+
+  const profLabelMap: Record<string, string> = {
+    psicologo: "Psicólogo",
+    medico_vet: "Médico Veterinário",
+    fisioterapeuta: "Fisioterapeuta",
+    nutricionista: "Nutricionista",
+    enfermeira: "Enfermeira",
+    assistente_social: "Assistente Social",
+    cirurgia_dentista: "Cirurgião Dentista",
+    outro: "Outro",
+  };
+
+  const profArr = (plano.profissionais_consulta as string[] | undefined) ?? [];
+  const profTxt =
+    profArr.length > 0
+      ? profArr.map((p: string) => profLabelMap[p] ?? p).join(", ")
+      : null;
+
+  /* ===========================
+   * 4) DESCRIÇÃO
    * =========================== */
 
   const descricaoBase = (() => {
@@ -264,13 +269,38 @@ export function formToAppointmentApi(
     return "Plano registrado sem descrição detalhada.";
   })();
 
-  const description = `Tipo de atendimento: ${tipoLabel}.\n\n${descricaoBase}`;
+  const descParts = [`Tipo de atendimento: ${type}.`];
+
+  if (profTxt) {
+    descParts.push(`Profissionais: ${profTxt}.`);
+  }
+  descParts.push("", descricaoBase);
+
+  const description = descParts.join("\n");
 
   /* ===========================
-   * 4) RISCO / OUTROS CAMPOS
+   * 5) RISCO / OUTROS CAMPOS
    * =========================== */
 
   const risk_level: AppointmentApiPayload["risk_level"] = "Moderado";
+
+  // Converte valores do front para códigos do back (ReferralProfessionChoices)
+  const profCodeMap: Record<string, string> = {
+    psicologo: "PSICOLOGO",
+    medico_vet: "MEDICO_VETERINARIO",
+    fisioterapeuta: "FISIOTERAPEUTA",
+    nutricionista: "NUTRICIONISTA",
+    enfermeira: "ENFERMEIRA",
+    assistente_social: "ASSISTENTE_SOCIAL",
+    cirurgia_dentista: "CIRURGIA_DENTISTA",
+  };
+
+  const referralProfessionals =
+    profArr.length > 0
+      ? profArr
+          .map((p: string) => profCodeMap[p] ?? p.toUpperCase())
+          .join(",")
+      : null;
 
   return {
     patient_id: patientId,
@@ -280,6 +310,7 @@ export function formToAppointmentApi(
     type,
     description,
     risk_level,
+    referral_professionals: referralProfessionals,
     status: "ativo",
   };
 }

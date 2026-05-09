@@ -36,6 +36,11 @@ class Appointment(BaseModel):
     description = models.TextField(null=True)
     type = models.CharField(choices=TYPE_CHOICES, max_length=20)
     status = models.CharField(choices=STATUS_CHOICES, null=True, blank=True)
+    referral_professionals = models.TextField(
+        "Profissionais para consulta",
+        null=True, blank=True,
+        help_text="Códigos dos profissionais separados por vírgula (ex.: PSICOLOGO,NUTRICIONISTA)"
+    )
 
     def __str__(self):
         return f"{self.patient} - {self.scheduled_datetime.strftime('%d/%m/%Y %H:%M')}"
