@@ -55,6 +55,7 @@ class TransmissibleDiseaseChoices(models.TextChoices):
     TOXOPLASMOSE = "TOXOPLASMOSE", "Toxoplasmose"
     ESPOROTRICOSE = "ESPOROTRICOSE", "Esporotricose"
     HANSENIASE = "HANSENIASE", "Hanseníase"
+    NAO = "NAO", "Não"
 
 class ReferralProfessionChoices(models.TextChoices):
     PSICOLOGO = "PSICOLOGO", "Psicólogo"

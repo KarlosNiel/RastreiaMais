@@ -311,6 +311,7 @@ function BlocoHAS() {
                 { value: "infarto", label: "Infarto" },
                 { value: "renal", label: "Doença renal" },
                 { value: "outra", label: "Outra" },
+                { value: "sem_complicacoes", label: "Sem complicações" },
               ]}
             />
             {showOutra && (

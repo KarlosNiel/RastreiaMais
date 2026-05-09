@@ -21,3 +21,4 @@ class HypertensionComplicationsChoices(models.TextChoices):
     AVC = "AVC", "AVC"
     INFARTO = "INFARTO", "Infarto"
     DOENCA_RENAL = "DOENCA_RENAL", "Doença renal"
+    SEM_COMPLICACOES = "SEM_COMPLICACOES", "Sem complicações"

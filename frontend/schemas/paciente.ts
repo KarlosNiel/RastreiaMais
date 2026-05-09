@@ -191,7 +191,7 @@ export const ClinicaHASZ = z.object({
   medicamentos: StrOpt.optional(),
   historico_familiar: YesNoMaybeZ,
   complicacoes: z
-    .array(z.enum(["avc", "infarto", "renal", "outra"]))
+    .array(z.enum(["avc", "infarto", "renal", "outra", "sem_complicacoes"]))
     .optional(),
   complicacao_outra: StrOpt.optional(),
 
@@ -319,6 +319,7 @@ export const MultiprofZ = z.object({
         "toxoplasmose",
         "esporotricose",
         "hanseniase",
+        "nao",
       ]),
     )
     .optional(),

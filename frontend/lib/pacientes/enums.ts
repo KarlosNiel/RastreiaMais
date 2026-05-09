@@ -97,12 +97,14 @@ export const hasComplicationsMap: ChoiceMap = {
   avc: "AVC",
   infarto: "INFARTO",
   renal: "DOENCA_RENAL",
+  sem_complicacoes: "SEM_COMPLICACOES",
 };
 
 export const hasComplicationsBackToFront: ChoiceMap = {
   AVC: "avc",
   INFARTO: "infarto",
   DOENCA_RENAL: "renal",
+  SEM_COMPLICACOES: "sem_complicacoes",
 };
 
 /** ─────────────────────────────────────────────────────────────
@@ -169,6 +171,7 @@ export const diseaseChoiceMap: ChoiceMap = {
   toxoplasmose: "TOXOPLASMOSE",
   esporotricose: "ESPOROTRICOSE",
   hanseniase: "HANSENIASE",
+  nao: "NAO",
 };
 
 export const diseaseChoiceBackToFront: ChoiceMap = invertMap(diseaseChoiceMap);

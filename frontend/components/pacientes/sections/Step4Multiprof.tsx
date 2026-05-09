@@ -233,6 +233,7 @@ export default function Step4Multiprof() {
                     { value: "toxoplasmose", label: "Toxoplasmose" },
                     { value: "esporotricose", label: "Esporotricose" },
                     { value: "hanseniase", label: "Hanseníase" },
+                    { value: "nao", label: "Não" },
                   ]}
                 />
                 <RHFInput
