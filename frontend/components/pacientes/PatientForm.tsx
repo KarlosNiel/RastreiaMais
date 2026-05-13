@@ -274,6 +274,14 @@ export default function PatientForm(props: Props) {
     password: null,
   });
 
+  const [draftModal, setDraftModal] = useState<{
+    open: boolean;
+    draft: any;
+  }>({
+    open: false,
+    draft: null,
+  });
+
   const methods = useForm<CreateFormInput | EditFormInput>({
     resolver: zodResolver(schema),
     defaultValues: isCreate
@@ -327,28 +335,35 @@ export default function PatientForm(props: Props) {
 
       if (!raw) {
         hasMountedRef.current = true;
-
         return;
       }
 
       const draft = JSON.parse(raw);
+      setDraftModal({ open: true, draft });
+    } catch (e) {
+      console.error("Falha ao carregar rascunho", e);
+      hasMountedRef.current = true;
+    }
+  }, [isCreate]);
 
+  const handleDraftDecision = (accept: boolean) => {
+    if (accept && draftModal.draft) {
       const merged = {
         ...CREATE_DEFAULTS,
         ...(props.defaultValues ?? {}),
-        ...(draft ?? {}),
+        ...(draftModal.draft ?? {}),
       };
 
-      // tenta validar o draft; se estiver muito zoado, ainda assim carrega o merge cru
       const parsed = schema.safeParse(merged);
 
       reset((parsed.success ? parsed.data : merged) as any);
-    } catch (e) {
-      console.error("Falha ao carregar rascunho", e);
-    } finally {
-      hasMountedRef.current = true;
+    } else {
+      window.localStorage.removeItem(getDraftKey());
     }
-  }, [isCreate, reset]);
+
+    setDraftModal({ open: false, draft: null });
+    hasMountedRef.current = true; // Libera o autosave
+  };
 
   // Autosave de rascunho (apenas create, escopado por usuário)
   useEffect(() => {
@@ -897,6 +912,41 @@ export default function PatientForm(props: Props) {
           )}
         </ModalContent>
       </Modal>
+      {/* Modal de Rascunho */}
+      <Modal
+        isOpen={draftModal.open}
+        onOpenChange={(open) => {
+          if (!open) handleDraftDecision(false);
+        }}
+      >
+        <ModalContent>
+          <ModalHeader className="text-xl">Rascunho Encontrado</ModalHeader>
+          <ModalBody>
+            <p>
+              Você possui um cadastro não finalizado salvo no seu navegador.
+            </p>
+            <p>
+              Deseja continuar de onde parou ou iniciar um novo registro limpo?
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              color="danger"
+              variant="flat"
+              onPress={() => handleDraftDecision(false)}
+            >
+              Iniciar Limpo
+            </Button>
+            <Button
+              color="primary"
+              onPress={() => handleDraftDecision(true)}
+            >
+              Continuar Rascunho
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
     </FormProvider>
   );
 }

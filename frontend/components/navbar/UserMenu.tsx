@@ -51,25 +51,20 @@ export function UserMenu({ user }: UserMenuProps) {
           size="sm"
           variant="light"
         >
-          <Avatar
-            showFallback
-            className="cursor-pointer w-5 h-5 bg-transparent"
-            fallback={<UserIcon className="h-5 w-5 dark:text-white stroke-2" />}
-            name={userInitials}
-            size="sm"
-          />
+          <UserIcon className="size-5 text-gray-700 dark:text-white" strokeWidth={2} />
         </Button>
       </DropdownTrigger>
 
       <DropdownMenu aria-label="Menu do usuário" variant="flat">
         <DropdownItem
           key="profile"
-          className="h-14 gap-2"
+          isReadOnly
+          className="h-14 gap-2 opacity-100 cursor-default data-[hover=true]:bg-transparent"
           textValue="Informações do perfil"
         >
           <div className="flex flex-col">
-            <p className="font-semibold">{userName}</p>
-            <p className="text-small text-default-500">
+            <p className="text-sm font-semibold text-foreground">{userName}</p>
+            <p className="text-xs text-foreground-500">
               {user.email || user.username}
             </p>
           </div>
@@ -91,7 +86,6 @@ export function UserMenu({ user }: UserMenuProps) {
 
         <DropdownItem
           key="logout"
-          color="danger"
           startContent={<ArrowRightOnRectangleIcon className="h-4 w-4" />}
           onPress={handleLogout}
         >

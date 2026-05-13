@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { HeroUIProvider } from "@heroui/react";
+import { HeroUIProvider, ToastProvider } from "@heroui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
@@ -45,8 +45,8 @@ export default function Providers({ children }: ProvidersProps) {
       defaultTheme="system"
       storageKey="rastreia-theme"
     >
-      {/* locale pt-BR -> DatePicker, textos, etc. em padrão brasileiro */}
       <HeroUIProvider className="font-sans" locale="pt-BR">
+        <ToastProvider />
         <QueryClientProvider client={queryClient}>
           <AuthProvider>{children}</AuthProvider>
         </QueryClientProvider>

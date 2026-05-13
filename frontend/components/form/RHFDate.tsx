@@ -86,8 +86,11 @@ export function RHFDate({
       render={({ field, fieldState }) => {
         const { onChange, value, ref, ...restField } = field;
         // Sempre produz CalendarDate | null — nunca undefined —
-        // para manter o DatePicker permanentemente em modo controlled.
-        const dateValue = toCalendarDate(value);
+        // Memoizado para evitar que o DatePicker perca o foco durante re-renders
+        const dateValue = React.useMemo(
+          () => toCalendarDate(value),
+          [value instanceof Date ? value.getTime() : value],
+        );
 
         return (
           <DatePicker

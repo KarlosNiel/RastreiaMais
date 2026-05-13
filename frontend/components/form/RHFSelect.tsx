@@ -3,7 +3,7 @@
 import type { Key } from "@react-types/shared";
 
 import { Select, SelectItem, type SelectProps } from "@heroui/react";
-// ❌ removido: import { useMemo } from "react";
+import { useMemo } from "react";
 import {
   Controller,
   useFormContext,
@@ -56,7 +56,7 @@ export function RHFSelect<T extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => {
         // ---- value -> selectedKeys (sempre Set<Key> com strings)
-        const selectedKeys: Set<Key> = (() => {
+        const selectedKeys: Set<Key> = useMemo(() => {
           if (isMultiple) {
             const arr = Array.isArray(field.value) ? field.value : [];
 
@@ -72,7 +72,7 @@ export function RHFSelect<T extends FieldValues>({
           }
 
           return new Set<Key>([String(field.value) as Key]);
-        })();
+        }, [field.value, isMultiple]);
 
         // ---- onSelectionChange (HeroUI -> RHF)
         const handleSelection = (keys: "all" | Set<Key>) => {

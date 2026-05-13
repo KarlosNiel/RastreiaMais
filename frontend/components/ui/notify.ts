@@ -21,13 +21,13 @@ export function notify(
 }
 
 export const notifySuccess = (msg: string, desc?: string) =>
-  notify(msg, desc, { color: "success", variant: "solid" });
+  notify(msg, desc, { color: "success", variant: "flat" });
 
 export const notifyError = (msg: string, desc?: string) =>
-  notify(msg, desc, { color: "danger", variant: "solid" });
+  notify(msg, desc, { color: "danger", variant: "flat" });
 
 export const notifyWarn = (msg: string, desc?: string) =>
-  notify(msg, desc, { color: "warning", variant: "flat" }); // <- trocado de "faded" para "flat"
+  notify(msg, desc, { color: "warning", variant: "flat" });
 
 export const notifyInfo = (msg: string, desc?: string) =>
-  notify(msg, desc, { color: "primary", variant: "bordered" });
+  notify(msg, desc, { color: "primary", variant: "flat" });

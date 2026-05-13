@@ -96,7 +96,10 @@ export function RHFInput<T extends FieldValues>({
             value={displayed}
             {...rest}
             // callbacks no final (regra react/jsx-sort-props)
-            onBlur={field.onBlur}
+            onBlur={(e) => {
+              field.onBlur();
+              rest.onBlur?.(e);
+            }}
             onValueChange={(raw) => {
               const parsed = handleParse(raw);
 
