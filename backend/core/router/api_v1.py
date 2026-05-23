@@ -8,6 +8,7 @@ from apps.conditions.api.v1.router import router_conditions
 from apps.locations.api.v1.router import router_locations
 from apps.medications.api.v1.router import router_medications
 from apps.pendencies.api.v1.router import router_pendencies
+from apps.reports.api.v1.router import router_reports
 
 api_v1_urls = [
     path("accounts/", include((router_accounts.urls, "accounts"), namespace='accounts')),
@@ -16,5 +17,6 @@ api_v1_urls = [
     path("conditions/", include((router_conditions.urls, "conditions"), namespace='conditions')),
     path("locations/", include((router_locations.urls, "locations"), namespace='locations')),
     path("medications/", include((router_medications.urls, "medications"), namespace='medications')),
-    path("pendencies/", include((router_pendencies.urls, "pendencies"), namespace='pendencies'))
+    path("pendencies/", include((router_pendencies.urls, "pendencies"), namespace='pendencies')),
+    path("reports/", include((router_reports.urls, "reports"), namespace='reports')),
 ] 

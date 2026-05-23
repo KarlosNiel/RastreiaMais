@@ -16,6 +16,7 @@ import Step2, { STEP2_FIELDS } from "./sections/Step2Condicoes";
 import Step3, { getStep3FieldsDynamic } from "./sections/Step3Clinica";
 import Step4 from "./sections/Step4Multiprof";
 import Step5 from "./sections/Step5Plano";
+import Step6 from "./sections/Step6Resumo";
 
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
 
@@ -32,9 +33,10 @@ const STEPS_META = [
   { key: "s3", label: "Clínica" },
   { key: "s4", label: "Multiprof." },
   { key: "s5", label: "Plano" },
+  { key: "s6", label: "Resumo" },
 ] as const;
 
-const DEFAULT_FIELDS: string[][] = [[], [], [], [], []];
+const DEFAULT_FIELDS: string[][] = [[], [], [], [], [], []];
 
 const BASE_DRAFT_KEY = "rastreia:paciente:draft";
 
@@ -462,6 +464,7 @@ export default function PatientWizard({
           {step === 2 && <Step3 />}
           {step === 3 && <Step4 />}
           {step === 4 && <Step5 />}
+          {step === 5 && <Step6 />}
         </div>
 
         <footer className="border-none border-gray-800 bg-transparent px-4 sm:px-6 lg:px-8 py-0 rounded-b-lg transition-colors">
