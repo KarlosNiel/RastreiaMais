@@ -9,7 +9,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/react";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
 import type { SOAPReport } from "@/lib/api/soap";
@@ -138,8 +138,6 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
-  const printRef = useRef<HTMLDivElement>(null);
-
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
@@ -161,7 +159,7 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
           </p>
         </ModalHeader>
 
-        <ModalBody className="px-6" ref={printRef}>
+        <ModalBody className="px-6">
           {/* Print header (visible only when printing) */}
           <div className="hidden print:block mb-6 text-center">
             <h1 className="text-2xl font-bold">RASTREIA+</h1>
