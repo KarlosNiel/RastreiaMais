@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import {
   CalendarDaysIcon,
   ChartBarIcon,
+  CheckCircleIcon,
+  ClockIcon,
   ExclamationTriangleIcon,
   HeartIcon,
   ShieldExclamationIcon,
@@ -203,6 +205,65 @@ export default function MePage() {
             </div>
           )}
         </div>
+      </section>
+
+      {/* Medicamentos em Uso */}
+      <section className="mt-6 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="grid size-7 place-items-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+              <CheckCircleIcon className="size-4.5" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
+              Medicamentos em Uso
+            </h2>
+          </div>
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+            {meds.length} {meds.length === 1 ? "ativo" : "ativos"}
+          </span>
+        </div>
+
+        {isLoadingMeds ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="h-20 bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+            <div className="h-20 bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+          </div>
+        ) : meds.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {meds.map((m) => (
+              <div
+                key={m.id}
+                className="p-3.5 rounded-lg border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 flex flex-col justify-between gap-1"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
+                    {m.nome}
+                  </p>
+                  <span className="text-[11px] font-medium text-emerald-700 bg-emerald-100/70 dark:bg-emerald-950/60 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                    Ativo
+                  </span>
+                </div>
+                {m.obs && (
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2">
+                    {m.obs}
+                  </p>
+                )}
+                {m.endDate && (
+                  <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-400 dark:text-zinc-500">
+                    <ClockIcon className="size-3.5" />
+                    <span>
+                      Término: {new Date(m.endDate).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-zinc-400 py-2">
+            Nenhum medicamento contínuo prescrito atualmente.
+          </p>
+        )}
       </section>
 
       <section className="mt-6 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">

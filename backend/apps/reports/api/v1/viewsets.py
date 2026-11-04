@@ -68,8 +68,19 @@ class DashboardKPIsViewSet(ViewSet):
         if role == 'patient' and profile:
             appointments_qs = appointments_qs.filter(patient=profile)
             alerts_qs = alerts_qs.filter(patient=profile)
+            total_patients = 1
+        elif role == 'professional' and profile:
+            appointments_qs = appointments_qs.filter(professional=profile)
+            total_patients = appointments_qs.values('patient').distinct().count()
+            # Alertas relevantes aos pacientes atendidos pelo profissional
+            patient_ids = appointments_qs.values_list('patient_id', flat=True).distinct()
+            if patient_ids:
+                alerts_qs = alerts_qs.filter(patient_id__in=patient_ids)
+            else:
+                alerts_qs = alerts_qs.none()
+        else:
+            total_patients = patients_qs.count()
 
-        total_patients = patients_qs.count()
         total_appointments = appointments_qs.count()
         critical_appointments = appointments_qs.filter(risk_level="Crítico").count()
         critical_alerts = alerts_qs.filter(risk_level="critical").count()

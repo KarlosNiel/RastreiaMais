@@ -12,7 +12,10 @@ import {
   ModalHeader,
 } from "@heroui/react";
 import { useCallback } from "react";
-import { PrinterIcon } from "@heroicons/react/24/outline";
+import {
+  ClipboardDocumentCheckIcon,
+  PrinterIcon,
+} from "@heroicons/react/24/outline";
 
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
 
@@ -144,6 +147,43 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
+
+  const handleCopyFullSOAP = useCallback(() => {
+    if (!report) return;
+
+    const sections = [
+      `PACIENTE: ${report.paciente.nome} | CPF: ${report.paciente.cpf || "—"} | Idade: ${report.paciente.idade ?? "—"} anos`,
+      `--- SUBJETIVO (S) ---`,
+      report.subjetivo.identificacao,
+      report.subjetivo.historico,
+      report.subjetivo.determinantes,
+      report.subjetivo.estilo_vida,
+      `--- OBJETIVO (O) ---`,
+      report.objetivo.pressao_arterial,
+      report.objetivo.antropometria,
+      report.objetivo.glicemia_metabolico,
+      report.objetivo.exame_fisico,
+      `--- AVALIAÇÃO (A) ---`,
+      report.avaliacao.hipertensao,
+      report.avaliacao.diabetes,
+      report.avaliacao.risco_cardiovascular,
+      report.avaliacao.riscos_psicossociais,
+      report.avaliacao.outras_dcnts,
+      `--- PLANO (P) ---`,
+      report.plano.conduta_clinica,
+      report.plano.exames_solicitados,
+      report.plano.encaminhamentos,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    navigator.clipboard
+      ?.writeText(sections)
+      .then(() =>
+        notifySuccess("SOAP completo copiado para a área de transferência!"),
+      )
+      .catch(() => notifyWarn("Falha ao copiar SOAP."));
+  }, [report]);
 
   if (!report) return null;
 
@@ -310,7 +350,7 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
           </p>
         </ModalBody>
 
-        <ModalFooter className="print:hidden">
+        <ModalFooter className="print:hidden flex flex-wrap justify-between items-center gap-2">
           <Button
             className="font-medium text-slate-700 dark:text-zinc-300"
             radius="md"
@@ -319,15 +359,27 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
           >
             Fechar
           </Button>
-          <Button
-            className="font-medium"
-            color="primary"
-            radius="md"
-            startContent={<PrinterIcon className="size-4" />}
-            onPress={handlePrint}
-          >
-            Imprimir / Salvar PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              className="font-medium"
+              color="secondary"
+              radius="md"
+              startContent={<ClipboardDocumentCheckIcon className="size-4" />}
+              variant="flat"
+              onPress={handleCopyFullSOAP}
+            >
+              Copiar para PEC/e-SUS
+            </Button>
+            <Button
+              className="font-medium"
+              color="primary"
+              radius="md"
+              startContent={<PrinterIcon className="size-4" />}
+              onPress={handlePrint}
+            >
+              Imprimir / PDF
+            </Button>
+          </div>
         </ModalFooter>
       </ModalContent>
     </Modal>

@@ -27,15 +27,20 @@ class Appointment(BaseModel):
     class Meta:
         verbose_name = "Agendamento"
         verbose_name_plural = "Agendamentos"
+        indexes = [
+            models.Index(fields=['professional', 'scheduled_datetime']),
+            models.Index(fields=['patient', 'scheduled_datetime']),
+            models.Index(fields=['status', 'risk_level']),
+        ]
 
-    patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
-    professional = models.ForeignKey(ProfessionalUser, on_delete=models.CASCADE)
-    scheduled_datetime = models.DateTimeField()
+    patient = models.ForeignKey(PatientUser, on_delete=models.PROTECT)
+    professional = models.ForeignKey(ProfessionalUser, on_delete=models.PROTECT)
+    scheduled_datetime = models.DateTimeField(db_index=True)
     local = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True)
-    risk_level = models.CharField(choices=RISK_LEVEL, max_length=20)
+    risk_level = models.CharField(choices=RISK_LEVEL, max_length=20, db_index=True)
     description = models.TextField(null=True)
     type = models.CharField(choices=TYPE_CHOICES, max_length=20)
-    status = models.CharField(choices=STATUS_CHOICES, null=True, blank=True)
+    status = models.CharField(choices=STATUS_CHOICES, null=True, blank=True, db_index=True)
     referral_professionals = models.TextField(
         "Profissionais para consulta",
         null=True, blank=True,

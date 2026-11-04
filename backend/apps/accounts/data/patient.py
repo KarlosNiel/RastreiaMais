@@ -41,7 +41,7 @@ class SocialdemographicData(models.Model):
         abstract = True
 
     cpf = models.CharField(
-        "CPF", max_length=20, null=True, blank=True
+        "CPF", max_length=20, null=True, blank=True, db_index=True
     )
     birth_date = models.DateField(
         "Data de Nascimento", null=True, blank=True

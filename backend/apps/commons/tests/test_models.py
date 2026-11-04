@@ -5,7 +5,6 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from apps.commons.models import BaseModel, SoftDeleteQuerySet, ActiveManager, AllManager
-from apps.accounts.tests.factories import UserFactory
 
 
 class CommonsModelTest(TestCase):

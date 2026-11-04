@@ -11,7 +11,8 @@ export function useAlertsQuery() {
 
       return data as AlertProps[];
     },
-    staleTime: 1000 * 60 * 2, // 2 min
-    refetchOnWindowFocus: false,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 }

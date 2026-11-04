@@ -33,7 +33,9 @@ export function useGestorKpis() {
     queryKey: ["dashboard-kpis"],
     queryFn: async () => {
       try {
-        const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
+        const resp = await apiGet<DashboardKPIsResponse>(
+          "/api/v1/reports/kpis/",
+        );
 
         if (resp && typeof resp.total_patients === "number") {
           return resp;

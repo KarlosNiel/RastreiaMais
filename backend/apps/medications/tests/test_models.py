@@ -17,15 +17,16 @@ class MedicationModelTest(TestCase):
         )
         self.patient = PatientUser.objects.create(user=self.user)
 
-    def test_creating_medication_without_end_date_raises_error(self):
-        with self.assertRaises(IntegrityError):
-            Medication.objects.create(
-                patient=self.patient,
-                name="Med No End Date",
-                description="No end date",
-                end_date=None,  
-                active=True
-            )
+    def test_creating_medication_without_end_date_is_continuous(self):
+        med = Medication.objects.create(
+            patient=self.patient,
+            name="Med No End Date",
+            description="Continuous medication",
+            end_date=None,  
+            active=True
+        )
+        self.assertIsNotNone(med.id)
+        self.assertTrue(med.is_active())
 
     def test_is_active_with_future_end_date(self):
         future_date = now().date() + timedelta(days=5)

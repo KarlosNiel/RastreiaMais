@@ -41,16 +41,6 @@ function toCalendarDate(v: unknown): CalendarDate | null {
   return null;
 }
 
-/**
- * Converte CalendarDate (DateValue) para Date local sem usar timezone UTC.
- * Mantemos apenas Y/M/D (00:00 local).
- */
-function calendarDateToDate(cd: CalendarDate | null): Date | undefined {
-  if (!cd) return undefined;
-
-  return new Date(cd.year, cd.month - 1, cd.day);
-}
-
 export type RHFDateProps = Omit<
   DatePickerProps,
   "value" | "defaultValue" | "onChange" | "errorMessage"

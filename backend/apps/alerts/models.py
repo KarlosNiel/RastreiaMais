@@ -13,11 +13,14 @@ class Alert(BaseModel):
     class Meta:
         verbose_name = "Alerta"
         verbose_name_plural = "Alertas"
+        indexes = [
+            models.Index(fields=['patient', 'risk_level']),
+        ]
     
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=150)
     description = models.TextField()
-    risk_level = models.CharField(choices=RISK_CHOICES, max_length=20,  default='moderate')
+    risk_level = models.CharField(choices=RISK_CHOICES, max_length=20, default='moderate', db_index=True)
 
     def __str__ (self):
         return f"[{self.risk_level}] {self.title}"

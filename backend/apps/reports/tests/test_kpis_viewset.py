@@ -29,3 +29,13 @@ class DashboardKPIsViewSetTest(APITestCase):
         self.assertIn("total_appointments", data)
         self.assertIn("critical_appointments", data)
         self.assertIn("critical_alerts", data)
+
+    def test_professional_user_kpis(self):
+        from apps.accounts.models import ProfessionalUser
+        prof = ProfessionalUser.objects.create(user=self.user, role="Enfermeiro")
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(data["total_patients"], 0)
+        self.assertEqual(data["total_appointments"], 0)

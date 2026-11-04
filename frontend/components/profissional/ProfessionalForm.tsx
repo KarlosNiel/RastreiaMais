@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Alert } from "@heroui/alert";
@@ -61,7 +60,6 @@ export default function ProfessionalForm({
     message: string;
   } | null>(null);
 
-  const router = useRouter();
   const isCreate = mode === "create";
 
   const baseDefaults: ProfissionalFormValues = {

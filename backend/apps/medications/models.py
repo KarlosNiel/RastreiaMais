@@ -8,12 +8,15 @@ class Medication(BaseModel):
     class Meta:
         verbose_name = "Medicação"
         verbose_name_plural = "Medicações"
+        indexes = [
+            models.Index(fields=['patient', 'active']),
+        ]
         
     patient = models.ForeignKey(PatientUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     description = models.TextField()
     end_date = models.DateField(null=True, blank=True)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True, db_index=True)
     
     def is_active(self):
         if self.end_date == None or now().date() <= self.end_date:

@@ -24,10 +24,10 @@ import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { apiGet, apiPatch } from "@/lib/api";
 import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
-import { useDeleteAlert } from "@/lib/hooks/alerts/useDeleteAlert";
 import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpis";
 import { KPI_ICONS } from "@/lib/profissional-kpis";
 import ConfirmModal from "@/components/profissional/ConfirmModal";
+import { notifyError, notifySuccess } from "@/components/ui/notify";
 
 type RiskTone = "safe" | "moderate" | "critical";
 type ChipTone = "safe" | "attention" | "critical" | "neutral";
@@ -145,28 +145,48 @@ export default function ProfissionalPage() {
         status,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["appointments"] });
+      const previousAppointments = queryClient.getQueryData<
+        AppointmentResponse[]
+      >(["appointments"]);
+
+      if (previousAppointments) {
+        queryClient.setQueryData<AppointmentResponse[]>(
+          ["appointments"],
+          (old) => {
+            if (!old) return [];
+
+            return old.map((appt) =>
+              String(appt.id) === String(id) ? { ...appt, status } : appt,
+            );
+          },
+        );
+      }
+
+      return { previousAppointments };
     },
-    onError: (error) => {
-      console.error("Erro ao atualizar status:", error);
-      alert("Erro ao atualizar o status do agendamento");
+    onError: (_error, _variables, context) => {
+      if (context?.previousAppointments) {
+        queryClient.setQueryData(
+          ["appointments"],
+          context.previousAppointments,
+        );
+      }
+      notifyError("Erro ao atualizar o status do agendamento");
+    },
+    onSuccess: (_data, variables) => {
+      notifySuccess(
+        variables.status === "finalizado"
+          ? "Agendamento finalizado com sucesso"
+          : "Agendamento cancelado com sucesso",
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
     },
   });
-
-  const deleteAlertMutation = useDeleteAlert();
-
-  const handleDeleteAlert = async (alertId: number) => {
-    if (!confirm("Tem certeza que deseja excluir este alerta?")) return;
-
-    try {
-      await deleteAlertMutation.mutateAsync(alertId);
-      setIsAlertModalOpen(false);
-      setSelectedAlert(null);
-    } catch (err) {
-      console.error("Erro ao deletar alerta:", err);
-    }
-  };
 
   const AGENDA_ROWS: AgendaRow[] =
     appointments?.map((a) => ({

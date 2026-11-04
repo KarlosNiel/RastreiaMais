@@ -251,7 +251,6 @@ export default function Step6Resumo() {
     const hasData = vals.clinica?.has;
     const dmData = vals.clinica?.dm;
     const multiprof = vals.multiprof ?? {};
-    const plano = vals.plano ?? {};
 
     const nome = socio.nome ?? "—";
     const idade = calcAge(socio.nascimento);

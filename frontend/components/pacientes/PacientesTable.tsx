@@ -83,17 +83,26 @@ export function PacientesTable({
     string | null
   >(null);
   const [filterValue, setFilterValue] = React.useState("");
+  const [debouncedFilter, setDebouncedFilter] = React.useState("");
   const [page, setPage] = React.useState(initialPage);
-  const [pageSize, setPageSize] = React.useState(initialRowsPerPage);
+  const pageSize = initialRowsPerPage;
   const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
     column: "user",
     direction: "ascending",
   });
 
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilter(filterValue);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [filterValue]);
+
   const filteredItems = React.useMemo(() => {
     let data = rows;
 
-    const q = filterValue.toLowerCase().trim();
+    const q = debouncedFilter.toLowerCase().trim();
 
     if (q) {
       data = data.filter((r) => {
@@ -109,7 +118,7 @@ export function PacientesTable({
     }
 
     return data;
-  }, [rows, filterValue]);
+  }, [rows, debouncedFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
 

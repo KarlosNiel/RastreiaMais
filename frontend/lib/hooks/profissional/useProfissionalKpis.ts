@@ -26,7 +26,9 @@ export function useProfissionalKpis(props?: UseProfissionalKpisProps) {
     queryKey: ["dashboard-kpis"],
     queryFn: async () => {
       try {
-        const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
+        const resp = await apiGet<DashboardKPIsResponse>(
+          "/api/v1/reports/kpis/",
+        );
 
         if (resp && typeof resp.total_patients === "number") {
           return resp;
@@ -46,8 +48,7 @@ export function useProfissionalKpis(props?: UseProfissionalKpisProps) {
     const appts = props?.appointments ?? [];
     const alertsList = props?.alerts ?? [];
 
-    const appointmentsCount =
-      remoteKpis?.total_appointments ?? appts.length;
+    const appointmentsCount = remoteKpis?.total_appointments ?? appts.length;
 
     const riskPatients =
       remoteKpis?.critical_appointments ??
@@ -59,11 +60,8 @@ export function useProfissionalKpis(props?: UseProfissionalKpisProps) {
 
     const totalPatients =
       remoteKpis?.total_patients ??
-      new Set(
-        appts
-          .map((a: any) => a.patient?.id || a.patient)
-          .filter(Boolean),
-      ).size;
+      new Set(appts.map((a: any) => a.patient?.id || a.patient).filter(Boolean))
+        .size;
 
     return [
       {

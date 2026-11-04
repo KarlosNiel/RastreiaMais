@@ -11,13 +11,11 @@ class DCNTModelTest(TestCase):
         self.patient = PatientUser.objects.create(user=self.user)
 
     def test_dcnt_creation(self):
-        dcnt = DCNT.objects.create(patient=self.patient, is_diagnosed=True)
+        dcnt = DCNT.objects.create(is_diagnosed=True)
         self.assertTrue(dcnt.is_diagnosed)
-        self.assertEqual(dcnt.patient, self.patient)
 
     def test_dcnt_null_patient(self):
         dcnt = DCNT.objects.create(is_diagnosed=False)
-        self.assertIsNone(dcnt.patient)
         self.assertFalse(dcnt.is_diagnosed)
 
 
