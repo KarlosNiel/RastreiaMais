@@ -335,10 +335,12 @@ export default function PatientForm(props: Props) {
 
       if (!raw) {
         hasMountedRef.current = true;
+
         return;
       }
 
       const draft = JSON.parse(raw);
+
       setDraftModal({ open: true, draft });
     } catch (e) {
       console.error("Falha ao carregar rascunho", e);
@@ -885,6 +887,8 @@ export default function PatientForm(props: Props) {
 
               <ModalFooter className="flex justify-between">
                 <Button
+                  className="font-medium text-slate-700 dark:text-zinc-300"
+                  radius="md"
                   variant="light"
                   onPress={() => {
                     if (
@@ -900,7 +904,9 @@ export default function PatientForm(props: Props) {
                   Copiar senha
                 </Button>
                 <Button
+                  className="font-medium"
                   color="primary"
+                  radius="md"
                   onPress={() => {
                     onClose(); // fechar modal → dispara onOpenChange(false) → push("/pacientes")
                   }}
@@ -914,14 +920,19 @@ export default function PatientForm(props: Props) {
       </Modal>
       {/* Modal de Rascunho */}
       <Modal
+        classNames={{
+          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+        }}
         isOpen={draftModal.open}
         onOpenChange={(open) => {
           if (!open) handleDraftDecision(false);
         }}
       >
         <ModalContent>
-          <ModalHeader className="text-xl">Rascunho Encontrado</ModalHeader>
-          <ModalBody>
+          <ModalHeader className="text-lg font-semibold">
+            Rascunho Encontrado
+          </ModalHeader>
+          <ModalBody className="text-sm text-slate-600 dark:text-zinc-400">
             <p>
               Você possui um cadastro não finalizado salvo no seu navegador.
             </p>
@@ -931,14 +942,17 @@ export default function PatientForm(props: Props) {
           </ModalBody>
           <ModalFooter>
             <Button
-              color="danger"
+              className="font-medium text-slate-700 dark:text-zinc-300"
+              radius="md"
               variant="flat"
               onPress={() => handleDraftDecision(false)}
             >
               Iniciar Limpo
             </Button>
             <Button
+              className="font-medium"
               color="primary"
+              radius="md"
               onPress={() => handleDraftDecision(true)}
             >
               Continuar Rascunho
@@ -946,7 +960,6 @@ export default function PatientForm(props: Props) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </FormProvider>
   );
 }

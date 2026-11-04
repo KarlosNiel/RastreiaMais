@@ -192,8 +192,8 @@ export default function ProfessionalForm({
       </div>
 
       <Card
-        className="border border-default-200 dark:border-default-100 bg-white dark:bg-gray-900"
-        shadow="sm"
+        className="border border-slate-200/80 bg-white dark:bg-zinc-900 dark:border-zinc-800 rounded-xl shadow-2xs"
+        shadow="none"
       >
         <CardBody className="p-6">
           <h2 className="text-lg font-semibold mb-4 text-foreground">
@@ -207,11 +207,11 @@ export default function ProfessionalForm({
           >
             <RHFInput
               isRequired
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               label="Nome de usuário"
               name="username"
               placeholder="Ex: joao.silva"
+              radius="md"
               rules={{
                 required: "Informe o nome de usuário",
                 minLength: { value: 3, message: "Mínimo de 3 caracteres" },
@@ -224,31 +224,31 @@ export default function ProfessionalForm({
 
             <RHFInput
               isRequired
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               label="Primeiro nome"
               name="firstName"
               placeholder="Ex: João"
+              radius="md"
               rules={{ required: "Informe o primeiro nome" }}
             />
 
             <RHFInput
               isRequired
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               label="Sobrenome"
               name="lastName"
               placeholder="Ex: da Silva"
+              radius="md"
               rules={{ required: "Informe o sobrenome" }}
             />
 
             <RHFInput
               isRequired
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               label="E-mail vinculado"
               name="email"
               placeholder="Digite o e-mail"
+              radius="md"
               rules={{
                 required: "Informe o e-mail",
                 pattern: {
@@ -290,7 +290,6 @@ export default function ProfessionalForm({
             )}
 
             <RHFInput
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               isRequired={isCreate}
               label={isCreate ? "Senha" : "Nova senha"}
@@ -300,6 +299,7 @@ export default function ProfessionalForm({
                   ? "Digite a senha"
                   : "Deixe em branco para manter a atual"
               }
+              radius="md"
               rules={{
                 required: isCreate ? "Informe a senha" : false,
                 minLength: {
@@ -311,7 +311,6 @@ export default function ProfessionalForm({
             />
 
             <RHFInput
-              classNames={{ inputWrapper: "bg-gray-100 dark:bg-gray-800" }}
               control={control}
               isRequired={isCreate}
               label={isCreate ? "Repetir a senha" : "Confirmar nova senha"}
@@ -321,6 +320,7 @@ export default function ProfessionalForm({
                   ? "Repita a senha"
                   : "Repita a nova senha (se informada)"
               }
+              radius="md"
               rules={{
                 required: isCreate ? "Repita a senha" : false,
                 validate: (v) => {
@@ -333,10 +333,22 @@ export default function ProfessionalForm({
             />
 
             <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-              <Button as="a" color="danger" href="/gestor" variant="flat">
+              <Button
+                as="a"
+                className="font-medium text-slate-700 dark:text-zinc-300"
+                href="/gestor"
+                radius="md"
+                variant="flat"
+              >
                 Cancelar
               </Button>
-              <Button color="primary" isLoading={submitting} type="submit">
+              <Button
+                className="font-medium"
+                color="primary"
+                isLoading={submitting}
+                radius="md"
+                type="submit"
+              >
                 {isCreate ? "Finalizar registro" : "Salvar alterações"}
               </Button>
             </div>

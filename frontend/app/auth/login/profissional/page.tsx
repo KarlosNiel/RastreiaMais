@@ -74,11 +74,7 @@ export default function LoginProfissionalPage() {
           isRequired
           autoCapitalize="none"
           autoComplete="email"
-          className="pb-6"
-          classNames={{
-            input: "",
-            inputWrapper: "border border-orange-600 transition",
-          }}
+          className="pb-5"
           enterKeyHint="next"
           label="E-mail"
           name="email"
@@ -92,11 +88,7 @@ export default function LoginProfissionalPage() {
         <TextField
           isRequired
           autoComplete="current-password"
-          className="pb-6"
-          classNames={{
-            input: "",
-            inputWrapper: "border border-orange-600 transition",
-          }}
+          className="pb-5"
           endContent={
             <button
               aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}

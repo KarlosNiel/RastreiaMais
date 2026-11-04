@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardBody } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { UserCircleIcon, CogIcon } from "@heroicons/react/24/outline";
 
@@ -24,84 +24,86 @@ export const RoleCards = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Profissional */}
-          <Card className="relative group hover:scale-105 transition-transform duration-300 border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 dark:from-primary/10 dark:to-primary/0 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-            <CardBody className="relative p-8">
-              <div className="w-16 h-16 rounded-2xl bg-orange-50/25 dark:bg-orange-500/10 flex items-center justify-center mb-6">
-                <CogIcon className="w-8 h-8 text-primary" />
+          <div className="rounded-2xl border border-slate-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-8 shadow-xs hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+              <div className="size-14 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/30 flex items-center justify-center mb-6">
+                <CogIcon className="size-7 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground dark:text-gray-100">
+              <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-zinc-100">
                 Profissional de Saúde
               </h3>
-              <p className="text-default-600 dark:text-gray-400 mb-6 leading-relaxed">
-                Acesse prontuários, gerencie consultas e visualize exames
+              <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                Acesse prontuários, gerencie consultas e visualize exames com
+                agilidade
               </p>
 
               <ul className="space-y-3 mb-8">
                 {[
                   "Gestão completa de pacientes",
-                  "Relatórios e indicadores",
+                  "Relatórios e indicadores de APS",
                   "Histórico de consultas e exames",
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-2" />
-                    <span className="text-sm text-default-600 dark:text-gray-400">
+                  <li key={i} className="flex items-center gap-2.5">
+                    <div className="size-1.5 rounded-full bg-primary" />
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">
                       {item}
                     </span>
                   </li>
                 ))}
               </ul>
+            </div>
 
-              <Button
-                className="w-full font-semibold"
-                color="primary"
-                size="lg"
-                onPress={() => router.push("/auth/login/profissional")}
-              >
-                Entrar como Profissional
-              </Button>
-            </CardBody>
-          </Card>
+            <Button
+              className="w-full font-semibold text-white bg-primary hover:bg-primary/90 shadow-2xs"
+              color="primary"
+              radius="md"
+              size="lg"
+              onPress={() => router.push("/auth/login/profissional")}
+            >
+              Entrar como Profissional
+            </Button>
+          </div>
 
           {/* Paciente */}
-          <Card className="relative group hover:scale-105 transition-transform duration-300 border border-transparent dark:border-gray-800 bg-white dark:bg-gray-900">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-secondary/5 dark:from-secondary/10 dark:to-secondary/0 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-            <CardBody className="relative p-8">
-              <div className="w-16 h-16 rounded-2xl bg-secondary-100 dark:bg-secondary-500/10 flex items-center justify-center mb-6">
-                <UserCircleIcon className="w-8 h-8 text-secondary" />
+          <div className="rounded-2xl border border-slate-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-8 shadow-xs hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+              <div className="size-14 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/30 flex items-center justify-center mb-6">
+                <UserCircleIcon className="size-7 text-sky-600 dark:text-sky-400" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground dark:text-gray-100">
-                Paciente
+              <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-zinc-100">
+                Portal do Paciente
               </h3>
-              <p className="text-default-600 dark:text-gray-400 mb-6 leading-relaxed">
-                Acompanhe seus dados de saúde, consultas e resultados de exames
+              <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                Acompanhe seus dados vitais, consultas e orientações médicas de
+                forma simples
               </p>
 
               <ul className="space-y-3 mb-8">
                 {[
                   "Histórico de saúde completo",
                   "Visualizar consultas e exames",
-                  "Acompanhar medicações",
+                  "Acompanhar medicações prescritas",
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-secondary mt-2" />
-                    <span className="text-sm text-default-600 dark:text-gray-400">
+                  <li key={i} className="flex items-center gap-2.5">
+                    <div className="size-1.5 rounded-full bg-sky-500" />
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">
                       {item}
                     </span>
                   </li>
                 ))}
               </ul>
+            </div>
 
-              <Button
-                className="w-full font-semibold"
-                color="secondary"
-                size="lg"
-                onPress={() => router.push("/auth/login/paciente")}
-              >
-                Entrar como Paciente
-              </Button>
-            </CardBody>
-          </Card>
+            <Button
+              className="w-full font-semibold border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+              radius="md"
+              size="lg"
+              variant="bordered"
+              onPress={() => router.push("/auth/login/paciente")}
+            >
+              Entrar como Paciente
+            </Button>
+          </div>
         </div>
       </div>
     </section>

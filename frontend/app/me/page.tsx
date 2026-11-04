@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  CalendarIcon,
+  CalendarDaysIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
   HeartIcon,
@@ -72,7 +72,7 @@ export default function MePage() {
         value: hasData.pressaoArterial,
         delta: hasData.deltaPA,
         accent: hasData.deltaPA < 0 ? ("amber" as const) : ("green" as const),
-        icon: <ChartBarIcon className="h-5 w-5 stroke-orange-600" />,
+        icon: <ChartBarIcon className="size-5" />,
       },
       {
         key: "risco",
@@ -80,7 +80,7 @@ export default function MePage() {
         value: hasData.riscoCardiovascular,
         delta: 0,
         accent: accentMap[hasData.riscoColor],
-        icon: <ShieldExclamationIcon className="h-5 w-5 stroke-orange-600" />,
+        icon: <ShieldExclamationIcon className="size-5" />,
       },
       {
         key: "hdl",
@@ -88,7 +88,7 @@ export default function MePage() {
         value: hasData.colesterolHDL,
         delta: hasData.deltaHDL,
         accent: hasData.deltaHDL > 0 ? ("green" as const) : ("amber" as const),
-        icon: <HeartIcon className="h-5 w-5 stroke-orange-600" />,
+        icon: <HeartIcon className="size-5" />,
       },
       {
         key: "ldl",
@@ -96,7 +96,7 @@ export default function MePage() {
         value: hasData.colesterolLDL,
         delta: hasData.deltaLDL,
         accent: hasData.deltaLDL < 0 ? ("green" as const) : ("red" as const),
-        icon: <ExclamationTriangleIcon className="h-5 w-5 stroke-orange-600" />,
+        icon: <ExclamationTriangleIcon className="size-5" />,
       },
     ];
   }, [hasData]);
@@ -168,51 +168,48 @@ export default function MePage() {
       <header className="flex flex-col gap-2 pt-8 pb-4 md:flex-row md:items-end md:justify-between md:pb-5">
         <div>
           {isLoadingMe ? (
-            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+            <div className="h-8 w-48 bg-slate-200 dark:bg-zinc-800 animate-pulse rounded-md" />
           ) : (
-            <h1 className="text-2xl font-semibold md:text-3xl dark:text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
               {patientName}
             </h1>
           )}
-          <p className="mt-1 text-sm text-foreground/60 dark:text-white">
-            Hipertensão Arterial Sistêmica (HAS) <span aria-hidden>▾</span>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
+            Acompanhamento Clínico &bull;{" "}
+            <span className="font-medium text-slate-700 dark:text-zinc-300">
+              Hipertensão Arterial Sistêmica (HAS)
+            </span>
           </p>
         </div>
       </header>
 
-      <section className="mt-6 grid grid-cols-1 sm-grid-cols-2 gap-6">
+      <section className="mt-4">
         {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoadingHas ? (
-            <div className="col-span-2 p-6 text-center text-gray-500 dark:text-gray-400">
+            <div className="col-span-full p-8 text-center text-slate-500 dark:text-zinc-400">
               Carregando dados clínicos...
             </div>
           ) : KPIS.length > 0 ? (
-            KPIS.map(({ key, ...kpi }) => (
-              <KpiCard
-                key={key}
-                {...kpi}
-                footerText="Seus dados atualizados com as informações mais recentes."
-              />
-            ))
+            KPIS.map(({ key, ...kpi }) => <KpiCard key={key} {...kpi} />)
           ) : (
-            <div className="col-span-2 p-6 text-center text-gray-500 dark:text-gray-400">
+            <div className="col-span-full p-8 text-center text-slate-500 dark:text-zinc-400">
               Nenhum dado clínico disponível.
             </div>
           )}
         </div>
       </section>
 
-      <section className="mt-6 rounded-md bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 shadow-sm p-4 w-full transition-all">
+      <section className="mt-6 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">
         <div className="flex items-center gap-2 mb-4">
-          <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <CalendarDaysIcon className="size-5 text-slate-600 dark:text-zinc-300" />
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
             Suas Consultas
           </h2>
         </div>
 
         {isLoading ? (
-          <div className="p-6 text-gray-500 dark:text-gray-400">
+          <div className="p-6 text-slate-500 dark:text-zinc-400">
             Carregando consultas...
           </div>
         ) : isError ? (
@@ -221,7 +218,7 @@ export default function MePage() {
           </div>
         ) : (
           <ConsultasTable
-            className="rounded-md overflow-hidden"
+            className="rounded-lg overflow-hidden"
             initialPage={1}
             initialRowsPerPage={4}
             rows={rows}

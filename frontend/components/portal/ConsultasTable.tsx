@@ -1,4 +1,4 @@
-// components/paciente/ConsultasTable.tsx
+// components/portal/ConsultasTable.tsx
 "use client";
 
 import {
@@ -9,7 +9,6 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Button,
 } from "@heroui/react";
 import { EyeIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -56,99 +55,110 @@ export function ConsultasTable({
         removeWrapper
         aria-label="Tabela de consultas do paciente"
         className="overflow-x-auto"
+        classNames={{
+          th: "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700/60 first:rounded-l-lg last:rounded-r-lg",
+          td: "px-4 py-3.5 text-sm text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/40",
+          base: "min-h-[220px]",
+          table: "dark:bg-zinc-900",
+        }}
+        shadow="none"
       >
         <TableHeader>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Profissional
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Cargo
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Local
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Horário
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Data
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50">
             Status
           </TableColumn>
-          <TableColumn className="text-sm dark:text-white dark:bg-gray-800 w-[110px]">
+          <TableColumn className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 text-right w-[90px]">
             Ações
           </TableColumn>
         </TableHeader>
 
         <TableBody emptyContent="Nenhuma consulta encontrada">
-          {visible.map((r, idx) => (
+          {visible.map((r) => (
             <TableRow
               key={r.id}
-              className={
-                idx % 2 === 1
-                  ? "bg-content2/60 dark:bg-gray-800 dark:text-white"
-                  : "dark:bg-gray-900 dark:text-white"
-              }
+              className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
             >
               <TableCell className="whitespace-nowrap">
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-flex size-7 items-center justify-center rounded-full border border-divider">
-                    <svg aria-hidden className="size-4" viewBox="0 0 24 24">
-                      <path
-                        d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                <span className="font-semibold text-slate-900 dark:text-zinc-100">
                   {r.profissional}
                 </span>
               </TableCell>
 
-              <TableCell>{r.cargo}</TableCell>
-              <TableCell className="max-w-[260px] truncate">
+              <TableCell className="text-slate-600 dark:text-zinc-400">
+                {r.cargo}
+              </TableCell>
+              <TableCell className="max-w-[260px] truncate text-slate-600 dark:text-zinc-400">
                 {r.local}
               </TableCell>
-              <TableCell>{r.hora}</TableCell>
-              <TableCell>{r.data}</TableCell>
+              <TableCell className="tabular-nums font-medium text-slate-700 dark:text-zinc-300">
+                {r.hora}
+              </TableCell>
+              <TableCell className="tabular-nums text-slate-600 dark:text-zinc-400">
+                {r.data}
+              </TableCell>
 
-              <TableCell className="">
+              <TableCell>
                 <StatusChip
-                  className={`
-                    ${r.status === "ativo" ? "bg-green-500/15 text-green-700 dark:text-green-300" : ""}
-                    ${r.status === "finalizado" ? "bg-gray-500/15 text-gray-600 dark:text-gray-400" : ""}
-                    ${r.status === "cancelado" ? "bg-red-500/15 text-red-600 dark:text-red-400" : ""}
-                  `}
                   size="sm"
+                  tone={
+                    r.status === "ativo"
+                      ? "safe"
+                      : r.status === "cancelado"
+                        ? "critical"
+                        : "neutral"
+                  }
                 >
-                  {r.status}
+                  {r.status === "ativo"
+                    ? "Ativo"
+                    : r.status === "cancelado"
+                      ? "Cancelado"
+                      : "Finalizado"}
                 </StatusChip>
               </TableCell>
 
-              <TableCell className="">
-                <Button
-                  isIconOnly
-                  className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-                  onPress={() => onView?.(r)}
-                >
-                  <EyeIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </Button>
+              <TableCell>
+                <div className="flex items-center justify-end">
+                  <button
+                    aria-label={`Ver detalhes da consulta com ${r.profissional}`}
+                    className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
+                    onClick={() => onView?.(r)}
+                  >
+                    <EyeIcon className="size-4.5" />
+                  </button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      <div className="mt-4 flex justify-center">
+      <div className="py-3 flex justify-center border-t border-slate-100 dark:border-zinc-800/80 mt-2">
         <Pagination
           isCompact
           showControls
           classNames={{
-            next: "dark:bg-gray-800",
-            prev: "dark:bg-gray-800",
-            item: "dark:bg-gray-800",
+            next: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            prev: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            item: "dark:bg-zinc-800 shadow-2xs",
           }}
+          color="primary"
           page={page}
+          size="sm"
           total={pages}
           onChange={setPage}
         />

@@ -23,18 +23,10 @@ export type KpiItem = {
 
 // Ícones padronizados com Heroicons
 export const KPI_ICONS: Record<KpiKey, ReactNode> = {
-  totalPatients: (
-    <UsersIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  riskPatients: (
-    <ExclamationTriangleIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  appointments: (
-    <CalendarDaysIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  criticalAlerts: (
-    <BellAlertIcon className="size-5 text-current stroke-orange-600" />
-  ),
+  totalPatients: <UsersIcon className="size-5" />,
+  riskPatients: <ExclamationTriangleIcon className="size-5" />,
+  appointments: <CalendarDaysIcon className="size-5" />,
+  criticalAlerts: <BellAlertIcon className="size-5" />,
 };
 
 export async function getProfissionalKpis(): Promise<KpiItem[]> {
@@ -65,7 +57,7 @@ export async function getProfissionalKpis(): Promise<KpiItem[]> {
       key: "criticalAlerts",
       label: "Alertas Críticos",
       value: 2,
-      accent: "green",
+      accent: "red",
     },
   ];
 }

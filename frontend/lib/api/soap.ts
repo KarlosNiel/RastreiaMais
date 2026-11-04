@@ -57,7 +57,7 @@ export type SOAPReport = {
  */
 export async function generateSOAPReport(
   patientId: number,
-): Promise<SOAPReport> {
+): Promise<SOAPReport | null> {
   return apiPost<SOAPReport>("/api/v1/reports/soap/generate/", {
     patient_id: patientId,
   });

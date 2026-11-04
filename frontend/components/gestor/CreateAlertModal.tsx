@@ -88,11 +88,18 @@ export default function CreateAlertModal({
 
   return (
     <>
-      <Modal backdrop="blur" isOpen={open} onOpenChange={onOpenChange}>
+      <Modal
+        backdrop="blur"
+        classNames={{
+          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+        }}
+        isOpen={open}
+        onOpenChange={onOpenChange}
+      >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>
+              <ModalHeader className="font-semibold text-base">
                 {alertData ? "Detalhes do Alerta" : "Criar Novo Alerta"}
               </ModalHeader>
 
@@ -101,6 +108,7 @@ export default function CreateAlertModal({
                   isDisabled={!!alertData}
                   label="CPF"
                   placeholder="Ex: 12345678900"
+                  radius="md"
                   value={cpf}
                   variant="bordered"
                   onChange={(e) => {
@@ -114,6 +122,7 @@ export default function CreateAlertModal({
                 <Select
                   isDisabled={!!alertData}
                   label="Nível de Risco"
+                  radius="md"
                   selectedKeys={risk ? [risk] : []}
                   variant="bordered"
                   onChange={(e) => setRisk(e.target.value as any)}
@@ -127,6 +136,7 @@ export default function CreateAlertModal({
                   isDisabled={!!alertData}
                   label="Título"
                   placeholder="Ex: Falta de retorno da consulta"
+                  radius="md"
                   value={title}
                   variant="bordered"
                   onChange={(e) => setTitle(e.target.value)}
@@ -136,6 +146,7 @@ export default function CreateAlertModal({
                   isDisabled={!!alertData}
                   label="Descrição"
                   placeholder="Descreva o motivo do alerta..."
+                  radius="md"
                   value={description}
                   variant="bordered"
                   onChange={(e) => setDescription(e.target.value)}
@@ -145,26 +156,40 @@ export default function CreateAlertModal({
               {alertData ? (
                 <ModalFooter>
                   <Button
+                    className="font-medium"
                     color="danger"
                     isLoading={deleteAlert.isPending}
+                    radius="md"
                     variant="flat"
                     onPress={() => setConfirmDeleteOpen(true)}
                   >
                     Excluir Alerta
                   </Button>
 
-                  <Button variant="light" onPress={onClose}>
+                  <Button
+                    className="font-medium text-slate-700 dark:text-zinc-300"
+                    radius="md"
+                    variant="light"
+                    onPress={onClose}
+                  >
                     Fechar
                   </Button>
                 </ModalFooter>
               ) : (
                 <ModalFooter>
-                  <Button variant="light" onPress={onClose}>
+                  <Button
+                    className="font-medium text-slate-700 dark:text-zinc-300"
+                    radius="md"
+                    variant="light"
+                    onPress={onClose}
+                  >
                     Cancelar
                   </Button>
                   <Button
+                    className="font-medium"
                     color="primary"
                     isLoading={createAlert.isPending}
+                    radius="md"
                     onPress={handleSave}
                   >
                     Salvar
@@ -176,27 +201,40 @@ export default function CreateAlertModal({
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <Modal
+        classNames={{
+          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+        }}
+        isOpen={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+      >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="text-danger">
+              <ModalHeader className="text-danger font-semibold text-base">
                 Confirmar Exclusão
               </ModalHeader>
 
-              <ModalBody>
+              <ModalBody className="text-sm text-slate-600 dark:text-zinc-400">
                 Tem certeza que deseja excluir este alerta? Essa ação não pode
                 ser desfeita.
               </ModalBody>
 
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>
+                <Button
+                  className="font-medium text-slate-700 dark:text-zinc-300"
+                  radius="md"
+                  variant="light"
+                  onPress={onClose}
+                >
                   Cancelar
                 </Button>
 
                 <Button
+                  className="font-medium"
                   color="danger"
                   isLoading={deleteAlert.isPending}
+                  radius="md"
                   onPress={handleDelete}
                 >
                   Excluir

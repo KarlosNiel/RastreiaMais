@@ -216,7 +216,7 @@ export default function Step5Plano() {
   return (
     <div className="space-y-6">
       <Card
-        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        className="border border-slate-200/80 bg-white dark:bg-zinc-900/60 dark:border-zinc-800 rounded-xl p-3 sm:p-5 shadow-2xs"
         shadow="none"
       >
         <CardBody className="space-y-8">

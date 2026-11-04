@@ -228,7 +228,7 @@ function RedefinirSenhaContent() {
                 "border transition-colors",
                 touched.password && password.length >= 8
                   ? "border-success-500"
-                  : "border-orange-600",
+                  : "border-default-200",
               ),
             }}
             endContent={
@@ -297,7 +297,7 @@ function RedefinirSenhaContent() {
                   ? "border-success-500"
                   : touched.passwordConfirm && passwordsMatch === false
                     ? "border-danger-500"
-                    : "border-orange-600",
+                    : "border-default-200",
               ),
             }}
             endContent={

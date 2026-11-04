@@ -374,12 +374,16 @@ export default function PatientWizard({
                       aria-current={active ? "step" : undefined}
                       aria-disabled={disabled || undefined}
                       className={[
-                        "inline-flex items-center gap-2 h-10 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ring-offset-app ring-orange-600",
+                        "inline-flex items-center gap-2 h-9 rounded-lg border px-3.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ring-primary/40",
                         active
-                          ? "bg-orange-600 text-white border-orange-600"
-                          : "dark:bg-gray-800 bg-white border-orange-600 dark:border-none text-black dark:text-white hover:bg-gray-100 hover:text-black",
-                        hasErr && !active ? "border-red-600 text-red-500" : "",
-                        disabled ? "opacity-50 cursor-not-allowed" : "",
+                          ? "bg-primary text-white border-primary shadow-2xs font-semibold"
+                          : "bg-white dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs",
+                        hasErr && !active
+                          ? "border-rose-400 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20"
+                          : "",
+                        disabled
+                          ? "opacity-40 cursor-not-allowed pointer-events-none"
+                          : "",
                       ].join(" ")}
                       disabled={disabled}
                       title={
@@ -396,17 +400,17 @@ export default function PatientWizard({
                       <span
                         aria-hidden
                         className={[
-                          "grid place-items-center size-6 rounded-full border text-[12px] font-semibold",
+                          "grid place-items-center size-5 rounded-full text-[11px] font-semibold",
                           active
-                            ? "border-white/70 bg-white/20 text-white"
-                            : "border-gray-600 text-gray-400",
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300",
                         ].join(" ")}
                       >
                         {i + 1}
                       </span>
                       {s.label}
                       {hasErr && !active && (
-                        <span className="ml-1 inline-block size-2 rounded-full bg-red-600" />
+                        <span className="ml-1 inline-block size-1.5 rounded-full bg-rose-500" />
                       )}
                     </button>
                   </li>
@@ -416,29 +420,33 @@ export default function PatientWizard({
 
             <div className="flex flex-wrap gap-2 md:justify-end">
               <Button
-                className="border border-orange-600 text-black bg-transparent hover:bg-red-600 dark:bg-gray-800 dark:border-none dark:text-white dark:hover:bg-red-600 transition"
+                className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
                 isDisabled={isSubmitting}
-                radius="full"
+                radius="md"
+                size="sm"
                 type="button"
-                variant="light"
+                variant="bordered"
                 onClick={handleCancel}
               >
                 Cancelar
               </Button>
               <Button
-                className="border border-orange-600 hover:bg-gray-200 text-black bg-transparent dark:bg-gray-800 dark:border-none dark:hover:bg-blue-600 dark:text-white transition"
+                className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
                 isDisabled={isSubmitting}
-                radius="full"
+                radius="md"
+                size="sm"
                 type="button"
-                variant="flat"
+                variant="bordered"
                 onClick={handleSaveDraft}
               >
                 Salvar Rascunho
               </Button>
               <Button
-                className="bg-orange-600 hover:bg-orange-500 text-white radius-full transition"
+                className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                color="primary"
                 isDisabled={isSubmitting}
-                radius="full"
+                radius="md"
+                size="sm"
                 type="button"
                 onClick={handleSubmitClick}
               >
@@ -449,10 +457,10 @@ export default function PatientWizard({
 
           <div
             aria-hidden
-            className="mt-4 h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800 transition-colors"
+            className="mt-4 h-1 w-full rounded-full bg-slate-100 dark:bg-zinc-800 transition-colors"
           >
             <div
-              className="h-1 rounded-full bg-orange-600 transition-[width] duration-300 ease-out"
+              className="h-1 rounded-full bg-primary transition-[width] duration-300 ease-out"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -467,14 +475,14 @@ export default function PatientWizard({
           {step === 5 && <Step6 />}
         </div>
 
-        <footer className="border-none border-gray-800 bg-transparent px-4 sm:px-6 lg:px-8 py-0 rounded-b-lg transition-colors">
+        <footer className="border-t border-slate-100 dark:border-zinc-800/80 bg-transparent pt-6 rounded-b-lg transition-colors">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
-              className="min-w-[120px] border border-orange-600 text-gray-black bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+              className="min-w-[110px] font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
               isDisabled={step === 0 || isSubmitting}
-              radius="full"
+              radius="md"
               type="button"
-              variant="flat"
+              variant="bordered"
               onClick={prev}
             >
               Voltar
@@ -482,9 +490,10 @@ export default function PatientWizard({
 
             {step < total - 1 ? (
               <Button
-                className="bg-orange-600 hover:bg-orange-500 text-white radius-full min-w-[160px] transition"
+                className="min-w-[140px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                color="primary"
                 isDisabled={isSubmitting}
-                radius="full"
+                radius="md"
                 type="button"
                 onClick={next}
               >
@@ -492,13 +501,14 @@ export default function PatientWizard({
               </Button>
             ) : (
               <Button
-                className="bg-orange-600 hover:bg-orange-500 text-white radius-full min-w-[200px] transition"
+                className="min-w-[180px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                color="primary"
                 isDisabled={isSubmitting}
-                radius="full"
+                radius="md"
                 type="button"
                 onClick={handleSubmitClick}
               >
-                {isSubmitting ? "Enviando…" : "Finalizar registro"}
+                {isSubmitting ? "Enviando…" : "Finalizar Registro"}
               </Button>
             )}
           </div>

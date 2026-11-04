@@ -82,14 +82,14 @@ export default function Nav() {
             key={i.href}
             aria-current={active ? "page" : undefined}
             className={[
-              "rounded-2xl px-3 py-2 text-sm transition",
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               // estados visuais padronizados
-              "hover:bg-content2 hover:text-foreground",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50",
+              "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
               // ativo
-              "data-[active=true]:bg-content2 data-[active=true]:text-foreground data-[active=true]:font-medium",
+              "data-[active=true]:bg-slate-100 data-[active=true]:text-slate-900 data-[active=true]:font-semibold dark:data-[active=true]:bg-zinc-800 dark:data-[active=true]:text-zinc-100",
               // inativo
-              "data-[active=false]:text-foreground/80",
+              "data-[active=false]:text-slate-600 dark:data-[active=false]:text-zinc-400",
             ].join(" ")}
             data-active={active ? "true" : "false"}
             href={i.href}

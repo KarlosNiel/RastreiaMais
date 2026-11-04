@@ -121,15 +121,6 @@ export default function RecuperarSenhaPage() {
               isRequired
               autoCapitalize="none"
               autoComplete="username"
-              classNames={{
-                input: "",
-                inputWrapper: cn(
-                  "border transition-colors",
-                  isValidIdentifier
-                    ? "border-orange-600"
-                    : "border-default-200",
-                ),
-              }}
               label="Email, CPF ou Usuário"
               name="identifier"
               placeholder="Digite seu email, CPF ou usuário"

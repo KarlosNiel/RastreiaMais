@@ -1,6 +1,8 @@
 // frontend/components/pacientes/SOAPReportModal.tsx
 "use client";
 
+import type { SOAPReport } from "@/lib/api/soap";
+
 import {
   Button,
   Modal,
@@ -10,9 +12,9 @@ import {
   ModalHeader,
 } from "@heroui/react";
 import { useCallback } from "react";
+import { PrinterIcon } from "@heroicons/react/24/outline";
 
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
-import type { SOAPReport } from "@/lib/api/soap";
 
 type Props = {
   isOpen: boolean;
@@ -72,6 +74,7 @@ function SOAPBlock({
   }, [sections, letter]);
 
   const nonEmptySections = sections.filter((s) => s.text);
+
   if (nonEmptySections.length === 0) return null;
 
   return (
@@ -121,16 +124,16 @@ function SOAPBlock({
 function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
     ATINGIDO:
-      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
     "EM CURSO":
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
     PENDENTE:
-      "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+      "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
   };
 
   return (
     <span
-      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorMap[status] ?? colorMap["PENDENTE"]}`}
+      className={`inline-block px-2 py-0.5 rounded-md border text-xs font-medium ${colorMap[status] ?? colorMap["PENDENTE"]}`}
     >
       {status}
     </span>
@@ -145,12 +148,7 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
   if (!report) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      scrollBehavior="inside"
-      size="4xl"
-      onClose={onClose}
-    >
+    <Modal isOpen={isOpen} scrollBehavior="inside" size="4xl" onClose={onClose}>
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1 print:hidden">
           <h2 className="text-lg font-bold">Relatório SOAP — RASTREIA+</h2>
@@ -313,14 +311,22 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
         </ModalBody>
 
         <ModalFooter className="print:hidden">
-          <Button variant="flat" onPress={onClose}>
+          <Button
+            className="font-medium text-slate-700 dark:text-zinc-300"
+            radius="md"
+            variant="flat"
+            onPress={onClose}
+          >
             Fechar
           </Button>
           <Button
-            className="bg-orange-600 hover:bg-orange-500 text-white"
+            className="font-medium"
+            color="primary"
+            radius="md"
+            startContent={<PrinterIcon className="size-4" />}
             onPress={handlePrint}
           >
-            🖨 Imprimir / Salvar PDF
+            Imprimir / Salvar PDF
           </Button>
         </ModalFooter>
       </ModalContent>

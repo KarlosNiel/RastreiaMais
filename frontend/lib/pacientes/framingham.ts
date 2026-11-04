@@ -60,60 +60,78 @@ function getAgePoints(age: number, sex: "M" | "F"): number {
   if (sex === "M") {
     if (age < 35) return -9; // 20-34
     if (age < 40) return -4; // 35-39
-    if (age < 45) return 0;  // 40-44
-    if (age < 50) return 3;  // 45-49
-    if (age < 55) return 6;  // 50-54
-    if (age < 60) return 8;  // 55-59
+    if (age < 45) return 0; // 40-44
+    if (age < 50) return 3; // 45-49
+    if (age < 55) return 6; // 50-54
+    if (age < 60) return 8; // 55-59
     if (age < 65) return 10; // 60-64
     if (age < 70) return 11; // 65-69
     if (age < 75) return 12; // 70-74
-    return 13;               // 75-79 (or more)
+
+    return 13; // 75-79 (or more)
   } else {
     if (age < 35) return -7; // 20-34
     if (age < 40) return -3; // 35-39
-    if (age < 45) return 0;  // 40-44
-    if (age < 50) return 3;  // 45-49
-    if (age < 55) return 6;  // 50-54
-    if (age < 60) return 8;  // 55-59
+    if (age < 45) return 0; // 40-44
+    if (age < 50) return 3; // 45-49
+    if (age < 55) return 6; // 50-54
+    if (age < 60) return 8; // 55-59
     if (age < 65) return 10; // 60-64
     if (age < 70) return 12; // 65-69
     if (age < 75) return 14; // 70-74
-    return 16;               // 75-79 (or more)
+
+    return 16; // 75-79 (or more)
   }
 }
 
 function getCholesterolPoints(tc: number, age: number, sex: "M" | "F"): number {
   let ageGroup = 0;
-  if (age < 40) ageGroup = 0;      // 20-39
-  else if (age < 50) ageGroup = 1; // 40-49
-  else if (age < 60) ageGroup = 2; // 50-59
-  else if (age < 70) ageGroup = 3; // 60-69
-  else ageGroup = 4;               // 70-79
+
+  if (age < 40)
+    ageGroup = 0; // 20-39
+  else if (age < 50)
+    ageGroup = 1; // 40-49
+  else if (age < 60)
+    ageGroup = 2; // 50-59
+  else if (age < 70)
+    ageGroup = 3; // 60-69
+  else ageGroup = 4; // 70-79
 
   if (sex === "M") {
     if (tc < 160) return 0;
     if (tc < 200) return [4, 3, 2, 1, 0][ageGroup];
     if (tc < 240) return [7, 5, 3, 1, 0][ageGroup];
     if (tc < 280) return [9, 6, 4, 2, 1][ageGroup];
+
     return [11, 8, 5, 3, 1][ageGroup];
   } else {
     if (tc < 160) return 0;
     if (tc < 200) return [4, 3, 2, 1, 1][ageGroup];
     if (tc < 240) return [8, 6, 4, 2, 1][ageGroup];
     if (tc < 280) return [11, 8, 5, 3, 2][ageGroup];
+
     return [13, 10, 7, 4, 2][ageGroup];
   }
 }
 
-function getSmokingPoints(smoker: boolean, age: number, sex: "M" | "F"): number {
+function getSmokingPoints(
+  smoker: boolean,
+  age: number,
+  sex: "M" | "F",
+): number {
   if (!smoker) return 0;
 
   let ageGroup = 0;
-  if (age < 40) ageGroup = 0;      // 20-39
-  else if (age < 50) ageGroup = 1; // 40-49
-  else if (age < 60) ageGroup = 2; // 50-59
-  else if (age < 70) ageGroup = 3; // 60-69
-  else ageGroup = 4;               // 70-79
+
+  if (age < 40)
+    ageGroup = 0; // 20-39
+  else if (age < 50)
+    ageGroup = 1; // 40-49
+  else if (age < 60)
+    ageGroup = 2; // 50-59
+  else if (age < 70)
+    ageGroup = 3; // 60-69
+  else ageGroup = 4; // 70-79
 
   if (sex === "M") {
     return [8, 5, 3, 1, 1][ageGroup];
@@ -126,6 +144,7 @@ function getHdlPoints(hdl: number): number {
   if (hdl >= 60) return -1;
   if (hdl >= 50) return 0;
   if (hdl >= 40) return 1;
+
   return 2;
 }
 
@@ -135,12 +154,14 @@ function getBpPoints(sbp: number, treated: boolean, sex: "M" | "F"): number {
     if (sbp < 130) return treated ? 1 : 0;
     if (sbp < 140) return treated ? 2 : 1;
     if (sbp < 160) return treated ? 2 : 1;
+
     return treated ? 3 : 2;
   } else {
     if (sbp < 120) return 0; // treated and untreated are 0
     if (sbp < 130) return treated ? 3 : 1;
     if (sbp < 140) return treated ? 4 : 2;
     if (sbp < 160) return treated ? 5 : 3;
+
     return treated ? 6 : 4;
   }
 }
@@ -165,6 +186,7 @@ function getRiskPercentage(points: number, sex: "M" | "F"): number {
     if (points === 14) return 16;
     if (points === 15) return 20;
     if (points === 16) return 25;
+
     return 30; // 17 ou mais => 30 ou mais
   } else {
     if (points <= 8) return 0.5; // "menos de 9" => "menos de 1%" (0 na tabela provavelmente erro de digitação para <1%)
@@ -184,6 +206,7 @@ function getRiskPercentage(points: number, sex: "M" | "F"): number {
     if (points === 22) return 17;
     if (points === 23) return 22;
     if (points === 24) return 27;
+
     return 30; // 25 ou mais => 30 ou mais
   }
 }
@@ -191,5 +214,6 @@ function getRiskPercentage(points: number, sex: "M" | "F"): number {
 function getCategory(percentage: number): FraminghamCategory {
   if (percentage < 10) return "<10";
   if (percentage <= 20) return "10-20";
+
   return ">20";
 }

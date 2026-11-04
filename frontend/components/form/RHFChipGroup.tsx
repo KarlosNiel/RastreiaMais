@@ -168,7 +168,7 @@ export function RHFChipGroup<T extends FieldValues>(props: Props<T>) {
                       )}
                       color={color as any}
                       disabled={opt.disabled}
-                      radius="full"
+                      radius="md"
                       role={itemRole}
                       size="md"
                       type="button"

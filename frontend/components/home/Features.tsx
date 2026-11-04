@@ -64,7 +64,8 @@ export const Features = () => {
             return (
               <Card
                 key={i}
-                className="hover:scale-105 hover:shadow-lg transition-all duration-300 border border-transparent dark:border-gray-80 dark:bg-gray-900"
+                className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 shadow-2xs transition-all duration-200"
+                shadow="none"
               >
                 <CardBody className="p-6">
                   <div

@@ -1,13 +1,15 @@
 // frontend/components/pacientes/sections/Step6Resumo.tsx
 "use client";
 
+import type { SOAPReport } from "@/lib/api/soap";
+
 import { Button, Card, CardBody } from "@heroui/react";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 import SOAPReportModal from "@/components/pacientes/SOAPReportModal";
 import { notifySuccess, notifyWarn } from "@/components/ui/notify";
-import type { SOAPReport } from "@/lib/api/soap";
 
 /* ── Label maps (replicados do backend para montagem client-side) ── */
 
@@ -90,8 +92,10 @@ const REFERRAL_MAP: Record<string, string> = {
 function calcAge(birth: string | Date | undefined | null): number | null {
   if (!birth) return null;
   const d = new Date(birth);
+
   if (isNaN(d.getTime())) return null;
   const today = new Date();
+
   return (
     today.getFullYear() -
     d.getFullYear() -
@@ -109,13 +113,16 @@ function boolLabel(
 ): string | null {
   if (val === true || val === "sim") return t;
   if (val === false || val === "nao") return f;
+
   return null;
 }
 
 function fmtDate(d: Date | string | null | undefined): string | null {
   if (!d) return null;
   const dt = new Date(d);
+
   if (isNaN(dt.getTime())) return null;
+
   return dt.toLocaleDateString("pt-BR");
 }
 
@@ -168,6 +175,7 @@ function SOAPBlock({
   }, [sections, letter]);
 
   const nonEmpty = sections.filter((s) => s.text);
+
   if (nonEmpty.length === 0) return null;
 
   return (
@@ -215,8 +223,7 @@ function StatusBadge({ status }: { status: string }) {
       "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
     "EM CURSO":
       "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-    PENDENTE:
-      "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+    PENDENTE: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
   };
 
   return (
@@ -254,18 +261,22 @@ export default function Step6Resumo() {
 
     // ── S ── Subjetivo
     const idParts = [`Paciente ${genero}`];
+
     if (idade !== null) idParts.push(`${idade} anos`);
     idParts.push(raca, ocupacao);
 
     const diagParts: string[] = [];
+
     if (cond.has && hasData) {
       const med = TREATMENT_MAP[hasData.usa_medicacao ?? ""] ?? "—";
+
       diagParts.push(
         `diagnóstico prévio de hipertensão arterial sistêmica — uso de medicação: ${med}`,
       );
     }
     if (cond.dm && dmData) {
       const med = TREATMENT_MAP[dmData.usa_medicacao ?? ""] ?? "—";
+
       diagParts.push(
         `diagnóstico prévio de diabetes mellitus — uso de medicação: ${med}`,
       );
@@ -280,6 +291,7 @@ export default function Step6Resumo() {
     const histParts: string[] = [];
     const lastConsult =
       hasData?.ultima_consulta_has ?? dmData?.ultima_consulta_dm;
+
     if (lastConsult) {
       histParts.push(`Última consulta para avaliação há ${lastConsult}`);
     }
@@ -287,6 +299,7 @@ export default function Step6Resumo() {
     const famHas = boolLabel(hasData?.historico_familiar);
     const famDm = boolLabel(dmData?.historico_familiar);
     const famItems: string[] = [];
+
     if (famHas === "SIM") famItems.push("HAS");
     if (famDm === "SIM") famItems.push("DM");
     histParts.push(
@@ -304,6 +317,7 @@ export default function Step6Resumo() {
       "INTERFERE",
       "NÃO INTERFERE",
     );
+
     if (stress)
       socialParts.push(
         `Estresse do dia a dia ${stress} no controle de sua condição`,
@@ -313,13 +327,16 @@ export default function Step6Resumo() {
       "DIFICULTAM",
       "NÃO DIFICULTAM",
     );
+
     if (econ)
       socialParts.push(
         `Fatores econômicos ${econ} a continuidade do tratamento`,
       );
     const apoio = boolLabel(multiprof.psico_apoio_suficiente);
+
     if (apoio) socialParts.push(`Apoio familiar: ${apoio}`);
     const bf = boolLabel(socio.bolsa_familia);
+
     if (bf) socialParts.push(`Beneficiário do Bolsa Família: ${bf}`);
 
     const determinantes = socialParts.length
@@ -334,8 +351,10 @@ export default function Step6Resumo() {
     const sal = SALT_MAP[lifeSrc.sal ?? ""] ?? "—";
 
     let atividadeLabel = "—";
+
     if (multiprof.fisico_atividade === "sim") {
       const freq = multiprof.fisico_atividade_freq_semana;
+
       atividadeLabel = freq ? `PRATICA — ${freq}x/semana` : "PRATICA";
     } else if (multiprof.fisico_atividade === "nao") {
       atividadeLabel = "SEDENTÁRIO";
@@ -345,17 +364,15 @@ export default function Step6Resumo() {
 
     // ── O ── Objetivo
     let pressaoArterial: string | null = null;
+
     if (hasData) {
       const paParts: string[] = [];
+
       if (hasData.pa1_sis && hasData.pa1_dia) {
-        paParts.push(
-          `1ª aferição: ${hasData.pa1_sis}/${hasData.pa1_dia} mmHg`,
-        );
+        paParts.push(`1ª aferição: ${hasData.pa1_sis}/${hasData.pa1_dia} mmHg`);
       }
       if (hasData.pa2_sis && hasData.pa2_dia) {
-        paParts.push(
-          `2ª aferição: ${hasData.pa2_sis}/${hasData.pa2_dia} mmHg`,
-        );
+        paParts.push(`2ª aferição: ${hasData.pa2_sis}/${hasData.pa2_dia} mmHg`);
       }
       if (paParts.length) {
         paParts.push("Aferição realizada em repouso, posição sentada.");
@@ -365,13 +382,16 @@ export default function Step6Resumo() {
 
     const antroSrc = hasData ?? dmData;
     let antropometria: string | null = null;
+
     if (antroSrc) {
       const ap: string[] = [];
+
       if (antroSrc.peso) ap.push(`Peso: ${antroSrc.peso} kg`);
       if (antroSrc.altura) ap.push(`Altura: ${antroSrc.altura} m`);
       if (antroSrc.imc) {
         const imc = Number(antroSrc.imc);
         let imcClass = "";
+
         if (imc < 18.5) imcClass = "Abaixo do peso";
         else if (imc < 25) imcClass = "Normal";
         else if (imc < 30) imcClass = "Sobrepeso";
@@ -387,6 +407,7 @@ export default function Step6Resumo() {
 
     let glicemiaMetabolico: string | null = null;
     const gParts: string[] = [];
+
     if (dmData) {
       if (dmData.glicemia_aleatoria)
         gParts.push(
@@ -396,17 +417,20 @@ export default function Step6Resumo() {
         gParts.push(
           `Glicemia capilar em jejum: ${dmData.glicemia_jejum} mg/dL`,
         );
-      if (dmData.hba1c) gParts.push(`Hemoglobina glicada (HbA1c): ${dmData.hba1c}%`);
+      if (dmData.hba1c)
+        gParts.push(`Hemoglobina glicada (HbA1c): ${dmData.hba1c}%`);
     }
     if (hasData) {
       if (hasData.col_total) {
         let txt = `Colesterol total: ${hasData.col_total} mg/dL`;
+
         if (hasData.col_total_data)
           txt += `. Data: ${fmtDate(hasData.col_total_data)}`;
         gParts.push(txt);
       }
       if (hasData.hdl) {
         let txt = `HDL: ${hasData.hdl} mg/dL`;
+
         if (hasData.hdl_data) txt += `. Data: ${fmtDate(hasData.hdl_data)}`;
         gParts.push(txt);
       }
@@ -416,17 +440,21 @@ export default function Step6Resumo() {
     // Exame físico sumário
     const eParts: string[] = [];
     const edema = boolLabel(multiprof.fisico_edemas, "PRESENTE", "AUSENTE");
+
     if (edema) eParts.push(`Edemas: ${edema}`);
     const dispneia = boolLabel(
       multiprof.fisico_dispneia,
       "PRESENTE",
       "AUSENTE",
     );
+
     if (dispneia) eParts.push(`Dispneia: ${dispneia}`);
     const parestesia = boolLabel(multiprof.fisico_formigamento_caimbras);
+
     if (parestesia)
       eParts.push(`Queixas de formigamento ou câimbras: ${parestesia}`);
     const difCaminhar = boolLabel(multiprof.fisico_dificuldade_caminhar);
+
     if (difCaminhar)
       eParts.push(
         `Dificuldade para caminhar ou realizar atividades: ${difCaminhar}`,
@@ -440,10 +468,12 @@ export default function Step6Resumo() {
 
     // ── A ── Avaliação
     let hipertensao: string | null = null;
+
     if (cond.has && hasData) {
       if (hasData.diag_has === "sim") {
         const classPa = BP_MAP[hasData.classificacao_pa ?? ""] ?? "—";
         const med = TREATMENT_MAP[hasData.usa_medicacao ?? ""] ?? "—";
+
         hipertensao = `HAS — classificação: ${classPa}. Adesão medicamentosa: ${med}.`;
       } else {
         hipertensao =
@@ -452,12 +482,13 @@ export default function Step6Resumo() {
     }
 
     let diabetes: string | null = null;
+
     if (cond.dm && dmData) {
       if (dmData.diag_dm === "sim") {
         diabetes = "DM CONFIRMADA.";
       } else {
-        const screening =
-          SCREENING_MAP[dmData.triagem_dm ?? ""] ?? "";
+        const screening = SCREENING_MAP[dmData.triagem_dm ?? ""] ?? "";
+
         diabetes = screening
           ? `Triagem: ${screening}.`
           : "Sem alterações glicêmicas identificadas na triagem.";
@@ -465,8 +496,11 @@ export default function Step6Resumo() {
     }
 
     let riscoCv: string | null = null;
+
     if (hasData?.framingham) {
-      const framLabel = FRAMINGHAM_MAP[hasData.framingham] ?? hasData.framingham;
+      const framLabel =
+        FRAMINGHAM_MAP[hasData.framingham] ?? hasData.framingham;
+
       riscoCv = `Score de Framingham: ${framLabel}.`;
       if (antroSrc?.imc)
         riscoCv +=
@@ -474,6 +508,7 @@ export default function Step6Resumo() {
     }
 
     const riscoSocParts: string[] = [];
+
     if (multiprof.psico_estresse_interfere === "sim")
       riscoSocParts.push("estresse com impacto no controle");
     if (multiprof.psico_fatores_economicos === "sim")
@@ -490,14 +525,17 @@ export default function Step6Resumo() {
 
     // ── P ── Plano
     const condutaParts: string[] = [];
+
     if (hasData?.condutas?.length) {
       hasData.condutas.forEach((c: string) => {
         const label = CONDUCT_HAS_MAP[c];
+
         if (label) condutaParts.push(label);
       });
     }
     if (hasData?.usa_medicacao === "irregular") {
       const meds = hasData.medicamentos ?? "os medicamentos prescritos";
+
       condutaParts.push(
         `Reforço de orientação sobre adesão medicamentosa para ${meds}`,
       );
@@ -507,6 +545,7 @@ export default function Step6Resumo() {
       : "Nenhuma conduta clínica imediata registrada.";
 
     const exames: string[] = [];
+
     if (cond.dm) {
       exames.push("glicemia em jejum", "HbA1c");
     }
@@ -519,10 +558,15 @@ export default function Step6Resumo() {
 
     let encaminhamentos =
       "Sem necessidade de encaminhamento multiprofissional identificada nesta avaliação.";
-    if (multiprof.precisa_enc_multiprof === "sim" && multiprof.enc_multiprof?.length) {
+
+    if (
+      multiprof.precisa_enc_multiprof === "sim" &&
+      multiprof.enc_multiprof?.length
+    ) {
       const profs = (multiprof.enc_multiprof as string[])
         .map((p: string) => REFERRAL_MAP[p] ?? p)
         .join(", ");
+
       encaminhamentos = `Encaminhamento multiprofissional para ${profs}.`;
     }
 
@@ -536,9 +580,9 @@ export default function Step6Resumo() {
       },
       {
         indicador: "Acompanhamento de pessoa com DCNT",
-        status: (cond.has || cond.dm
-          ? "ATINGIDO"
-          : "PENDENTE") as "ATINGIDO" | "PENDENTE",
+        status: (cond.has || cond.dm ? "ATINGIDO" : "PENDENTE") as
+          | "ATINGIDO"
+          | "PENDENTE",
       },
       {
         indicador: "HbA1c solicitada em diabético ou suspeito",
@@ -564,7 +608,12 @@ export default function Step6Resumo() {
         nascimento: fmtDate(socio.nascimento),
         idade,
       },
-      subjetivo: { identificacao, historico, determinantes, estilo_vida: estiloVida },
+      subjetivo: {
+        identificacao,
+        historico,
+        determinantes,
+        estilo_vida: estiloVida,
+      },
       objetivo: {
         pressao_arterial: pressaoArterial,
         antropometria,
@@ -598,25 +647,28 @@ export default function Step6Resumo() {
   return (
     <div className="space-y-6">
       <Card
-        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        className="border border-slate-200/80 bg-white dark:bg-zinc-900/60 dark:border-zinc-800 rounded-xl p-3 sm:p-5 shadow-2xs"
         shadow="none"
       >
         <CardBody className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">6. Resumo SOAP</h2>
             <Button
-              className="bg-orange-600 hover:bg-orange-500 text-white"
-              radius="full"
+              className="font-medium"
+              color="primary"
+              radius="md"
+              startContent={<DocumentTextIcon className="size-4" />}
               type="button"
               onPress={handleOpenModal}
             >
-              📋 Gerar Relatório SOAP
+              Gerar Relatório SOAP
             </Button>
           </div>
 
           <p className="text-sm text-foreground/60">
             Visualize o resumo da avaliação no formato SOAP antes de finalizar.
-            Use os botões &quot;Copiar bloco&quot; para colar diretamente no PEC/e-SUS.
+            Use os botões &quot;Copiar bloco&quot; para colar diretamente no
+            PEC/e-SUS.
           </p>
 
           {/* Paciente info */}
@@ -766,10 +818,10 @@ export default function Step6Resumo() {
             </p>
             <p className="text-xs text-amber-700 dark:text-amber-300">
               O SOAP gerado pelo RASTREIA+ é um rascunho estruturado, não um
-              texto definitivo. O profissional de saúde é responsável por revisar
-              e validar o conteúdo antes de colar no PEC. Informações clínicas
-              devem ser conferidas com os dados reais do paciente no momento do
-              atendimento.
+              texto definitivo. O profissional de saúde é responsável por
+              revisar e validar o conteúdo antes de colar no PEC. Informações
+              clínicas devem ser conferidas com os dados reais do paciente no
+              momento do atendimento.
             </p>
           </div>
         </CardBody>

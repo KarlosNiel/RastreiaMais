@@ -55,16 +55,8 @@ export async function getGestorKpis(): Promise<KpiDTO[]> {
 }
 
 export const KPI_ICONS: Record<KpiKey, React.ReactNode> = {
-  totalPatients: (
-    <UsersIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  atRisk: (
-    <ExclamationTriangleIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  appointments: (
-    <CalendarDaysIcon className="size-5 text-current stroke-orange-600" />
-  ),
-  criticalAlerts: (
-    <BellAlertIcon className="size-5 text-current stroke-orange-600" />
-  ),
+  totalPatients: <UsersIcon className="size-5" />,
+  atRisk: <ExclamationTriangleIcon className="size-5" />,
+  appointments: <CalendarDaysIcon className="size-5" />,
+  criticalAlerts: <BellAlertIcon className="size-5" />,
 };

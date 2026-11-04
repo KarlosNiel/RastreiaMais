@@ -1,9 +1,13 @@
-// frontend/app/pacientes/(list)/PacientesTable.tsx
+// frontend/components/pacientes/PacientesTable.tsx
 "use client";
 
 import type { Key, SortDescriptor } from "@react-types/shared";
 
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  PencilSquareIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import {
   Button,
   Input,
@@ -14,6 +18,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  Tooltip,
 } from "@heroui/react";
 import Link from "next/link";
 import * as React from "react";
@@ -22,10 +27,6 @@ import CreateAppointmentsModal from "@/components/appointments/CreateAppointment
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
-type ChipTone = "safe" | "attention" | "critical" | "neutral";
-
-const mapRiskToChip = (t: RiskTone): ChipTone =>
-  t === "moderate" ? "attention" : t;
 
 export type PatientRow = {
   id: string;
@@ -52,24 +53,12 @@ type Column = {
   align?: "start" | "center" | "end";
 };
 
-const RISK_OPTIONS = [
-  { name: "Baixo risco", uid: "safe" },
-  { name: "Risco moderado", uid: "moderate" },
-  { name: "Alto risco", uid: "critical" },
-] as const;
-
 const COLUMNS: Column[] = [
   { name: "Nome", uid: "user", sortable: true, align: "start" },
   { name: "CPF", uid: "cpf", sortable: true, align: "start" },
   { name: "Endereço", uid: "address", sortable: true, align: "start" },
   { name: "Ações", uid: "actions", align: "end" },
 ];
-
-const riskWeight: Record<RiskTone, number> = {
-  safe: 0,
-  moderate: 1,
-  critical: 2,
-};
 
 /* ===== Props ===== */
 export type PacienteTableProps = {
@@ -94,7 +83,6 @@ export function PacientesTable({
     string | null
   >(null);
   const [filterValue, setFilterValue] = React.useState("");
-  const [riskFilter, setRiskFilter] = React.useState<Set<Key>>(new Set());
   const [page, setPage] = React.useState(initialPage);
   const [pageSize, setPageSize] = React.useState(initialRowsPerPage);
   const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
@@ -168,6 +156,15 @@ export function PacientesTable({
     return arr.slice(start, start + pageSize);
   }, [filteredItems, sortDescriptor, page, pageSize]);
 
+  const formatCpf = (cpf?: string) => {
+    if (!cpf) return "—";
+    const digits = cpf.replace(/\D/g, "");
+
+    if (digits.length !== 11) return cpf;
+
+    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
+
   /* ===== Render ===== */
   const renderCell = React.useCallback(
     (row: PatientRow, colKey: Key) => {
@@ -175,11 +172,21 @@ export function PacientesTable({
 
       switch (k) {
         case "user":
-          return `${row.user.first_name} ${row.user.last_name}`;
+          return (
+            <span className="font-semibold text-slate-900 dark:text-zinc-100">
+              {row.user.first_name} {row.user.last_name}
+            </span>
+          );
+        case "cpf":
+          return (
+            <span className="tabular-nums text-slate-600 dark:text-zinc-400 font-mono text-xs">
+              {formatCpf(row.cpf)}
+            </span>
+          );
         case "address": {
           const a = row.address;
 
-          if (!a) return "—";
+          if (!a) return <span className="text-slate-400">—</span>;
 
           const street = a.street ?? "";
           const number = a.number ?? "";
@@ -187,35 +194,45 @@ export function PacientesTable({
           const city = a.city ?? "";
           const uf = a.uf ?? "";
 
-          if (!street && !number && !district && !city && !uf) return "—";
+          if (!street && !number && !district && !city && !uf)
+            return <span className="text-slate-400">—</span>;
 
-          return `${street || ""}${street && number ? ", " : ""}${number || ""}${
-            (street || number) && (district || city || uf) ? " - " : ""
-          }${district || ""}${district && city ? ", " : ""}${city || ""}${
-            city && uf ? "/" : ""
-          }${uf || ""}`;
+          return (
+            <span className="text-slate-600 dark:text-zinc-400 text-sm">
+              {`${street || ""}${street && number ? ", " : ""}${number || ""}${
+                (street || number) && (district || city || uf) ? " - " : ""
+              }${district || ""}${district && city ? ", " : ""}${city || ""}${
+                city && uf ? "/" : ""
+              }${uf || ""}`}
+            </span>
+          );
         }
 
         case "actions":
           return (
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                isIconOnly
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-                onPress={() => {
-                  setSelectedPatientId(row.id);
-                  setIsAppointmentModalOpen(true);
-                }}
-              >
-                <span className="text-green-600 font-bold text-lg">+</span>
-              </Button>
-              <Button
-                isIconOnly
-                className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-                onPress={() => onAction?.("edit", row)}
-              >
-                <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </Button>
+            <div className="flex items-center justify-end gap-1">
+              <Tooltip content="Novo Agendamento" delay={300}>
+                <button
+                  aria-label={`Novo agendamento para ${row.user.first_name}`}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors focus:outline-none"
+                  onClick={() => {
+                    setSelectedPatientId(row.id);
+                    setIsAppointmentModalOpen(true);
+                  }}
+                >
+                  <CalendarDaysIcon className="size-4.5" />
+                </button>
+              </Tooltip>
+
+              <Tooltip content="Editar Paciente" delay={300}>
+                <button
+                  aria-label={`Editar ${row.user.first_name}`}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
+                  onClick={() => onAction?.("edit", row)}
+                >
+                  <PencilSquareIcon className="size-4.5" />
+                </button>
+              </Tooltip>
             </div>
           );
         default:
@@ -226,19 +243,35 @@ export function PacientesTable({
   );
 
   const topContent = enableToolbar ? (
-    <div className="flex flex-col gap-4 px-4 sm:px-1">
+    <div className="flex flex-col gap-3 px-1 mb-2">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Input
           isClearable
-          className="w-full sm:max-w-xl sm:flex-1"
+          className="w-full sm:max-w-md"
           classNames={{
             inputWrapper:
-              "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-50 dark:hover:bg-gray-800",
+              "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
             input:
-              "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+              "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
           }}
-          placeholder="Buscar paciente, CPF ou endereço..."
-          radius="full"
+          placeholder="Buscar por paciente, CPF ou endereço..."
+          radius="md"
+          startContent={
+            <svg
+              aria-hidden
+              className="size-4 text-slate-400 dark:text-zinc-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          }
           value={filterValue}
           variant="flat"
           onClear={() => setFilterValue("")}
@@ -247,20 +280,24 @@ export function PacientesTable({
 
         <Button
           as={Link}
-          className="text-white dark:text-orange-600 dark:bg-transparent border dark:border-orange-600 dark:hover:bg-gray-900"
+          className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
           color="primary"
           href="/pacientes/novo"
-          radius="lg"
+          radius="md"
           size="md"
+          startContent={<PlusIcon className="size-4" strokeWidth={2.5} />}
           variant="solid"
         >
-          Novo paciente
+          Novo Paciente
         </Button>
       </div>
 
-      <span className="text-small text-default-500">
-        Total {filteredItems.length} pacientes
-      </span>
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-xs text-slate-500 dark:text-zinc-400">
+          Total: {filteredItems.length}{" "}
+          {filteredItems.length === 1 ? "paciente" : "pacientes"}
+        </span>
+      </div>
     </div>
   ) : null;
 
@@ -272,17 +309,19 @@ export function PacientesTable({
         onOpenChange={setIsAppointmentModalOpen}
       />
 
-      <div className="rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 shadow-md border border-gray-200 dark:border-gray-800 transition-all">
+      <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">
         <Table
           isHeaderSticky
           aria-label="Lista de pacientes"
           bottomContentPlacement="outside"
           classNames={{
-            th: "px-6 py-3 text-foreground/70 font-semibold",
-            td: "px-6 py-3",
-            wrapper: "bg-transparent border-none shadow-none",
-            table: "dark:bg-gray-900",
+            th: "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700/60 first:rounded-l-lg last:rounded-r-lg",
+            td: "px-4 py-3.5 text-sm text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/40",
+            base: "min-h-[300px]",
+            table: "dark:bg-zinc-900",
+            wrapper: "bg-transparent border-none shadow-none px-0",
           }}
+          selectionMode="none"
           shadow="none"
           sortDescriptor={sortDescriptor}
           topContent={topContent}
@@ -295,7 +334,7 @@ export function PacientesTable({
                 key={column.uid}
                 align={column.align}
                 allowsSorting={!!column.sortable}
-                className="text-sm dark:bg-gray-800"
+                className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50"
               >
                 {column.name}
               </TableColumn>
@@ -309,7 +348,7 @@ export function PacientesTable({
             {(item: PatientRow) => (
               <TableRow
                 key={item.id}
-                className="even:bg-gray-50 dark:even:bg-gray-800/60 dark:odd:bg-gray-900/60 transition"
+                className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
               >
                 {(columnKey: Key) => (
                   <TableCell>{renderCell(item, columnKey)}</TableCell>
@@ -319,14 +358,14 @@ export function PacientesTable({
           </TableBody>
         </Table>
 
-        <div className="py-3 flex justify-center">
+        <div className="py-3 flex justify-center border-t border-slate-100 dark:border-zinc-800/80 mt-2">
           <Pagination
             isCompact
             showControls
             classNames={{
-              next: "dark:bg-gray-800",
-              prev: "dark:bg-gray-800",
-              item: "dark:bg-gray-800",
+              next: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+              prev: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+              item: "dark:bg-zinc-800 shadow-2xs",
             }}
             color="primary"
             page={page}

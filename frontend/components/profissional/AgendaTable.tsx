@@ -19,6 +19,7 @@ import {
   TableRow,
   Tooltip,
 } from "@heroui/react";
+import { CheckIcon, EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import * as React from "react";
 
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -269,16 +270,34 @@ export function AgendaTable({
       switch (k) {
         case "paciente":
           return (
-            <>
-              <span className="font-medium">{row.paciente}</span>{" "}
-              <span className="text-foreground/60">{row.docMasked}</span> ·{" "}
-              {row.condicao}
-            </>
+            <div>
+              <span className="font-semibold text-slate-900 dark:text-zinc-100">
+                {row.paciente}
+              </span>
+              {row.docMasked && (
+                <span className="text-xs text-slate-400 dark:text-zinc-500 ml-1.5">
+                  ({row.docMasked})
+                </span>
+              )}
+              {row.condicao && row.condicao !== "—" && (
+                <span className="text-xs text-slate-500 dark:text-zinc-400 block mt-0.5">
+                  {row.condicao}
+                </span>
+              )}
+            </div>
           );
         case "hora":
-          return <span className="tabular-nums">{row.hora}</span>;
+          return (
+            <span className="tabular-nums text-sm font-medium text-slate-700 dark:text-zinc-300">
+              {row.hora}
+            </span>
+          );
         case "local":
-          return row.local;
+          return (
+            <span className="text-sm text-slate-600 dark:text-zinc-400">
+              {row.local}
+            </span>
+          );
         case "risco":
           return (
             <div className="flex justify-center">
@@ -314,71 +333,44 @@ export function AgendaTable({
           );
         case "actions":
           return (
-            <div className="flex items-center justify-end gap-2">
-              <Tooltip content="Finalizar agendamento">
+            <div className="flex items-center justify-end gap-1">
+              <Tooltip content="Finalizar agendamento" delay={300}>
                 <button
-                  aria-label={`Concluir ${row.paciente}`}
-                  className={`rounded-lg border border-divider p-2 focus:outline-none focus:ring-2 focus:ring-focus ${
+                  aria-label={`Finalizar agendamento de ${row.paciente}`}
+                  className={`p-1.5 rounded-md transition-colors focus:outline-none ${
                     isDisabled
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-content2 hover:border-emerald-500"
+                      ? "opacity-25 cursor-not-allowed text-slate-400"
+                      : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                   }`}
                   disabled={isDisabled}
                   onClick={() => !isDisabled && onAction?.("done", row)}
                 >
-                  <svg
-                    aria-hidden
-                    className="size-5 text-emerald-600"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <CheckIcon className="size-4.5" strokeWidth={2} />
                 </button>
               </Tooltip>
 
-              <Tooltip content="Cancelar agendamento">
+              <Tooltip content="Cancelar agendamento" delay={300}>
                 <button
-                  aria-label={`Excluir ${row.paciente}`}
-                  className={`rounded-lg border border-divider p-2 focus:outline-none focus:ring-2 focus:ring-focus ${
+                  aria-label={`Cancelar agendamento de ${row.paciente}`}
+                  className={`p-1.5 rounded-md transition-colors focus:outline-none ${
                     isDisabled
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-content2 hover:border-rose-500"
+                      ? "opacity-25 cursor-not-allowed text-slate-400"
+                      : "text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                   }`}
                   disabled={isDisabled}
                   onClick={() => !isDisabled && onAction?.("delete", row)}
                 >
-                  <svg
-                    aria-hidden
-                    className="size-5 text-rose-600"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7Zm3-3h6l1 1h4v2H4V5h4l1-1Z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <XMarkIcon className="size-4.5" strokeWidth={2} />
                 </button>
               </Tooltip>
 
-              <Tooltip content="Ver detalhes">
+              <Tooltip content="Ver detalhes" delay={300}>
                 <button
-                  aria-label={`Abrir ${row.paciente}`}
-                  className="rounded-lg border border-divider p-2 hover:bg-content2 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-focus"
+                  aria-label={`Ver detalhes de ${row.paciente}`}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
                   onClick={() => onAction?.("open", row)}
                 >
-                  <svg
-                    aria-hidden
-                    className="size-5 text-blue-600"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M14 3v2H5v14h14v-9h2v11H3V3h11Zm7 0h-6v2h2.59l-9.83 9.83 1.41 1.41L19 6.41V9h2V3Z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <EyeIcon className="size-4.5" strokeWidth={2} />
                 </button>
               </Tooltip>
             </div>
@@ -395,28 +387,32 @@ export function AgendaTable({
     const totalFiltered = filteredItems.length;
 
     return (
-      <div className="flex flex-col gap-4 px-4 sm:px-1">
-        <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <Input
             isClearable
-            className="w-full sm:max-w-[44%]"
+            className="w-full sm:max-w-md"
             classNames={{
               inputWrapper:
-                "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-50 dark:hover:bg-gray-800",
+                "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
               input:
-                "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+                "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
             }}
             placeholder="Buscar por paciente, condição ou local…"
-            radius="full"
+            radius="md"
             startContent={
               <svg
                 aria-hidden
-                className="size-4 text-foreground/50"
+                className="size-4 text-slate-400 dark:text-zinc-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
                 viewBox="0 0 24 24"
               >
                 <path
-                  d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                  fill="currentColor"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             }
@@ -432,11 +428,20 @@ export function AgendaTable({
             }}
           />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button radius="full" variant="flat">
+              <DropdownTrigger>
+                <Button
+                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  radius="md"
+                  variant="bordered"
+                >
                   Risco
+                  {riskFilter !== "all" && riskFilter.size > 0 && (
+                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                      {riskFilter.size}
+                    </span>
+                  )}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -460,9 +465,18 @@ export function AgendaTable({
             </Dropdown>
 
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
-                <Button radius="full" variant="flat">
+              <DropdownTrigger>
+                <Button
+                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  radius="md"
+                  variant="bordered"
+                >
                   Status
+                  {statusFilter !== "all" && statusFilter.size > 0 && (
+                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                      {statusFilter.size}
+                    </span>
+                  )}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -487,11 +501,11 @@ export function AgendaTable({
               </DropdownMenu>
             </Dropdown>
 
-            <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
+            <label className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 ml-1">
               Por página:
               <select
                 aria-label="Linhas por página"
-                className="bg-transparent outline-0 text-small border rounded"
+                className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-2 py-1.5 text-xs text-slate-700 dark:text-zinc-200 outline-none focus:border-primary shadow-2xs"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
@@ -506,9 +520,10 @@ export function AgendaTable({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-small text-default-500">
-            Total {totalFiltered} registros
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-slate-500 dark:text-zinc-400">
+            Total de {totalFiltered}{" "}
+            {totalFiltered === 1 ? "registro" : "registros"}
           </span>
         </div>
       </div>
@@ -524,14 +539,14 @@ export function AgendaTable({
 
   const bottomContent = React.useMemo(() => {
     return (
-      <div className="py-2 flex justify-center">
+      <div className="py-3 flex justify-center border-t border-slate-100 dark:border-zinc-800/80">
         <Pagination
           isCompact
           showControls
           classNames={{
-            next: "dark:bg-gray-800",
-            prev: "dark:bg-gray-800",
-            item: "dark:bg-gray-800",
+            next: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            prev: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            item: "dark:bg-zinc-800 shadow-2xs",
           }}
           color="primary"
           page={page}
@@ -550,11 +565,11 @@ export function AgendaTable({
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
       classNames={{
-        th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-3",
-        base: "min-h-[320px]",
-        table: "dark:bg-gray-900",
-        wrapper: "bg-transparent border-none shadow-none px-2",
+        th: "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700/60 first:rounded-l-lg last:rounded-r-lg",
+        td: "px-4 py-3.5 text-sm text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/40",
+        base: "min-h-[300px]",
+        table: "dark:bg-zinc-900",
+        wrapper: "bg-transparent border-none shadow-none px-0",
       }}
       removeWrapper={false}
       selectionMode="none"
@@ -571,7 +586,7 @@ export function AgendaTable({
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
-            className="text-sm dark:bg-gray-800 w-[20%]"
+            className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50"
           >
             {column.name}
           </TableColumn>
@@ -585,7 +600,7 @@ export function AgendaTable({
         {(item: AgendaRow) => (
           <TableRow
             key={item.id}
-            className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900"
+            className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
           >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>

@@ -18,7 +18,7 @@ export function FormActions({
 }) {
   return (
     <div className="mt-3 flex items-center justify-end gap-3 md:col-span-2">
-      <RMButton as={Link} href={cancelHref} look="outline" tone="danger">
+      <RMButton as={Link} href={cancelHref} look="outline" tone="neutral">
         {cancelLabel}
       </RMButton>
       <RMButton isDisabled={submitting} look="solid" tone="brand" type="submit">

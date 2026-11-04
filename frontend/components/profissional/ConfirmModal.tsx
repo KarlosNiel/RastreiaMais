@@ -33,26 +33,35 @@ export default function ConfirmModal({
   return (
     <Modal
       backdrop="blur"
+      classNames={{
+        base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+      }}
       isOpen={open}
       placement="center"
       size="sm"
       onOpenChange={(o) => !o && onCancel()}
     >
       <ModalContent>
-        <ModalHeader className="text-lg font-semibold">{title}</ModalHeader>
+        <ModalHeader className="text-base font-semibold">{title}</ModalHeader>
 
         <ModalBody>
-          <p className="text-gray-700 dark:text-gray-300">{message}</p>
+          <p className="text-sm text-slate-600 dark:text-zinc-400">{message}</p>
         </ModalBody>
 
         <ModalFooter>
-          <Button radius="lg" variant="light" onPress={onCancel}>
+          <Button
+            className="font-medium text-slate-700 dark:text-zinc-300"
+            radius="md"
+            variant="light"
+            onPress={onCancel}
+          >
             {cancelText}
           </Button>
 
           <Button
+            className="font-medium"
             color={tone === "danger" ? "danger" : "primary"}
-            radius="lg"
+            radius="md"
             onPress={onConfirm}
           >
             {confirmText}

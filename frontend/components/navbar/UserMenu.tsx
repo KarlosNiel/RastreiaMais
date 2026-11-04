@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownItem,
   Button,
-  Avatar,
 } from "@heroui/react";
 import {
   UserIcon,
@@ -47,11 +46,14 @@ export function UserMenu({ user }: UserMenuProps) {
         <Button
           isIconOnly
           aria-label="Menu do usuário"
-          className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
+          className="rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 transition-colors"
           size="sm"
           variant="light"
         >
-          <UserIcon className="size-5 text-gray-700 dark:text-white" strokeWidth={2} />
+          <UserIcon
+            className="size-5 text-gray-700 dark:text-white"
+            strokeWidth={2}
+          />
         </Button>
       </DropdownTrigger>
 

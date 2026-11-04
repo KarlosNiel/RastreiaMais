@@ -19,23 +19,25 @@ function SuccessModal({
 }) {
   return (
     <Modal
-      classNames={{ base: "rounded-2xl shadow-xl dark:bg-gray-900" }}
+      classNames={{
+        base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+      }}
       isOpen={open}
       size="sm"
       onOpenChange={onClose}
     >
       <ModalContent>
-        <ModalHeader className="text-green-600 font-semibold">
+        <ModalHeader className="text-emerald-600 font-semibold text-base">
           Agendamento criado
         </ModalHeader>
-        <ModalBody>
-          <p className="text-default-700 dark:text-gray-300">
+        <ModalBody className="pb-6">
+          <p className="text-sm text-slate-600 dark:text-zinc-400">
             O agendamento foi registrado com sucesso.
           </p>
           <Button
-            className="mt-4"
+            className="mt-4 font-medium"
             color="success"
-            radius="full"
+            radius="md"
             onPress={onClose}
           >
             Fechar
@@ -159,7 +161,7 @@ export default function CreateAppointmentsModal({
     <>
       <Modal
         classNames={{
-          base: "rounded-2xl shadow-2xl dark:bg-gray-900",
+          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
         }}
         isOpen={open}
         scrollBehavior="inside"
@@ -312,7 +314,7 @@ export default function CreateAppointmentsModal({
                   }}
                   label="Descrição"
                   minRows={3}
-                  radius="lg"
+                  radius="md"
                   value={form.description}
                   variant="flat"
                   onChange={(e) =>
@@ -322,8 +324,8 @@ export default function CreateAppointmentsModal({
 
                 <div className="flex justify-end gap-3 pt-4">
                   <Button
-                    className=" dark:text-gray-200"
-                    radius="full"
+                    className="font-medium text-slate-700 dark:text-zinc-300"
+                    radius="md"
                     variant="flat"
                     onPress={() => onOpenChange(false)}
                   >
@@ -331,9 +333,10 @@ export default function CreateAppointmentsModal({
                   </Button>
 
                   <Button
+                    className="font-medium"
                     color="primary"
                     isLoading={create.isPending}
-                    radius="full"
+                    radius="md"
                     onPress={onSubmit}
                   >
                     Criar Agendamento

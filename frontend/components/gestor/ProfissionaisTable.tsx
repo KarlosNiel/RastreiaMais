@@ -39,14 +39,12 @@ const STATUS_OPTIONS: { name: Status; uid: Status }[] = [
   { name: "Afastado", uid: "Afastado" },
 ];
 
-// mapeia status → tom visual dos chips (mesmo usado no dashboard)
 const statusToneMap: Record<Status, "active" | "license" | "away"> = {
   Ativo: "active",
   Licença: "license",
   Afastado: "away",
 };
 
-// ordem semântica para sort de status
 const statusWeight: Record<Status, number> = {
   Ativo: 0,
   Licença: 1,
@@ -65,10 +63,9 @@ const columns: Column[] = [
   { name: "Cargo", uid: "cargo", sortable: true, align: "start" },
   { name: "Local", uid: "local", sortable: true, align: "start" },
   { name: "Status", uid: "status", sortable: true, align: "start" },
-  { name: "Ações", uid: "actions", align: "start" },
+  { name: "Ações", uid: "actions", align: "end" },
 ];
 
-/** Ícone de ordenação local */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
   <svg aria-hidden height="1em" viewBox="0 0 24 24" width="1em" {...props}>
     <path
@@ -153,7 +150,7 @@ export function ProfissionaisTable({
     return arr.sort((a, b) => {
       const key = String(column) as keyof ProfRow | "status" | "actions";
 
-      if (key === "actions") return 0; // não ordenável
+      if (key === "actions") return 0;
 
       const firstRaw =
         key === "status" ? statusWeight[a.status] : (a as any)[key];
@@ -171,59 +168,84 @@ export function ProfissionaisTable({
     });
   }, [pageItems, sortDescriptor]);
 
-  const renderCell = React.useCallback((row: ProfRow, colKey: Key) => {
-    const key = String(colKey) as keyof ProfRow | "actions";
+  const renderCell = React.useCallback(
+    (row: ProfRow, colKey: Key) => {
+      const key = String(colKey) as keyof ProfRow | "actions";
 
-    switch (key) {
-      case "status":
-        return (
-          <div className="flex justify-start">
-            <StatusChip tone={statusToneMap[row.status]}>
-              {row.status}
-            </StatusChip>
-          </div>
-        );
-      case "actions":
-        return (
-          <div className="flex items-center justify-start gap-2">
-            <Button
-              isIconOnly
-              className="rounded-lg border border-divider p-2 hover:bg-content2 transition bg-transparent"
-              onPress={() => onAction?.("edit", row)}
-            >
-              <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </Button>
-          </div>
-        );
-      default:
-        return (row as any)[key];
-    }
-  }, []);
+      switch (key) {
+        case "profissional":
+          return (
+            <span className="font-semibold text-slate-900 dark:text-zinc-100">
+              {row.profissional}
+            </span>
+          );
+        case "cargo":
+          return (
+            <span className="text-sm text-slate-600 dark:text-zinc-400">
+              {row.cargo}
+            </span>
+          );
+        case "local":
+          return (
+            <span className="text-sm text-slate-600 dark:text-zinc-400">
+              {row.local}
+            </span>
+          );
+        case "status":
+          return (
+            <div className="flex justify-start">
+              <StatusChip tone={statusToneMap[row.status]}>
+                {row.status}
+              </StatusChip>
+            </div>
+          );
+        case "actions":
+          return (
+            <div className="flex items-center justify-end">
+              <button
+                aria-label={`Editar ${row.profissional}`}
+                className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
+                onClick={() => onAction?.("edit", row)}
+              >
+                <PencilSquareIcon className="size-4.5" />
+              </button>
+            </div>
+          );
+        default:
+          return (row as any)[key];
+      }
+    },
+    [onAction],
+  );
 
   const topContent = React.useMemo(() => {
     return (
-      <div className="flex flex-col gap-4 px-4 sm:px-1">
-        <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <Input
             isClearable
-            className="w-full sm:max-w-[44%]"
+            className="w-full sm:max-w-md"
             classNames={{
               inputWrapper:
-                "h-11 bg-transparent dark:bg-gray-900 border border-gray-300 border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
+                "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
               input:
-                "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+                "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
             }}
             placeholder="Buscar por profissional, cargo ou local…"
-            radius="full"
+            radius="md"
             startContent={
               <svg
                 aria-hidden
-                className="size-4 text-foreground/50"
+                className="size-4 text-slate-400 dark:text-zinc-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
                 viewBox="0 0 24 24"
               >
                 <path
-                  d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                  fill="currentColor"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             }
@@ -239,15 +261,20 @@ export function ProfissionaisTable({
             }}
           />
 
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2.5 items-center">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
+              <DropdownTrigger>
                 <Button
-                  className="flex justify-center items-center"
-                  radius="full"
-                  variant="flat"
+                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  radius="md"
+                  variant="bordered"
                 >
                   Status
+                  {statusFilter !== "all" && statusFilter.size > 0 && (
+                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                      {statusFilter.size}
+                    </span>
+                  )}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -265,15 +292,18 @@ export function ProfissionaisTable({
                 }
               >
                 {STATUS_OPTIONS.map((s) => (
-                  <DropdownItem key={s.uid}>{s.name}</DropdownItem>
+                  <DropdownItem key={s.uid} className="capitalize">
+                    {s.name}
+                  </DropdownItem>
                 ))}
               </DropdownMenu>
             </Dropdown>
 
-            <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
+            <label className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 ml-1">
               Por página:
               <select
-                className="bg-transparent outline-0 text-small border rounded"
+                aria-label="Linhas por página"
+                className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-2 py-1.5 text-xs text-slate-700 dark:text-zinc-200 outline-none focus:border-primary shadow-2xs"
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
@@ -288,9 +318,10 @@ export function ProfissionaisTable({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-small text-default-500">
-            Total: {filteredItems.length} profissionais
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-slate-500 dark:text-zinc-400">
+            Total: {filteredItems.length}{" "}
+            {filteredItems.length === 1 ? "profissional" : "profissionais"}
           </span>
         </div>
       </div>
@@ -299,17 +330,18 @@ export function ProfissionaisTable({
 
   const bottomContent = React.useMemo(() => {
     return (
-      <div className="py-2 flex justify-center">
+      <div className="py-3 flex justify-center border-t border-slate-100 dark:border-zinc-800/80">
         <Pagination
           isCompact
           showControls
           classNames={{
-            next: "dark:bg-gray-800",
-            prev: "dark:bg-gray-800",
-            item: "dark:bg-gray-800",
+            next: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            prev: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            item: "dark:bg-zinc-800 shadow-2xs",
           }}
           color="primary"
           page={page}
+          size="sm"
           total={pages}
           onChange={setPage}
         />
@@ -324,13 +356,14 @@ export function ProfissionaisTable({
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
       classNames={{
-        th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-3",
-        base: "min-h-[320px]",
-        table: "dark:bg-gray-900",
-        wrapper: "bg-transparent border-none shadow-none px-2",
+        th: "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700/60 first:rounded-l-lg last:rounded-r-lg",
+        td: "px-4 py-3.5 text-sm text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/40",
+        base: "min-h-[300px]",
+        table: "dark:bg-zinc-900",
+        wrapper: "bg-transparent border-none shadow-none px-0",
       }}
       selectionMode="none"
+      shadow="none"
       sortDescriptor={sortDescriptor}
       sortIcon={SortGlyph}
       topContent={topContent}
@@ -343,7 +376,7 @@ export function ProfissionaisTable({
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
-            className="text-sm dark:bg-gray-800 w-[20%]"
+            className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50"
           >
             {column.name}
           </TableColumn>
@@ -351,14 +384,13 @@ export function ProfissionaisTable({
       </TableHeader>
 
       <TableBody
-        className="overflow-x-auto"
-        emptyContent="Sem profissionais"
+        emptyContent="Nenhum profissional encontrado."
         items={sortedItems}
       >
         {(item: ProfRow) => (
           <TableRow
             key={item.id}
-            className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900"
+            className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
           >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>

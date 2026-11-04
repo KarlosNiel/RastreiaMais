@@ -17,38 +17,35 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white backdrop-blur dark:border-gray-800 dark:bg-gray-900 transition-colors">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95 transition-colors">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center ">
-            <Button
-              as={Link}
-              className="px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+          <div className="flex items-center">
+            <Link
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               href="/"
-              radius="full"
-              variant="light"
             >
               <span className="text-xl font-bold text-primary tracking-tight">
                 RastreiaCardio
               </span>
-            </Button>
+            </Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Botão toggle dark mode */}
             <Button
               isIconOnly
               aria-label="Alternar tema"
-              className="rounded-lg border-none border-gray-300 dark:border-gray-700 hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
+              className="size-9 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               size="sm"
               variant="light"
               onPress={toggleTheme}
             >
               {theme === "dark" ? (
-                <SunIcon className="size-5 text-white" strokeWidth={2} />
+                <SunIcon className="size-4.5 text-zinc-100" strokeWidth={2} />
               ) : (
-                <MoonIcon className="size-5 text-gray-700" strokeWidth={2} />
+                <MoonIcon className="size-4.5 text-slate-700" strokeWidth={2} />
               )}
             </Button>
 

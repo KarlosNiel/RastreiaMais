@@ -130,25 +130,41 @@ export default function AppointmentsModal({
           />
 
           {/* Botões */}
-          <div className="flex justify-between pt-2">
-            {!creating && (
-              <Button
-                color="danger"
-                isLoading={remove.isPending}
-                variant="flat"
-                onPress={onDelete}
-              >
-                Deletar
-              </Button>
-            )}
+          <div className="flex justify-between items-center pt-2">
+            <div>
+              {!creating && (
+                <Button
+                  className="font-medium"
+                  color="danger"
+                  isLoading={remove.isPending}
+                  radius="md"
+                  variant="flat"
+                  onPress={onDelete}
+                >
+                  Deletar
+                </Button>
+              )}
+            </div>
 
-            <Button
-              color="primary"
-              isLoading={create.isPending}
-              onPress={onSubmit}
-            >
-              {creating ? "Criar Agendamento" : "Salvar"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                className="font-medium text-slate-700 dark:text-zinc-300"
+                radius="md"
+                variant="flat"
+                onPress={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="font-medium"
+                color="primary"
+                isLoading={create.isPending}
+                radius="md"
+                onPress={onSubmit}
+              >
+                {creating ? "Criar Agendamento" : "Salvar"}
+              </Button>
+            </div>
           </div>
         </ModalBody>
       </ModalContent>

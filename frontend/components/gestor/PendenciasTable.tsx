@@ -54,14 +54,12 @@ const columns: readonly Column[] = [
   { name: "Status", uid: "risco", sortable: true, align: "start" },
 ] as const;
 
-// ordem semântica para risco (↑ ascendente: Baixo risco < Risco moderado < Alto risco)
 const riskWeight: Record<RiskTone, number> = {
   safe: 0,
   moderate: 1,
   critical: 2,
 };
 
-/** Ícone de sort local (evita depender de @heroui/shared-icons) */
 const SortGlyph = (props: React.SVGProps<SVGSVGElement>) => (
   <svg aria-hidden height="1em" viewBox="0 0 24 24" width="1em" {...props}>
     <path
@@ -100,8 +98,8 @@ export function PendenciasTable({
 
   const hasSearch = Boolean(filterValue?.trim());
 
-  const headerColumns = React.useMemo<Column[]>(() => {
-    return columns.filter((c) => visibleColumns.has(String(c.uid)));
+  const headerColumns = React.useMemo(() => {
+    return columns.filter((col) => visibleColumns.has(String(col.uid)));
   }, [visibleColumns]);
 
   const filteredItems = React.useMemo(() => {
@@ -113,8 +111,8 @@ export function PendenciasTable({
       data = data.filter(
         (r) =>
           r.paciente.toLowerCase().includes(q) ||
-          r.microarea.toLowerCase().includes(q) ||
-          r.pendencias.toLowerCase().includes(q),
+          r.pendencias.toLowerCase().includes(q) ||
+          r.microarea.toLowerCase().includes(q),
       );
     }
 
@@ -148,31 +146,66 @@ export function PendenciasTable({
 
     return arr.sort((a, b) => {
       const key = String(column) as keyof PendenciasRow | "risco";
+      let cmp = 0;
 
-      const firstRaw = key === "risco" ? riskWeight[a.risco] : (a as any)[key];
-      const secondRaw = key === "risco" ? riskWeight[b.risco] : (b as any)[key];
+      if (key === "risco") {
+        const wA = riskWeight[a.risco];
+        const wB = riskWeight[b.risco];
 
-      const first =
-        typeof firstRaw === "string" ? firstRaw.toLowerCase() : firstRaw;
-      const second =
-        typeof secondRaw === "string" ? secondRaw.toLowerCase() : secondRaw;
+        cmp = wA < wB ? -1 : wA > wB ? 1 : 0;
+      } else if (key === "dias") {
+        cmp = a.dias < b.dias ? -1 : a.dias > b.dias ? 1 : 0;
+      } else {
+        const valA = (a[key] ?? "").toString().toLowerCase();
+        const valB = (b[key] ?? "").toString().toLowerCase();
 
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
+        cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
+      }
 
       return direction === "descending" ? -cmp : cmp;
     });
   }, [pageItems, sortDescriptor]);
 
   const renderCell = React.useCallback((row: PendenciasRow, colKey: Key) => {
-    const key = String(colKey) as keyof PendenciasRow | "risco";
+    const key = String(colKey) as keyof PendenciasRow;
 
     switch (key) {
+      case "paciente":
+        return (
+          <span className="font-semibold text-slate-900 dark:text-zinc-100">
+            {row.paciente}
+          </span>
+        );
+      case "pendencias":
+        return (
+          <span className="text-sm text-slate-600 dark:text-zinc-400">
+            {row.pendencias}
+          </span>
+        );
+      case "dias":
+        return (
+          <span className="tabular-nums font-medium text-slate-700 dark:text-zinc-300">
+            {row.dias} dias
+          </span>
+        );
+      case "microarea":
+        return (
+          <span className="text-sm text-slate-600 dark:text-zinc-400">
+            {row.microarea}
+          </span>
+        );
       case "risco":
         return (
           <div className="flex justify-start">
             <StatusChip
               size="sm"
-              tone={row.risco === "moderate" ? "attention" : row.risco}
+              tone={
+                row.risco === "critical"
+                  ? "critical"
+                  : row.risco === "moderate"
+                    ? "attention"
+                    : "safe"
+              }
             >
               {row.risco === "critical"
                 ? "Alto risco"
@@ -182,8 +215,6 @@ export function PendenciasTable({
             </StatusChip>
           </div>
         );
-      case "dias":
-        return <span className="tabular-nums">{row.dias}</span>;
       default:
         return (row as any)[key];
     }
@@ -191,28 +222,32 @@ export function PendenciasTable({
 
   const topContent = React.useMemo(() => {
     return (
-      <div className="flex flex-col gap-4 px-4 sm:px-1">
-        <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <Input
             isClearable
-            className="w-full sm:max-w-[44%]"
+            className="w-full sm:max-w-md"
             classNames={{
               inputWrapper:
-                "h-11 bg-transparent dark:bg-gray-900 border border-orange-600 hover:bg-gray-200 dark:hover:bg-gray-800",
+                "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
               input:
-                "text-[0.95rem] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500",
+                "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
             }}
             placeholder="Buscar por paciente, pendência ou microárea…"
-            radius="full"
+            radius="md"
             startContent={
               <svg
                 aria-hidden
-                className="size-4 text-foreground/50"
+                className="size-4 text-slate-400 dark:text-zinc-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
                 viewBox="0 0 24 24"
               >
                 <path
-                  d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.49 21.49 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                  fill="currentColor"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             }
@@ -228,15 +263,20 @@ export function PendenciasTable({
             }}
           />
 
-          <div className="flex items-center gap-3">
+          <div className="flex gap-2.5 items-center">
             <Dropdown>
-              <DropdownTrigger className="hidden sm:flex bg-transparent border border-orange-600 dark:hover:bg-gray-700">
+              <DropdownTrigger>
                 <Button
-                  className="flex justify-center items-center"
-                  radius="full"
-                  variant="flat"
+                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  radius="md"
+                  variant="bordered"
                 >
                   Risco
+                  {riskFilter !== "all" && riskFilter.size > 0 && (
+                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                      {riskFilter.size}
+                    </span>
+                  )}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
@@ -259,11 +299,11 @@ export function PendenciasTable({
               </DropdownMenu>
             </Dropdown>
 
-            <label className="hidden sm:flex items-center gap-2 text-small text-default-500">
+            <label className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 ml-1">
               Por página:
               <select
                 aria-label="Linhas por página"
-                className="bg-transparent outline-none text-small border rounded"
+                className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-2 py-1.5 text-xs text-slate-700 dark:text-zinc-200 outline-none focus:border-primary shadow-2xs"
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
@@ -278,9 +318,10 @@ export function PendenciasTable({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-small text-default-500">
-            Total {filteredItems.length} registros
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-slate-500 dark:text-zinc-400">
+            Total: {filteredItems.length}{" "}
+            {filteredItems.length === 1 ? "registro" : "registros"}
           </span>
         </div>
       </div>
@@ -289,17 +330,18 @@ export function PendenciasTable({
 
   const bottomContent = React.useMemo(() => {
     return (
-      <div className="py-2 flex justify-center">
+      <div className="py-3 flex justify-center border-t border-slate-100 dark:border-zinc-800/80">
         <Pagination
           isCompact
           showControls
           classNames={{
-            next: "dark:bg-gray-800",
-            prev: "dark:bg-gray-800",
-            item: "dark:bg-gray-800",
+            next: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            prev: "dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-2xs",
+            item: "dark:bg-zinc-800 shadow-2xs",
           }}
           color="primary"
           page={page}
+          size="sm"
           total={pages}
           onChange={setPage}
         />
@@ -314,13 +356,14 @@ export function PendenciasTable({
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
       classNames={{
-        th: "px-6 py-3 text-foreground/70 font-semibold",
-        td: "px-6 py-3",
-        base: "min-h-[320px]",
-        table: "dark:bg-gray-900",
-        wrapper: "bg-transparent border-none shadow-none px-2",
+        th: "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-700/60 first:rounded-l-lg last:rounded-r-lg",
+        td: "px-4 py-3.5 text-sm text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/40",
+        base: "min-h-[300px]",
+        table: "dark:bg-zinc-900",
+        wrapper: "bg-transparent border-none shadow-none px-0",
       }}
       selectionMode="none"
+      shadow="none"
       sortDescriptor={sortDescriptor}
       sortIcon={SortGlyph}
       topContent={topContent}
@@ -333,7 +376,7 @@ export function PendenciasTable({
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
-            className="text-sm dark:bg-gray-800 w-[20%]"
+            className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50"
           >
             {column.name}
           </TableColumn>
@@ -341,14 +384,13 @@ export function PendenciasTable({
       </TableHeader>
 
       <TableBody
-        className="overflow-x-auto"
-        emptyContent="Sem registros"
+        emptyContent="Nenhuma pendência encontrada."
         items={sortedItems}
       >
         {(item: PendenciasRow) => (
           <TableRow
             key={item.id}
-            className="even:bg-gray-100 dark:even:bg-gray-800 dark:odd:bg-gray-900"
+            className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
           >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>

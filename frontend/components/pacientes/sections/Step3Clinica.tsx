@@ -74,7 +74,7 @@ export default function Step3Clinica() {
   return (
     <div className="space-y-6">
       <Card
-        className="border-none bg-gray-50 dark:bg-gray-900 rounded-sm py-5 px-2"
+        className="border border-slate-200/80 bg-white dark:bg-zinc-900/60 dark:border-zinc-800 rounded-xl p-3 sm:p-5 shadow-2xs"
         shadow="none"
       >
         <CardBody className="space-y-8">
@@ -496,7 +496,7 @@ function BlocoHAS() {
                 Calculadora de Framingham
               </h4>
               {framinghamResult ? (
-                <span className="text-xs font-bold px-2 py-1 bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 rounded-full">
+                <span className="text-xs font-semibold px-2 py-0.5 bg-primary-100 dark:bg-primary-900/60 text-primary-700 dark:text-primary-300 rounded-md border border-primary-200 dark:border-primary-800">
                   {framinghamResult.score.toFixed(1)}% de risco
                 </span>
               ) : (

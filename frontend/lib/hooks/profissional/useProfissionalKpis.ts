@@ -90,7 +90,7 @@ export function useProfissionalKpis() {
       key: "criticalAlerts",
       label: "Alertas Críticos",
       value: criticalAlerts,
-      accent: "green",
+      accent: "red",
     },
   ];
 

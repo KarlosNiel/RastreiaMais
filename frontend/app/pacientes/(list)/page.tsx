@@ -49,24 +49,30 @@ export default function Page() {
   });
 
   return (
-    <main className="min-h-screen bg-content1 dark:bg-gray-950 p-6">
+    <main className="min-h-screen bg-background dark:bg-zinc-950 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto">
+        <header className="flex flex-col gap-1 pb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+            Pacientes
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-400">
+            Listagem geral e prontuários cadastrados na unidade de saúde
+          </p>
+        </header>
+
         {isLoading ? (
-          <div className="text-gray-500 dark:text-gray-400">
+          <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
             Carregando pacientes...
           </div>
         ) : isError ? (
-          <div className="text-red-600 dark:text-red-400">
+          <div className="p-8 text-center text-red-600 dark:text-red-400">
             Erro ao carregar pacientes.
           </div>
         ) : (
           <PacientesTable
             rows={patients}
             onAction={(action, row) => {
-              if (action === "edit") {
-                router.push(`/pacientes/${row.id}/editar`);
-              }
-              if (action === "open") {
+              if (action === "edit" || action === "open") {
                 router.push(`/pacientes/${row.id}/editar`);
               }
             }}

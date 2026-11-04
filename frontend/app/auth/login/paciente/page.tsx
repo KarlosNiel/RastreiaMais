@@ -77,11 +77,7 @@ export default function LoginPacientePage() {
           isRequired
           autoCapitalize="none"
           autoComplete="username"
-          className="pb-6"
-          classNames={{
-            input: "",
-            inputWrapper: "border border-orange-600 transition",
-          }}
+          className="pb-5"
           enterKeyHint="next"
           label="CPF ou e-mail"
           name="login"
@@ -95,15 +91,11 @@ export default function LoginPacientePage() {
         <TextField
           isRequired
           autoComplete="current-password"
-          className="pb-6"
-          classNames={{
-            input: "",
-            inputWrapper: "border border-orange-600 hover:shadow-sm transition",
-          }}
+          className="pb-5"
           enterKeyHint="done"
           label="Senha"
           name="password"
-          placeholder="******"
+          placeholder="••••••••"
           type="password"
           value={password}
           onValueChange={setPassword}
