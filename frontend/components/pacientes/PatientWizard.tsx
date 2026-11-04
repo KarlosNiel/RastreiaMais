@@ -284,8 +284,29 @@ export default function PatientWizard({
     smoothToContentTop();
   }, [computePrevIndex, smoothToContentTop]);
 
+  const handleSaveDraft = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const draftKey = getUserScopedDraftKey();
+      const values = getValues();
+
+      window.localStorage.setItem(draftKey, JSON.stringify(values));
+      notifySuccess("Rascunho salvo.");
+    } catch {
+      notifyWarn("Não foi possível salvar o rascunho.");
+    }
+  }, [getValues]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Atalho de salvar rascunho (Ctrl+S / Cmd+S)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSaveDraft();
+
+        return;
+      }
+
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       const isFormCtl =
         tag === "input" || tag === "textarea" || tag === "select";
@@ -299,20 +320,7 @@ export default function PatientWizard({
     window.addEventListener("keydown", onKey);
 
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev]);
-
-  const handleSaveDraft = useCallback(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const draftKey = getUserScopedDraftKey();
-      const values = getValues();
-
-      window.localStorage.setItem(draftKey, JSON.stringify(values));
-      notifySuccess("Rascunho salvo.");
-    } catch {
-      notifyWarn("Não foi possível salvar o rascunho.");
-    }
-  }, [getValues]);
+  }, [next, prev, handleSaveDraft]);
 
   const [cancelModal, setCancelModal] = useState(false);
 
@@ -475,42 +483,65 @@ export default function PatientWizard({
           {step === 5 && <Step6 />}
         </div>
 
-        <footer className="border-t border-slate-100 dark:border-zinc-800/80 bg-transparent pt-6 rounded-b-lg transition-colors">
+        <footer className="sticky bottom-0 z-30 -mx-4 -mb-6 sm:-mx-6 sm:-mb-6 lg:-mx-8 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3.5 border-t border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-b-xl shadow-lg transition-colors">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              className="min-w-[110px] font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
-              isDisabled={step === 0 || isSubmitting}
-              radius="md"
-              type="button"
-              variant="bordered"
-              onClick={prev}
-            >
-              Voltar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                className="min-w-[100px] font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                isDisabled={step === 0 || isSubmitting}
+                radius="md"
+                type="button"
+                variant="bordered"
+                onClick={prev}
+              >
+                Voltar
+              </Button>
 
-            {step < total - 1 ? (
               <Button
-                className="min-w-[140px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
-                color="primary"
+                className="hidden sm:inline-flex font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
                 isDisabled={isSubmitting}
                 radius="md"
+                size="sm"
                 type="button"
-                onClick={next}
+                variant="light"
+                onClick={handleSaveDraft}
               >
-                Próximo
+                Salvar Rascunho
+                <kbd className="hidden lg:inline-block ml-1.5 px-1.5 py-0.5 text-[10px] bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-slate-500 dark:text-zinc-400 font-mono">
+                  ⌘S
+                </kbd>
               </Button>
-            ) : (
-              <Button
-                className="min-w-[180px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
-                color="primary"
-                isDisabled={isSubmitting}
-                radius="md"
-                type="button"
-                onClick={handleSubmitClick}
-              >
-                {isSubmitting ? "Enviando…" : "Finalizar Registro"}
-              </Button>
-            )}
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <span className="hidden sm:inline text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                Etapa {step + 1} de {total}
+              </span>
+
+              {step < total - 1 ? (
+                <Button
+                  className="min-w-[140px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                  color="primary"
+                  isDisabled={isSubmitting}
+                  radius="md"
+                  type="button"
+                  onClick={next}
+                >
+                  Próximo
+                </Button>
+              ) : (
+                <Button
+                  className="min-w-[180px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                  color="primary"
+                  isDisabled={isSubmitting}
+                  radius="md"
+                  type="button"
+                  onClick={handleSubmitClick}
+                >
+                  {isSubmitting ? "Enviando…" : "Finalizar Registro"}
+                </Button>
+              )}
+            </div>
           </div>
         </footer>
       </section>

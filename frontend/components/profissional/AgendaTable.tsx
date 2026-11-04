@@ -19,7 +19,12 @@ import {
   TableRow,
   Tooltip,
 } from "@heroui/react";
-import { CheckIcon, EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  CheckIcon,
+  EyeIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import * as React from "react";
 
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -134,6 +139,9 @@ export function AgendaTable({
   onAction,
 }: AgendaTableProps) {
   const [filterValue, setFilterValue] = React.useState("");
+  const [quickFilter, setQuickFilter] = React.useState<
+    "all" | "today" | "critical" | "active" | "finalized"
+  >("all");
   const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
   const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
     "all",
@@ -170,10 +178,28 @@ export function AgendaTable({
 
   React.useEffect(() => {
     if (!enableToolbar) setPage(1);
-  }, [effectiveQuery, effectiveRiskSet, effectiveStatusSet, enableToolbar]);
+  }, [
+    effectiveQuery,
+    effectiveRiskSet,
+    effectiveStatusSet,
+    enableToolbar,
+    quickFilter,
+  ]);
 
   const filteredItems = React.useMemo(() => {
     let data = rows;
+
+    if (quickFilter === "critical") {
+      data = data.filter((r) => r.risco === "critical");
+    } else if (quickFilter === "active") {
+      data = data.filter((r) => r.status === "ativo");
+    } else if (quickFilter === "finalized") {
+      data = data.filter((r) => r.status === "finalizado");
+    } else if (quickFilter === "today") {
+      const todayStr = new Date().toLocaleDateString("pt-BR");
+
+      data = data.filter((r) => r.hora.includes(todayStr));
+    }
 
     const q = (effectiveQuery || "").toLowerCase().trim();
 
@@ -200,7 +226,7 @@ export function AgendaTable({
     }
 
     return data;
-  }, [rows, effectiveQuery, effectiveRiskSet, effectiveStatusSet]);
+  }, [rows, effectiveQuery, effectiveRiskSet, effectiveStatusSet, quickFilter]);
 
   const totalPages = React.useMemo(
     () =>
@@ -268,24 +294,42 @@ export function AgendaTable({
       const isDisabled = isFinalized || isCanceled;
 
       switch (k) {
-        case "paciente":
+        case "paciente": {
+          const initials =
+            row.paciente
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase() || "P";
+
           return (
-            <div>
-              <span className="font-semibold text-slate-900 dark:text-zinc-100">
-                {row.paciente}
-              </span>
-              {row.docMasked && (
-                <span className="text-xs text-slate-400 dark:text-zinc-500 ml-1.5">
-                  ({row.docMasked})
+            <div className="flex items-center gap-3">
+              <div className="size-8.5 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center text-xs font-semibold shadow-2xs">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-900 dark:text-zinc-100 text-sm truncate">
+                    {row.paciente}
+                  </span>
+                  {row.docMasked && (
+                    <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
+                      ({row.docMasked})
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-slate-500 dark:text-zinc-400 block truncate">
+                  {row.type && row.type !== "-" ? `${row.type} · ` : ""}
+                  {row.condicao && row.condicao !== "—"
+                    ? row.condicao
+                    : row.local}
                 </span>
-              )}
-              {row.condicao && row.condicao !== "—" && (
-                <span className="text-xs text-slate-500 dark:text-zinc-400 block mt-0.5">
-                  {row.condicao}
-                </span>
-              )}
+              </div>
             </div>
           );
+        }
         case "hora":
           return (
             <span className="tabular-nums text-sm font-medium text-slate-700 dark:text-zinc-300">
@@ -385,9 +429,68 @@ export function AgendaTable({
   const topContent = React.useMemo(() => {
     if (!enableToolbar) return null;
     const totalFiltered = filteredItems.length;
+    const todayStr = new Date().toLocaleDateString("pt-BR");
+
+    const quickTabs = [
+      { id: "all", label: "Todos", count: rows.length },
+      {
+        id: "today",
+        label: "Hoje",
+        count: rows.filter((r) => r.hora.includes(todayStr)).length,
+      },
+      {
+        id: "critical",
+        label: "Alto risco",
+        count: rows.filter((r) => r.risco === "critical").length,
+      },
+      {
+        id: "active",
+        label: "Ativos",
+        count: rows.filter((r) => r.status === "ativo").length,
+      },
+      {
+        id: "finalized",
+        label: "Finalizados",
+        count: rows.filter((r) => r.status === "finalizado").length,
+      },
+    ] as const;
 
     return (
-      <div className="flex flex-col gap-3 px-1">
+      <div className="flex flex-col gap-3.5 px-1">
+        {/* Quick Filter Segmented Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
+          {quickTabs.map((tab) => {
+            const isActive = quickFilter === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-primary text-white shadow-2xs font-semibold"
+                    : "bg-slate-100 hover:bg-slate-200/70 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-zinc-300"
+                }`}
+                type="button"
+                onClick={() => {
+                  setQuickFilter(tab.id);
+                  setPage(1);
+                }}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    isActive
+                      ? "bg-white/25 text-white"
+                      : "bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200/60 dark:border-zinc-700/60"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <Input
             isClearable
@@ -594,7 +697,38 @@ export function AgendaTable({
       </TableHeader>
 
       <TableBody
-        emptyContent="Nenhum agendamento encontrado."
+        emptyContent={
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="size-12 rounded-full bg-slate-100 dark:bg-zinc-800 grid place-items-center text-slate-400 dark:text-zinc-500 mb-3 shadow-2xs">
+              <CalendarDaysIcon className="size-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">
+              Nenhum agendamento encontrado
+            </p>
+            <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 max-w-xs">
+              {filterValue || quickFilter !== "all"
+                ? "Tente ajustar os filtros rápidos ou a busca para visualizar outros registros."
+                : "Não há agendamentos cadastrados nesta unidade no momento."}
+            </p>
+            {(filterValue || quickFilter !== "all") && (
+              <Button
+                className="mt-3 font-medium text-xs text-primary"
+                radius="md"
+                size="sm"
+                variant="flat"
+                onPress={() => {
+                  setFilterValue("");
+                  setQuickFilter("all");
+                  setRiskFilter("all");
+                  setStatusFilter("all");
+                  setPage(1);
+                }}
+              >
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+        }
         items={sortedItems}
       >
         {(item: AgendaRow) => (

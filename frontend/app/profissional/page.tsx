@@ -282,7 +282,15 @@ export default function ProfissionalPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <BellAlertIcon className="size-5 text-rose-500 dark:text-rose-400" />
+                <div className="relative">
+                  <BellAlertIcon className="size-5 text-rose-500 dark:text-rose-400" />
+                  {alerts?.some((a) => a.risk_level === "critical") && (
+                    <span className="absolute -top-0.5 -right-0.5 flex size-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex size-2 rounded-full bg-rose-500" />
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
                   Alerta dos Pacientes
                 </h2>
