@@ -2,15 +2,30 @@
 
 import { useEffect, useState } from "react";
 
-import { meFetch, logout, MeResponse } from "@/lib/auth";
+import { meFetch, logout, MeResponse, Role } from "@/lib/auth";
+
+function readRoleFromStorage(): Role[] {
+  if (typeof document === "undefined") return [];
+  const m = document.cookie.match(/(?:^|;\s*)role=([^;]+)/);
+  const cookieRole = m ? (decodeURIComponent(m[1]) as Role) : null;
+  const storageRole =
+    typeof window !== "undefined"
+      ? (localStorage.getItem("role") as Role)
+      : null;
+  const r = cookieRole || storageRole;
+
+  return r ? [r] : [];
+}
 
 // Singleton para evitar múltiplas instâncias
 let globalUserState: {
   user: MeResponse["user"] | null;
+  roles: Role[];
   loading: boolean;
   listeners: Set<() => void>;
 } = {
   user: null,
+  roles: [],
   loading: true,
   listeners: new Set(),
 };
@@ -28,6 +43,7 @@ async function loadUser() {
 
       if (!token) {
         globalUserState.user = null;
+        globalUserState.roles = [];
         globalUserState.loading = false;
         notifyListeners();
 
@@ -37,8 +53,10 @@ async function loadUser() {
       const me = await meFetch();
 
       globalUserState.user = me.user;
+      globalUserState.roles = me.roles || [];
     } catch {
       globalUserState.user = null;
+      globalUserState.roles = [];
     } finally {
       globalUserState.loading = false;
       notifyListeners();
@@ -95,6 +113,7 @@ export function useAuth() {
         if (now - tokenTime > EXPIRY_TIME) {
           // Token expirou, fazer logout
           globalUserState.user = null;
+          globalUserState.roles = [];
           globalUserState.loading = false;
 
           // Limpar tokens
@@ -130,12 +149,19 @@ export function useAuth() {
     };
   }, []);
 
+  const effectiveRoles =
+    globalUserState.roles.length > 0
+      ? globalUserState.roles
+      : readRoleFromStorage();
+
   return {
     user: globalUserState.user,
+    roles: effectiveRoles,
     loading: globalUserState.loading,
     logout: async () => {
       await logout();
       globalUserState.user = null;
+      globalUserState.roles = [];
       globalUserState.loading = false;
       notifyListeners();
     },

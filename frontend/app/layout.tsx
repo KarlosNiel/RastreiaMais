@@ -3,8 +3,7 @@ import type { Metadata, Viewport } from "next";
 
 import Providers from "./providers";
 
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
+import { AppShell } from "@/components/layout/AppShell";
 import { fontHeading, fontMono, fontSans } from "@/config/fonts";
 import { app as cfg } from "@/config/rastreiamais";
 import { cn } from "@/lib/utils";
@@ -40,14 +39,10 @@ export default function RootLayout({
     >
       <body
         suppressHydrationWarning
-        className="min-h-svh md:min-h-dvh font-sans antialiased overflow-y-scroll scrollbar-none bg-slate-50/70 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors"
+        className="min-h-svh md:min-h-dvh font-sans antialiased bg-slate-50/70 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors"
       >
         <Providers>
-          <div className="relative z-50">
-            <Header />
-          </div>
-          {children}
-          <Footer />
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>
