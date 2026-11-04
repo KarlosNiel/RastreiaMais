@@ -5,7 +5,6 @@ import {
   CalendarDaysIcon,
   ChartBarIcon,
   ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
   Cog6ToothIcon,
   EllipsisVerticalIcon,
   HeartIcon,
@@ -195,74 +194,88 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
         )}
       >
         {/* Topo / Logo */}
-        <div className="flex h-16 items-center justify-between px-3.5 border-b border-slate-100 dark:border-zinc-800/80">
-          <Link
-            className={cn(
-              "flex items-center gap-2.5 rounded-xl py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              isCollapsed ? "justify-center w-full" : "px-1.5",
-            )}
-            href={
-              effectiveRoles.includes("MANAGER") ? "/gestor" : "/profissional"
-            }
-            title="RastreiaCardio"
-          >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs">
-              <svg
-                className="size-5"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.2}
-                viewBox="0 0 24 24"
-              >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
-              </svg>
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate leading-tight">
-                  Rastreia<span className="text-primary">Cardio</span>
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                  APS Digital
-                </span>
-              </div>
-            )}
-          </Link>
-
-          {!isCollapsed && (
-            <button
-              aria-label="Recolher menu"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-zinc-500 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              type="button"
-              onClick={toggleCollapse}
-            >
-              <ChevronDoubleLeftIcon className="size-4" strokeWidth={2} />
-            </button>
+        <div
+          className={cn(
+            "flex h-16 items-center px-3.5 border-b border-slate-100 dark:border-zinc-800/80",
+            isCollapsed ? "justify-center" : "justify-between",
           )}
-        </div>
-
-        {/* Botão de Expandir quando colapsado */}
-        {isCollapsed && (
-          <div className="pt-2 px-3 flex justify-center">
+        >
+          {isCollapsed ? (
+            /* No modo colapsado, clicar no ícone expande a sidebar */
             <Tooltip
               content="Expandir menu lateral"
-              offset={8}
+              offset={12}
               placement="right"
             >
               <button
                 aria-label="Expandir menu lateral"
+                className="flex size-10 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 mx-auto group"
+                type="button"
+                onClick={toggleCollapse}
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs group-hover:scale-105 transition-transform">
+                  <svg
+                    className="size-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
+                  </svg>
+                </div>
+              </button>
+            </Tooltip>
+          ) : (
+            /* No modo aberto, exibe logo completo + botão para recolher */
+            <>
+              <Link
+                className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                href={
+                  effectiveRoles.includes("MANAGER")
+                    ? "/gestor"
+                    : "/profissional"
+                }
+                title="RastreiaCardio"
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs">
+                  <svg
+                    className="size-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
+                  </svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate leading-tight">
+                    Rastreia<span className="text-primary">Cardio</span>
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                    APS Digital
+                  </span>
+                </div>
+              </Link>
+
+              <button
+                aria-label="Recolher menu"
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-zinc-500 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                 type="button"
                 onClick={toggleCollapse}
               >
-                <ChevronDoubleRightIcon className="size-4" strokeWidth={2} />
+                <ChevronDoubleLeftIcon className="size-4" strokeWidth={2} />
               </button>
-            </Tooltip>
-          </div>
-        )}
+            </>
+          )}
+        </div>
 
         {/* Itens de Navegação */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-none">
@@ -287,31 +300,22 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                     <Link
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-150 mx-auto",
+                        "group flex size-10 items-center justify-center rounded-xl transition-all duration-150 mx-auto",
                         active
                           ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold"
                           : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
                       )}
                       href={item.href}
                     >
-                      <div className="relative inline-flex items-center justify-center">
-                        <item.icon
-                          className={cn(
-                            "size-5 shrink-0 transition-colors",
-                            active
-                              ? "text-primary dark:text-primary-400"
-                              : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
-                          )}
-                          strokeWidth={active ? 2.2 : 1.8}
-                        />
-                        {/* Indicador sutil à direita do ícone */}
-                        {active && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute -right-2 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary ring-2 ring-white dark:ring-zinc-900"
-                          />
+                      <item.icon
+                        className={cn(
+                          "size-5 shrink-0 transition-colors",
+                          active
+                            ? "text-primary dark:text-primary-400"
+                            : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
                         )}
-                      </div>
+                        strokeWidth={active ? 2.2 : 1.8}
+                      />
                     </Link>
                   </Tooltip>
                 );
@@ -322,31 +326,22 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                   key={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
+                    "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                     active
                       ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold shadow-2xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
                   )}
                   href={item.href}
                 >
-                  <div className="relative inline-flex items-center justify-center shrink-0">
-                    <item.icon
-                      className={cn(
-                        "size-5 shrink-0 transition-colors",
-                        active
-                          ? "text-primary dark:text-primary-400"
-                          : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
-                      )}
-                      strokeWidth={active ? 2.2 : 1.8}
-                    />
-                    {/* Indicador sutil à direita do ícone */}
-                    {active && (
-                      <span
-                        aria-hidden="true"
-                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
-                      />
+                  <item.icon
+                    className={cn(
+                      "size-5 shrink-0 transition-colors",
+                      active
+                        ? "text-primary dark:text-primary-400"
+                        : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
                     )}
-                  </div>
+                    strokeWidth={active ? 2.2 : 1.8}
+                  />
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
@@ -375,31 +370,22 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       <Link
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-150 mx-auto",
+                          "group flex size-10 items-center justify-center rounded-xl transition-all duration-150 mx-auto",
                           active
                             ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
                         )}
                         href={item.href}
                       >
-                        <div className="relative inline-flex items-center justify-center">
-                          <item.icon
-                            className={cn(
-                              "size-5 shrink-0 transition-colors",
-                              active
-                                ? "text-primary dark:text-primary-400"
-                                : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
-                            )}
-                            strokeWidth={active ? 2.2 : 1.8}
-                          />
-                          {/* Indicador sutil à direita do ícone */}
-                          {active && (
-                            <span
-                              aria-hidden="true"
-                              className="absolute -right-2 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary ring-2 ring-white dark:ring-zinc-900"
-                            />
+                        <item.icon
+                          className={cn(
+                            "size-5 shrink-0 transition-colors",
+                            active
+                              ? "text-primary dark:text-primary-400"
+                              : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
                           )}
-                        </div>
+                          strokeWidth={active ? 2.2 : 1.8}
+                        />
                       </Link>
                     </Tooltip>
                   );
@@ -410,31 +396,22 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                     key={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
+                      "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                       active
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold shadow-2xs"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
                     )}
                     href={item.href}
                   >
-                    <div className="relative inline-flex items-center justify-center shrink-0">
-                      <item.icon
-                        className={cn(
-                          "size-5 shrink-0 transition-colors",
-                          active
-                            ? "text-primary dark:text-primary-400"
-                            : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
-                        )}
-                        strokeWidth={active ? 2.2 : 1.8}
-                      />
-                      {/* Indicador sutil à direita do ícone */}
-                      {active && (
-                        <span
-                          aria-hidden="true"
-                          className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
-                        />
+                    <item.icon
+                      className={cn(
+                        "size-5 shrink-0 transition-colors",
+                        active
+                          ? "text-primary dark:text-primary-400"
+                          : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
                       )}
-                    </div>
+                      strokeWidth={active ? 2.2 : 1.8}
+                    />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
@@ -714,7 +691,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       key={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
+                        "group flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
                         active
                           ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold"
                           : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
@@ -722,23 +699,15 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
                     >
-                      <div className="relative inline-flex items-center justify-center shrink-0">
-                        <item.icon
-                          className={cn(
-                            "size-5 shrink-0",
-                            active
-                              ? "text-primary dark:text-primary-400"
-                              : "text-slate-400 dark:text-zinc-500",
-                          )}
-                          strokeWidth={active ? 2.2 : 1.8}
-                        />
-                        {active && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
-                          />
+                      <item.icon
+                        className={cn(
+                          "size-5 shrink-0",
+                          active
+                            ? "text-primary dark:text-primary-400"
+                            : "text-slate-400 dark:text-zinc-500",
                         )}
-                      </div>
+                        strokeWidth={active ? 2.2 : 1.8}
+                      />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -758,7 +727,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                         key={item.href}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
+                          "group flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
                           active
                             ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-semibold"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
@@ -766,23 +735,15 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                         href={item.href}
                         onClick={() => setIsMobileOpen(false)}
                       >
-                        <div className="relative inline-flex items-center justify-center shrink-0">
-                          <item.icon
-                            className={cn(
-                              "size-5 shrink-0",
-                              active
-                                ? "text-primary dark:text-primary-400"
-                                : "text-slate-400 dark:text-zinc-500",
-                            )}
-                            strokeWidth={active ? 2.2 : 1.8}
-                          />
-                          {active && (
-                            <span
-                              aria-hidden="true"
-                              className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
-                            />
+                        <item.icon
+                          className={cn(
+                            "size-5 shrink-0",
+                            active
+                              ? "text-primary dark:text-primary-400"
+                              : "text-slate-400 dark:text-zinc-500",
                           )}
-                        </div>
+                          strokeWidth={active ? 2.2 : 1.8}
+                        />
                         <span>{item.label}</span>
                       </Link>
                     );
