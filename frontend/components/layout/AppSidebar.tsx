@@ -6,20 +6,31 @@ import {
   ChartBarIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
+  Cog6ToothIcon,
+  EllipsisVerticalIcon,
   HeartIcon,
   IdentificationIcon,
   MoonIcon,
   SunIcon,
+  UserCircleIcon,
   UserGroupIcon,
   UserPlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Tooltip } from "@heroui/react";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Tooltip,
+} from "@heroui/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { SystemSettingsModal } from "@/components/user/SystemSettingsModal";
+import { UserProfileModal } from "@/components/user/UserProfileModal";
 import { Role } from "@/lib/auth";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -97,6 +108,8 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -118,7 +131,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
       try {
         localStorage.setItem("rastreia:sidebar-collapsed", String(next));
       } catch {
-        // ignora erro em ambiente restrito
+        // ignora
       }
 
       return next;
@@ -134,7 +147,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
       await logout();
       router.push("/auth/login");
     } catch {
-      // falha silenciosa em caso de erro de rede
+      // fallback
     }
   };
 
@@ -152,8 +165,6 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
     );
   };
 
-  // Filtra itens de acordo com papéis do usuário
-  // Se ainda estiver carregando ou sem papéis detectados, exibe itens profissionais por padrão
   const effectiveRoles: Role[] = roles.length > 0 ? roles : ["PROFESSIONAL"];
   const visibleItems = NAV_ITEMS.filter((item) =>
     item.roles.some((r) => effectiveRoles.includes(r)),
@@ -283,18 +294,24 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       )}
                       href={item.href}
                     >
-                      {active && (
-                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary" />
-                      )}
-                      <item.icon
-                        className={cn(
-                          "size-5 shrink-0 transition-colors",
-                          active
-                            ? "text-primary dark:text-primary-400"
-                            : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                      <div className="relative inline-flex items-center justify-center">
+                        <item.icon
+                          className={cn(
+                            "size-5 shrink-0 transition-colors",
+                            active
+                              ? "text-primary dark:text-primary-400"
+                              : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                          )}
+                          strokeWidth={active ? 2.2 : 1.8}
+                        />
+                        {/* Indicador sutil à direita do ícone */}
+                        {active && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute -right-2 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary ring-2 ring-white dark:ring-zinc-900"
+                          />
                         )}
-                        strokeWidth={active ? 2.2 : 1.8}
-                      />
+                      </div>
                     </Link>
                   </Tooltip>
                 );
@@ -312,18 +329,24 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                   )}
                   href={item.href}
                 >
-                  {active && (
-                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
-                  )}
-                  <item.icon
-                    className={cn(
-                      "size-5 shrink-0 transition-colors",
-                      active
-                        ? "text-primary dark:text-primary-400"
-                        : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                  <div className="relative inline-flex items-center justify-center shrink-0">
+                    <item.icon
+                      className={cn(
+                        "size-5 shrink-0 transition-colors",
+                        active
+                          ? "text-primary dark:text-primary-400"
+                          : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                      )}
+                      strokeWidth={active ? 2.2 : 1.8}
+                    />
+                    {/* Indicador sutil à direita do ícone */}
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
+                      />
                     )}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
+                  </div>
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
@@ -359,18 +382,24 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                         )}
                         href={item.href}
                       >
-                        {active && (
-                          <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary" />
-                        )}
-                        <item.icon
-                          className={cn(
-                            "size-5 shrink-0 transition-colors",
-                            active
-                              ? "text-primary dark:text-primary-400"
-                              : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                        <div className="relative inline-flex items-center justify-center">
+                          <item.icon
+                            className={cn(
+                              "size-5 shrink-0 transition-colors",
+                              active
+                                ? "text-primary dark:text-primary-400"
+                                : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                            )}
+                            strokeWidth={active ? 2.2 : 1.8}
+                          />
+                          {/* Indicador sutil à direita do ícone */}
+                          {active && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute -right-2 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary ring-2 ring-white dark:ring-zinc-900"
+                            />
                           )}
-                          strokeWidth={active ? 2.2 : 1.8}
-                        />
+                        </div>
                       </Link>
                     </Tooltip>
                   );
@@ -388,18 +417,24 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                     )}
                     href={item.href}
                   >
-                    {active && (
-                      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
-                    )}
-                    <item.icon
-                      className={cn(
-                        "size-5 shrink-0 transition-colors",
-                        active
-                          ? "text-primary dark:text-primary-400"
-                          : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                    <div className="relative inline-flex items-center justify-center shrink-0">
+                      <item.icon
+                        className={cn(
+                          "size-5 shrink-0 transition-colors",
+                          active
+                            ? "text-primary dark:text-primary-400"
+                            : "text-slate-400 group-hover:text-slate-700 dark:text-zinc-500 dark:group-hover:text-zinc-200",
+                        )}
+                        strokeWidth={active ? 2.2 : 1.8}
+                      />
+                      {/* Indicador sutil à direita do ícone */}
+                      {active && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
+                        />
                       )}
-                      strokeWidth={active ? 2.2 : 1.8}
-                    />
+                    </div>
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
@@ -408,14 +443,20 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
           )}
         </div>
 
-        {/* Rodapé / Perfil do Usuário */}
-        <div className="border-t border-slate-200/80 dark:border-zinc-800 p-3 bg-slate-50/50 dark:bg-zinc-900/50">
+        {/* Rodapé / Perfil Unificado com Menu do Usuário */}
+        <div className="border-t border-slate-200/80 dark:border-zinc-800 p-2.5 bg-slate-50/50 dark:bg-zinc-900/50">
           {!isCollapsed ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="relative size-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 font-bold text-xs">
+            /* Modo Expandido */
+            <div className="flex items-center justify-between gap-1.5 p-1 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-800/40">
+              <button
+                className="flex items-center gap-2.5 min-w-0 flex-1 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800 text-left transition-colors"
+                title="Abrir Meu Perfil"
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+              >
+                <div className="relative size-8 shrink-0 flex items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-bold text-xs">
                   {userInitials}
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                  <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate leading-snug">
@@ -425,78 +466,188 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                     {roleLabel}
                   </span>
                 </div>
-              </div>
+              </button>
 
-              <div className="flex items-center gap-1 shrink-0">
-                <Tooltip
-                  content={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-                >
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Tooltip content="Configurações do Sistema">
                   <button
-                    aria-label="Alternar tema"
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    aria-label="Configurações do Sistema"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-700/60 transition-colors"
                     type="button"
-                    onClick={toggleTheme}
+                    onClick={() => setIsSettingsOpen(true)}
                   >
-                    {mounted && theme === "dark" ? (
-                      <SunIcon className="size-4" strokeWidth={2} />
-                    ) : (
-                      <MoonIcon className="size-4" strokeWidth={2} />
-                    )}
+                    <Cog6ToothIcon className="size-4" strokeWidth={2} />
                   </button>
                 </Tooltip>
 
-                <Tooltip content="Sair do sistema">
-                  <button
-                    aria-label="Sair"
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-red-950/30 transition-colors"
-                    type="button"
-                    onClick={handleLogout}
-                  >
-                    <ArrowRightOnRectangleIcon
-                      className="size-4"
-                      strokeWidth={2}
-                    />
-                  </button>
-                </Tooltip>
+                <Dropdown offset={10} placement="top-end">
+                  <DropdownTrigger>
+                    <button
+                      aria-label="Mais opções"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-700/60 transition-colors"
+                      type="button"
+                    >
+                      <EllipsisVerticalIcon
+                        className="size-4"
+                        strokeWidth={2}
+                      />
+                    </button>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Ações do usuário" variant="flat">
+                    <DropdownItem
+                      key="profile"
+                      startContent={
+                        <UserCircleIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+                      }
+                      onPress={() => setIsProfileOpen(true)}
+                    >
+                      Meu Perfil
+                    </DropdownItem>
+                    <DropdownItem
+                      key="settings"
+                      startContent={
+                        <Cog6ToothIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+                      }
+                      onPress={() => setIsSettingsOpen(true)}
+                    >
+                      Configurações do Sistema
+                    </DropdownItem>
+                    <DropdownItem
+                      key="theme"
+                      startContent={
+                        mounted && theme === "dark" ? (
+                          <SunIcon
+                            className="size-4 text-amber-500"
+                            strokeWidth={2}
+                          />
+                        ) : (
+                          <MoonIcon
+                            className="size-4 text-indigo-500"
+                            strokeWidth={2}
+                          />
+                        )
+                      }
+                      onPress={toggleTheme}
+                    >
+                      {mounted && theme === "dark"
+                        ? "Modo Claro"
+                        : "Modo Escuro"}
+                    </DropdownItem>
+                    <DropdownItem
+                      key="logout"
+                      className="text-danger"
+                      color="danger"
+                      startContent={
+                        <ArrowRightOnRectangleIcon
+                          className="size-4"
+                          strokeWidth={2}
+                        />
+                      }
+                      onPress={handleLogout}
+                    >
+                      Sair do Sistema
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
               </div>
             </div>
           ) : (
+            /* Modo Compacto / Colapsado */
             <div className="flex flex-col items-center gap-2">
-              <Tooltip content={`${userName} (${roleLabel})`} placement="right">
-                <div className="relative size-9 flex items-center justify-center rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 font-bold text-xs cursor-default">
-                  {userInitials}
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
-                </div>
-              </Tooltip>
-
-              <Tooltip content="Alternar tema" placement="right">
+              <Tooltip
+                content="Configurações do Sistema"
+                offset={12}
+                placement="right"
+              >
                 <button
-                  aria-label="Alternar tema"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  aria-label="Configurações do Sistema"
+                  className="flex size-10 items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/80 transition-colors mx-auto"
                   type="button"
-                  onClick={toggleTheme}
+                  onClick={() => setIsSettingsOpen(true)}
                 >
-                  {mounted && theme === "dark" ? (
-                    <SunIcon className="size-4" strokeWidth={2} />
-                  ) : (
-                    <MoonIcon className="size-4" strokeWidth={2} />
-                  )}
+                  <Cog6ToothIcon className="size-5" strokeWidth={1.8} />
                 </button>
               </Tooltip>
 
-              <Tooltip content="Sair" placement="right">
-                <button
-                  aria-label="Sair"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-red-950/30 transition-colors"
-                  type="button"
-                  onClick={handleLogout}
-                >
-                  <ArrowRightOnRectangleIcon
-                    className="size-4"
-                    strokeWidth={2}
-                  />
-                </button>
-              </Tooltip>
+              <Dropdown offset={14} placement="right-end">
+                <DropdownTrigger>
+                  <button
+                    aria-label="Menu do usuário"
+                    className="relative flex size-10 items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 text-slate-700 dark:text-zinc-200 font-bold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 mx-auto"
+                    type="button"
+                  >
+                    <span>{userInitials}</span>
+                    <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                  </button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Ações do usuário" variant="flat">
+                  <DropdownItem
+                    key="header"
+                    isReadOnly
+                    className="h-14 gap-2 opacity-100 cursor-default"
+                  >
+                    <div className="flex flex-col">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                        {userName}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400">
+                        {roleLabel}
+                      </p>
+                    </div>
+                  </DropdownItem>
+                  <DropdownItem
+                    key="profile"
+                    startContent={
+                      <UserCircleIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+                    }
+                    onPress={() => setIsProfileOpen(true)}
+                  >
+                    Meu Perfil
+                  </DropdownItem>
+                  <DropdownItem
+                    key="settings"
+                    startContent={
+                      <Cog6ToothIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+                    }
+                    onPress={() => setIsSettingsOpen(true)}
+                  >
+                    Configurações do Sistema
+                  </DropdownItem>
+                  <DropdownItem
+                    key="theme"
+                    startContent={
+                      mounted && theme === "dark" ? (
+                        <SunIcon
+                          className="size-4 text-amber-500"
+                          strokeWidth={2}
+                        />
+                      ) : (
+                        <MoonIcon
+                          className="size-4 text-indigo-500"
+                          strokeWidth={2}
+                        />
+                      )
+                    }
+                    onPress={toggleTheme}
+                  >
+                    {mounted && theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+                  </DropdownItem>
+                  <DropdownItem
+                    key="logout"
+                    className="text-danger"
+                    color="danger"
+                    startContent={
+                      <ArrowRightOnRectangleIcon
+                        className="size-4"
+                        strokeWidth={2}
+                      />
+                    }
+                    onPress={handleLogout}
+                  >
+                    Sair do Sistema
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           )}
         </div>
@@ -505,14 +656,12 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
       {/* ─── MOBILE DRAWER OVERLAY ─── */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          {/* Backdrop escuro com blur suave */}
           <div
             aria-hidden="true"
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
 
-          {/* Drawer deslizante */}
           <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-zinc-900 shadow-2xl flex flex-col z-50">
             {/* Topo do drawer */}
             <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100 dark:border-zinc-800">
@@ -573,18 +722,23 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
                     >
-                      {active && (
-                        <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-primary" />
-                      )}
-                      <item.icon
-                        className={cn(
-                          "size-5 shrink-0",
-                          active
-                            ? "text-primary dark:text-primary-400"
-                            : "text-slate-400 dark:text-zinc-500",
+                      <div className="relative inline-flex items-center justify-center shrink-0">
+                        <item.icon
+                          className={cn(
+                            "size-5 shrink-0",
+                            active
+                              ? "text-primary dark:text-primary-400"
+                              : "text-slate-400 dark:text-zinc-500",
+                          )}
+                          strokeWidth={active ? 2.2 : 1.8}
+                        />
+                        {active && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
+                          />
                         )}
-                        strokeWidth={active ? 2.2 : 1.8}
-                      />
+                      </div>
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -612,18 +766,23 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                         href={item.href}
                         onClick={() => setIsMobileOpen(false)}
                       >
-                        {active && (
-                          <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-primary" />
-                        )}
-                        <item.icon
-                          className={cn(
-                            "size-5 shrink-0",
-                            active
-                              ? "text-primary dark:text-primary-400"
-                              : "text-slate-400 dark:text-zinc-500",
+                        <div className="relative inline-flex items-center justify-center shrink-0">
+                          <item.icon
+                            className={cn(
+                              "size-5 shrink-0",
+                              active
+                                ? "text-primary dark:text-primary-400"
+                                : "text-slate-400 dark:text-zinc-500",
+                            )}
+                            strokeWidth={active ? 2.2 : 1.8}
+                          />
+                          {active && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute -right-1.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary"
+                            />
                           )}
-                          strokeWidth={active ? 2.2 : 1.8}
-                        />
+                        </div>
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -635,7 +794,14 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
             {/* Rodapé móvel */}
             <div className="border-t border-slate-200/80 dark:border-zinc-800 p-4 bg-slate-50/70 dark:bg-zinc-900/70">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  className="flex items-center gap-2.5 min-w-0 text-left"
+                  type="button"
+                  onClick={() => {
+                    setIsMobileOpen(false);
+                    setIsProfileOpen(true);
+                  }}
+                >
                   <div className="relative size-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 font-bold text-xs">
                     {userInitials}
                     <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
@@ -648,9 +814,21 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                       {roleLabel}
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
+                  <button
+                    aria-label="Configurações"
+                    className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    type="button"
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsSettingsOpen(true);
+                    }}
+                  >
+                    <Cog6ToothIcon className="size-4.5" strokeWidth={2} />
+                  </button>
+
                   <button
                     aria-label="Alternar tema"
                     className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -684,6 +862,16 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
           </div>
         </div>
       )}
+
+      {/* Modais de Perfil do Usuário e Configurações do Sistema */}
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
+      <SystemSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </>
   );
 }
