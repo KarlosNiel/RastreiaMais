@@ -26,29 +26,76 @@ export interface DashboardKPIsResponse {
 /**
  * Hook principal para buscar todos os KPIs do gestor
  * Utiliza o endpoint consolidado de agregação SQL (/api/v1/reports/kpis/)
+ * com fallback imediato caso a instância de backend ainda esteja atualizando.
  */
 export function useGestorKpis() {
   const { data, isLoading, isError } = useQuery<DashboardKPIsResponse>({
     queryKey: ["dashboard-kpis"],
     queryFn: async () => {
-      const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
+      try {
+        const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
 
-      return (
-        resp ?? {
+        if (resp && typeof resp.total_patients === "number") {
+          return resp;
+        }
+      } catch {
+        // Fallback gracioso para instâncias de produção que ainda não reiniciaram
+      }
+
+      try {
+        const [patientsResp, apptsResp, alertsResp] = await Promise.allSettled([
+          apiGet<any>("/api/v1/accounts/patients/"),
+          apiGet<any>("/api/v1/appointments/appointments/"),
+          apiGet<any>("/api/v1/alerts/alerts/"),
+        ]);
+
+        const patients =
+          patientsResp.status === "fulfilled" && patientsResp.value
+            ? (patientsResp.value?.count ??
+              (Array.isArray(patientsResp.value)
+                ? patientsResp.value.length
+                : (patientsResp.value?.results?.length ?? 0)))
+            : 0;
+
+        const appts =
+          apptsResp.status === "fulfilled" && apptsResp.value
+            ? Array.isArray(apptsResp.value)
+              ? apptsResp.value
+              : (apptsResp.value?.results ?? [])
+            : [];
+
+        const alerts =
+          alertsResp.status === "fulfilled" && alertsResp.value
+            ? Array.isArray(alertsResp.value)
+              ? alertsResp.value
+              : (alertsResp.value?.results ?? [])
+            : [];
+
+        return {
+          total_patients: patients,
+          total_appointments:
+            apptsResp.status === "fulfilled" && apptsResp.value?.count
+              ? apptsResp.value.count
+              : appts.length,
+          critical_appointments: appts.filter(
+            (a: any) => a.risk_level === "Crítico",
+          ).length,
+          critical_alerts: alerts.filter(
+            (a: any) => a.risk_level === "critical",
+          ).length,
+        };
+      } catch {
+        return {
           total_patients: 0,
           total_appointments: 0,
           critical_appointments: 0,
           critical_alerts: 0,
-        }
-      );
+        };
+      }
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 3, // 3 min
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) return false;
-
-      return failureCount < 2;
-    },
+    retry: false, // Não bloqueia a UI se o endpoint 404
   });
 
   const totalPatients = data?.total_patients ?? 0;

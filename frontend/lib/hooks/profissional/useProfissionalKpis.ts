@@ -3,6 +3,7 @@
 import type { KpiItem } from "@/lib/profissional-kpis";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { apiGet } from "@/lib/api";
 
@@ -13,72 +14,89 @@ interface DashboardKPIsResponse {
   critical_alerts: number;
 }
 
-export function useProfissionalKpis() {
-  const { data, isLoading, isError } = useQuery<DashboardKPIsResponse>({
+export type UseProfissionalKpisProps = {
+  appointments?: any[];
+  alerts?: any[];
+  isLoading?: boolean;
+};
+
+export function useProfissionalKpis(props?: UseProfissionalKpisProps) {
+  // Chamada de agregação no backend (sem retries caso o backend ainda não tenha subido o novo endpoint)
+  const { data: remoteKpis } = useQuery<DashboardKPIsResponse | null>({
     queryKey: ["dashboard-kpis"],
     queryFn: async () => {
-      const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
+      try {
+        const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
 
-      return (
-        resp ?? {
-          total_patients: 0,
-          total_appointments: 0,
-          critical_appointments: 0,
-          critical_alerts: 0,
+        if (resp && typeof resp.total_patients === "number") {
+          return resp;
         }
-      );
+
+        return null;
+      } catch {
+        return null;
+      }
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 3, // 3 min
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) return false;
-
-      return failureCount < 2;
-    },
+    retry: false, // Não bloqueia nem retenta caso o backend em prod ainda esteja com versão anterior
   });
 
-  if (isLoading) {
-    return { isLoading: true, isError: false, data: [] as KpiItem[] };
-  }
+  const kpis = useMemo<KpiItem[]>(() => {
+    const appts = props?.appointments ?? [];
+    const alertsList = props?.alerts ?? [];
 
-  if (isError) {
-    return { isLoading: false, isError: true, data: [] as KpiItem[] };
-  }
+    const appointmentsCount =
+      remoteKpis?.total_appointments ?? appts.length;
 
-  const totalPatients = data?.total_patients ?? 0;
-  const riskPatients = data?.critical_appointments ?? 0;
-  const appointmentsCount = data?.total_appointments ?? 0;
-  const criticalAlerts = data?.critical_alerts ?? 0;
+    const riskPatients =
+      remoteKpis?.critical_appointments ??
+      appts.filter((a: any) => a.risk_level === "Crítico").length;
 
-  const kpis: KpiItem[] = [
-    {
-      key: "totalPatients",
-      label: "Pacientes Totais",
-      value: totalPatients,
-      accent: "brand",
-    },
-    {
-      key: "riskPatients",
-      label: "Agendamentos de Risco",
-      value: riskPatients,
-      accent: "amber",
-    },
-    {
-      key: "appointments",
-      label: "Atendimentos",
-      value: appointmentsCount,
-      accent: "blue",
-    },
-    {
-      key: "criticalAlerts",
-      label: "Alertas Críticos",
-      value: criticalAlerts,
-      accent: "red",
-    },
-  ];
+    const criticalAlerts =
+      remoteKpis?.critical_alerts ??
+      alertsList.filter((a: any) => a.risk_level === "critical").length;
+
+    const totalPatients =
+      remoteKpis?.total_patients ??
+      new Set(
+        appts
+          .map((a: any) => a.patient?.id || a.patient)
+          .filter(Boolean),
+      ).size;
+
+    return [
+      {
+        key: "totalPatients",
+        label: "Pacientes Totais",
+        value: totalPatients,
+        accent: "brand",
+      },
+      {
+        key: "riskPatients",
+        label: "Agendamentos de Risco",
+        value: riskPatients,
+        accent: "amber",
+      },
+      {
+        key: "appointments",
+        label: "Atendimentos",
+        value: appointmentsCount,
+        accent: "blue",
+      },
+      {
+        key: "criticalAlerts",
+        label: "Alertas Críticos",
+        value: criticalAlerts,
+        accent: "red",
+      },
+    ];
+  }, [props?.appointments, props?.alerts, remoteKpis]);
+
+  const isLoading = props?.isLoading ?? false;
 
   return {
-    isLoading: false,
+    isLoading,
     isError: false,
     data: kpis,
   };

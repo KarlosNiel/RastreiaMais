@@ -83,7 +83,6 @@ export default function ProfissionalPage() {
     tone: "default",
     onConfirm: () => {},
   });
-  const { data: KPIS = [], isLoading: isLoadingKpis } = useProfissionalKpis();
   const [selectedAppointment, setSelectedAppointment] =
     useState<AgendaRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -132,6 +131,12 @@ export default function ProfissionalPage() {
 
       return failureCount < 3;
     },
+  });
+
+  const { data: KPIS = [], isLoading: isLoadingKpis } = useProfissionalKpis({
+    appointments,
+    alerts,
+    isLoading: isLoading || isLoadingAlerts,
   });
 
   const updateStatusMutation = useMutation({
