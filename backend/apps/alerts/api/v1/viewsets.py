@@ -14,7 +14,14 @@ class AlertViewset(BaseModelViewSet):
     serializer_class = AlertSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            'patient__user',
+            'patient__address',
+            'patient__has',
+            'patient__dm',
+        ).prefetch_related(
+            'patient__otherdcnt_set'
+        )
 
         user = getattr(self.request, "user", None)
         if not user or not user.is_authenticated:

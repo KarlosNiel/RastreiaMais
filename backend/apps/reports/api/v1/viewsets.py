@@ -40,3 +40,43 @@ class SOAPReportViewSet(ViewSet):
 
         response_serializer = SOAPReportResponseSerializer(report)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Reports - KPIs'])
+class DashboardKPIsViewSet(ViewSet):
+    """
+    ViewSet para métricas agregadas ultra-rápidas para Gestor e Profissional.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Obter KPIs do Dashboard",
+        description="Retorna contadores otimizados (SQL COUNT) para gestores e profissionais.",
+    )
+    def list(self, request):
+        from apps.accounts.utils.utils import get_user_profile
+        from apps.accounts.models import PatientUser
+        from apps.appointments.models import Appointment
+        from apps.alerts.models import Alert
+
+        role, profile = get_user_profile(request.user)
+
+        patients_qs = PatientUser.objects.filter(is_deleted=False)
+        appointments_qs = Appointment.objects.filter(is_deleted=False)
+        alerts_qs = Alert.objects.filter(is_deleted=False)
+
+        if role == 'patient' and profile:
+            appointments_qs = appointments_qs.filter(patient=profile)
+            alerts_qs = alerts_qs.filter(patient=profile)
+
+        total_patients = patients_qs.count()
+        total_appointments = appointments_qs.count()
+        critical_appointments = appointments_qs.filter(risk_level="Crítico").count()
+        critical_alerts = alerts_qs.filter(risk_level="critical").count()
+
+        return Response({
+            "total_patients": total_patients,
+            "total_appointments": total_appointments,
+            "critical_appointments": critical_appointments,
+            "critical_alerts": critical_alerts,
+        }, status=status.HTTP_200_OK)

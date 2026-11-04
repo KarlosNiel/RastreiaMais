@@ -20,7 +20,7 @@ class AlertModelTest(TestCase):
         self.assertIsInstance(alert, Alert)
         self.assertEqual(alert.title, self.alert_data["title"])
         self.assertEqual(alert.description, self.alert_data["description"])
-        self.assertEqual(alert.risk_level, "Moderado")  # Valor padrão
+        self.assertEqual(alert.risk_level, "moderate")  # Valor padrão
 
     def test_create_alert_with_risk(self):
         """Testa criação de Alert com cada nível de risco"""
@@ -30,8 +30,8 @@ class AlertModelTest(TestCase):
 
     def test_alert_str_method(self):
         """Testa método __str__ do Alert"""
-        alert = Alert.objects.create(**self.alert_data, risk_level="Crítico")
-        expected_str = f"[Crítico] {self.alert_data['title']}"
+        alert = Alert.objects.create(**self.alert_data, risk_level="critical")
+        expected_str = f"[critical] {self.alert_data['title']}"
         self.assertEqual(str(alert), expected_str)
 
     def test_invalid_risk_level_raises_validation_error(self):

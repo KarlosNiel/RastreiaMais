@@ -18,19 +18,29 @@ def get_creator_profile(user):  #* retorna o tipo de user que criou o objeto
         return None
 
 def get_user_profile(user):
+    if not user or not getattr(user, 'is_authenticated', False):
+        return None, None
+
+    cached = getattr(user, '_cached_user_profile', None)
+    if cached is not None:
+        return cached
+
+    result = (None, None)
     if hasattr(user, 'patientuser'):
-        return 'patient', user.patientuser  
-    
+        result = ('patient', user.patientuser)  
     elif hasattr(user, 'professionaluser'):
-        return 'professional', user.professionaluser
-    
+        result = ('professional', user.professionaluser)
     elif hasattr(user, 'manageruser'):
-        return 'manager', user.manageruser
-    
+        result = ('manager', user.manageruser)
     elif user.is_superuser:
-        return 'superuser', None
-    
-    return None, None
+        result = ('superuser', None)
+
+    try:
+        user._cached_user_profile = result
+    except Exception:
+        pass
+
+    return result
 
 class SingleProfileMixin: #* Mixin para permitir apenas a criação de um tipo de perfil por user
 

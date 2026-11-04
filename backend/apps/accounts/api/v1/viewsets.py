@@ -63,7 +63,14 @@ class PatientUserViewset(BaseModelViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            'user',
+            'address',
+            'has',
+            'dm',
+        ).prefetch_related(
+            'otherdcnt_set',
+        )
         role, profile = get_user_profile(self.request.user)
 
         if not self.request.user.is_authenticated:
@@ -85,7 +92,7 @@ class ProfessionalUserViewset(BaseModelViewSet):
     serializer_class = ProfessionalUserSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('user')
         role, profile = get_user_profile(self.request.user)
 
         if not self.request.user.is_authenticated:
@@ -106,7 +113,7 @@ class ManagerUserViewset(BaseModelViewSet):
     serializer_class = ManagerUserSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('user')
         role, profile = get_user_profile(self.request.user)
 
         if not self.request.user.is_authenticated:

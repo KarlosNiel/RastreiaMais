@@ -15,7 +15,16 @@ class AppointmentViewset(BaseModelViewSet):
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            'patient__user',
+            'patient__address',
+            'patient__has',
+            'patient__dm',
+            'professional__user',
+            'local'
+        ).prefetch_related(
+            'patient__otherdcnt_set'
+        )
         role, profile = get_user_profile(self.request.user)
 
         if not self.request.user.is_authenticated:
