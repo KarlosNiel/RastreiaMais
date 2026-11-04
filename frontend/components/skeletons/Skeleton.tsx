@@ -10,7 +10,10 @@ export function Skeleton({
   return (
     <div
       aria-hidden
-      className={cn("skeleton rounded-md", className)}
+      className={cn(
+        "animate-pulse bg-slate-200/80 dark:bg-zinc-800/80 rounded-md",
+        className,
+      )}
       {...props}
     />
   );

@@ -6,41 +6,36 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiGet } from "@/lib/api";
 
+interface DashboardKPIsResponse {
+  total_patients: number;
+  total_appointments: number;
+  critical_appointments: number;
+  critical_alerts: number;
+}
+
 export function useProfissionalKpis() {
-  const pacientesQuery = useQuery({
-    queryKey: ["pacientes"],
+  const { data, isLoading, isError } = useQuery<DashboardKPIsResponse>({
+    queryKey: ["dashboard-kpis"],
     queryFn: async () => {
-      const resp = await apiGet("/api/v1/accounts/patients/");
+      const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
 
-      return Array.isArray(resp) ? resp : (resp?.results ?? []);
+      return (
+        resp ?? {
+          total_patients: 0,
+          total_appointments: 0,
+          critical_appointments: 0,
+          critical_alerts: 0,
+        }
+      );
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 3, // 3 min
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401) return false;
+
+      return failureCount < 2;
     },
   });
-
-  const appointmentsQuery = useQuery({
-    queryKey: ["appointments"],
-    queryFn: async () => {
-      const resp = await apiGet("/api/v1/appointments/appointments/");
-
-      return Array.isArray(resp) ? resp : (resp?.results ?? []);
-    },
-  });
-
-  const alertsQuery = useQuery({
-    queryKey: ["alerts"],
-    queryFn: async () => {
-      const resp = await apiGet("/api/v1/alerts/alerts/");
-
-      return Array.isArray(resp) ? resp : (resp?.results ?? []);
-    },
-  });
-
-  const isLoading =
-    pacientesQuery.isLoading ||
-    appointmentsQuery.isLoading ||
-    alertsQuery.isLoading;
-
-  const isError =
-    pacientesQuery.isError || appointmentsQuery.isError || alertsQuery.isError;
 
   if (isLoading) {
     return { isLoading: true, isError: false, data: [] as KpiItem[] };
@@ -50,22 +45,10 @@ export function useProfissionalKpis() {
     return { isLoading: false, isError: true, data: [] as KpiItem[] };
   }
 
-  const pacientes = pacientesQuery.data ?? [];
-  const appointments = appointmentsQuery.data ?? [];
-  const alerts = alertsQuery.data ?? [];
-
-  // === KPIs ===
-  const totalPatients = pacientes.length;
-
-  const riskPatients = appointments.filter(
-    (a: any) => a.risk_level === "Crítico",
-  ).length;
-
-  const appointmentsCount = appointments.length;
-
-  const criticalAlerts = alerts.filter(
-    (a: any) => a.risk_level === "critical",
-  ).length;
+  const totalPatients = data?.total_patients ?? 0;
+  const riskPatients = data?.critical_appointments ?? 0;
+  const appointmentsCount = data?.total_appointments ?? 0;
+  const criticalAlerts = data?.critical_alerts ?? 0;
 
   const kpis: KpiItem[] = [
     {

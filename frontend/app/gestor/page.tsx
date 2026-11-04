@@ -8,7 +8,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
-import { Spinner } from "@heroui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +19,9 @@ import {
   ProfissionaisTable,
   ProfRow,
 } from "@/components/gestor/ProfissionaisTable";
+import { AlertsListSkeleton } from "@/components/skeletons/AlertsListSkeleton";
+import { StatCardSkeleton } from "@/components/skeletons/StatCardSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { apiGet } from "@/lib/api";
 import { KPI_ICONS } from "@/lib/gestor-kpis";
@@ -149,9 +151,12 @@ export default function GestorPage() {
         {/* KPIs */}
         <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {isLoadingKpis ? (
-            <div className="col-span-2 p-6 text-center text-slate-500 dark:text-zinc-400">
-              Carregando KPIs...
-            </div>
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
           ) : KPIS.length > 0 ? (
             KPIS.map((kpi) => (
               <KpiCard
@@ -220,9 +225,7 @@ export default function GestorPage() {
             />
 
             {isLoadingAlerts ? (
-              <div className="flex justify-center py-8">
-                <Spinner color="warning" />
-              </div>
+              <AlertsListSkeleton count={3} />
             ) : alerts?.length ? (
               <div className="max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
                 <ul className="space-y-2.5">
@@ -293,9 +296,7 @@ export default function GestorPage() {
           </h2>
         </div>
         {isLoadingProfissionais ? (
-          <div className="p-6 text-slate-500 dark:text-zinc-400">
-            Carregando profissionais...
-          </div>
+          <TableSkeleton rows={6} />
         ) : isErrorProfissionais ? (
           <div className="p-6 text-red-600 dark:text-red-400">
             Erro ao carregar profissionais.

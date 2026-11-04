@@ -20,6 +20,8 @@ import {
   type ConsultaRow,
 } from "@/components/portal/ConsultasTable";
 import PatientAppointmentDetailsModal from "@/components/me/PatientAppointmentDetailsModal";
+import { StatCardSkeleton } from "@/components/skeletons/StatCardSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function MePage() {
   const { data: me, isLoading: isLoadingMe } = useMe();
@@ -187,9 +189,12 @@ export default function MePage() {
         {/* KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoadingHas ? (
-            <div className="col-span-full p-8 text-center text-slate-500 dark:text-zinc-400">
-              Carregando dados clínicos...
-            </div>
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
           ) : KPIS.length > 0 ? (
             KPIS.map(({ key, ...kpi }) => <KpiCard key={key} {...kpi} />)
           ) : (
@@ -209,9 +214,7 @@ export default function MePage() {
         </div>
 
         {isLoading ? (
-          <div className="p-6 text-slate-500 dark:text-zinc-400">
-            Carregando consultas...
-          </div>
+          <TableSkeleton rows={4} />
         ) : isError ? (
           <div className="p-6 text-red-600 dark:text-red-400">
             Erro ao carregar consultas.

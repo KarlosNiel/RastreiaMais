@@ -17,35 +17,34 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-  Tooltip,
 } from "@heroui/react";
 import {
   CalendarDaysIcon,
   CheckIcon,
+  EllipsisVerticalIcon,
   EyeIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import * as React from "react";
 
-import { StatusChip } from "@/components/ui/StatusChip";
+import { cn } from "@/lib/utils";
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
-type ChipTone = "safe" | "attention" | "critical" | "neutral";
-
-const mapRiskToChip = (t: RiskTone): ChipTone =>
-  t === "moderate" ? "attention" : t;
 
 export type AgendaRow = {
   id: string;
+  patientId?: string;
   paciente: string;
-  docMasked: string;
+  docMasked?: string;
   condicao: string;
   hora: string;
+  rawDate?: string;
   local: string;
   risco: RiskTone;
   type: string;
   status: string;
+  description?: string;
 };
 
 type Column = {
@@ -207,7 +206,7 @@ export function AgendaTable({
       data = data.filter(
         (r) =>
           r.paciente.toLowerCase().includes(q) ||
-          r.docMasked.toLowerCase().includes(q) ||
+          (r.docMasked && r.docMasked.toLowerCase().includes(q)) ||
           r.condicao.toLowerCase().includes(q) ||
           r.local.toLowerCase().includes(q),
       );
@@ -258,16 +257,15 @@ export function AgendaTable({
         first = riskWeight[a.risco];
         second = riskWeight[b.risco];
       } else if (key === "hora") {
-        const A = toMinutes(a.hora);
-        const B = toMinutes(b.hora);
+        const timeA = a.rawDate
+          ? new Date(a.rawDate).getTime()
+          : toMinutes(a.hora);
+        const timeB = b.rawDate
+          ? new Date(b.rawDate).getTime()
+          : toMinutes(b.hora);
 
-        if (!Number.isNaN(A) && !Number.isNaN(B)) {
-          first = A;
-          second = B;
-        } else {
-          first = a.hora;
-          second = b.hora;
-        }
+        first = Number.isNaN(timeA) ? 0 : timeA;
+        second = Number.isNaN(timeB) ? 0 : timeB;
       } else {
         first = (a as any)[key] ?? "";
         second = (b as any)[key] ?? "";
@@ -278,7 +276,7 @@ export function AgendaTable({
           ? first - second
           : collator.compare(String(first), String(second));
 
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      return direction === "descending" ? -cmp : cmp;
     });
 
     return arr;
@@ -287,11 +285,8 @@ export function AgendaTable({
   const renderCell = React.useCallback(
     (row: AgendaRow, colKey: Key) => {
       const k = String(colKey) as keyof AgendaRow | "actions";
-
-      // Verifica se já foi finalizado ou cancelado
       const isFinalized = row.status === "finalizado";
-      const isCanceled = row.status === "cancelado";
-      const isDisabled = isFinalized || isCanceled;
+      const isActive = row.status === "ativo";
 
       switch (k) {
         case "paciente": {
@@ -306,7 +301,7 @@ export function AgendaTable({
 
           return (
             <div className="flex items-center gap-3">
-              <div className="size-8.5 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center text-xs font-semibold shadow-2xs">
+              <div className="size-9 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center text-xs font-semibold shadow-2xs">
                 {initials}
               </div>
               <div className="min-w-0">
@@ -320,105 +315,199 @@ export function AgendaTable({
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-slate-500 dark:text-zinc-400 block truncate">
-                  {row.type && row.type !== "-" ? `${row.type} · ` : ""}
-                  {row.condicao && row.condicao !== "—"
-                    ? row.condicao
-                    : row.local}
-                </span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 truncate">
+                  <span className="font-medium text-slate-600 dark:text-zinc-300">
+                    {row.type || "Consulta"}
+                  </span>
+                  {row.condicao && row.condicao !== "—" && (
+                    <>
+                      <span>•</span>
+                      <span className="text-primary-600 dark:text-primary-400 font-medium">
+                        {row.condicao}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           );
         }
-        case "hora":
+
+        case "hora": {
+          const parts = row.hora.split(", ");
+          const datePart = parts[0] || row.hora;
+          const timePart = parts[1] || "";
+
           return (
-            <span className="tabular-nums text-sm font-medium text-slate-700 dark:text-zinc-300">
-              {row.hora}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100 tabular-nums">
+                {timePart || datePart}
+              </span>
+              {timePart && (
+                <span className="text-xs text-slate-400 dark:text-zinc-500 tabular-nums">
+                  {datePart}
+                </span>
+              )}
+            </div>
           );
+        }
+
         case "local":
           return (
-            <span className="text-sm text-slate-600 dark:text-zinc-400">
+            <span className="text-sm text-slate-600 dark:text-zinc-300">
               {row.local}
             </span>
           );
-        case "risco":
+
+        case "risco": {
+          const isCritical = row.risco === "critical";
+          const isModerate = row.risco === "moderate";
+
           return (
-            <div className="flex justify-center">
-              <StatusChip size="sm" tone={mapRiskToChip(row.risco)}>
-                {row.risco === "critical"
+            <div className="flex items-center justify-center">
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap shadow-2xs",
+                  isCritical
+                    ? "bg-rose-50 text-rose-700 border-rose-200/70 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50"
+                    : isModerate
+                      ? "bg-amber-50 text-amber-700 border-amber-200/70 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50",
+                )}
+              >
+                {isCritical
                   ? "Alto risco"
-                  : row.risco === "moderate"
+                  : isModerate
                     ? "Risco moderado"
                     : "Baixo risco"}
-              </StatusChip>
+              </span>
             </div>
           );
+        }
+
         case "status":
           return (
             <div className="flex justify-center">
-              <StatusChip
-                size="sm"
-                tone={
-                  row.status === "finalizado"
-                    ? "safe"
-                    : row.status === "cancelado"
-                      ? "critical"
-                      : "attention"
-                }
-              >
-                {row.status === "finalizado"
-                  ? "Finalizado"
-                  : row.status === "cancelado"
-                    ? "Cancelado"
-                    : "Ativo"}
-              </StatusChip>
+              {row.status === "finalizado" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+                  <CheckIcon className="size-3" strokeWidth={2.5} />
+                  Finalizado
+                </span>
+              ) : row.status === "cancelado" ? (
+                <span className="inline-flex items-center text-xs font-medium text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full">
+                  Cancelado
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/40">
+                  <span className="size-1.5 rounded-full bg-sky-500" />
+                  Ativo
+                </span>
+              )}
             </div>
           );
-        case "actions":
+
+        case "actions": {
           return (
-            <div className="flex items-center justify-end gap-1">
-              <Tooltip content="Finalizar agendamento" delay={300}>
-                <button
-                  aria-label={`Finalizar agendamento de ${row.paciente}`}
-                  className={`p-1.5 rounded-md transition-colors focus:outline-none ${
-                    isDisabled
-                      ? "opacity-25 cursor-not-allowed text-slate-400"
-                      : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                  }`}
-                  disabled={isDisabled}
-                  onClick={() => !isDisabled && onAction?.("done", row)}
+            <div className="w-[144px] ml-auto flex items-center justify-end gap-1.5">
+              {isActive ? (
+                <Button
+                  className="h-8 w-24 text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-400 rounded-lg shadow-2xs"
+                  color="primary"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => onAction?.("open", row)}
                 >
-                  <CheckIcon className="size-4.5" strokeWidth={2} />
-                </button>
-              </Tooltip>
+                  Atender
+                </Button>
+              ) : isFinalized ? (
+                <Button
+                  className="h-8 w-24 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-zinc-300 dark:hover:text-white bg-slate-100 hover:bg-slate-200/70 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg shadow-2xs"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => onAction?.("open", row)}
+                >
+                  Ver resumo
+                </Button>
+              ) : (
+                <Button
+                  className="h-8 w-24 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 bg-slate-100/60 hover:bg-slate-200/60 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 rounded-lg shadow-2xs"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => onAction?.("open", row)}
+                >
+                  Detalhes
+                </Button>
+              )}
 
-              <Tooltip content="Cancelar agendamento" delay={300}>
-                <button
-                  aria-label={`Cancelar agendamento de ${row.paciente}`}
-                  className={`p-1.5 rounded-md transition-colors focus:outline-none ${
-                    isDisabled
-                      ? "opacity-25 cursor-not-allowed text-slate-400"
-                      : "text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                  }`}
-                  disabled={isDisabled}
-                  onClick={() => !isDisabled && onAction?.("delete", row)}
-                >
-                  <XMarkIcon className="size-4.5" strokeWidth={2} />
-                </button>
-              </Tooltip>
-
-              <Tooltip content="Ver detalhes" delay={300}>
-                <button
-                  aria-label={`Ver detalhes de ${row.paciente}`}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
-                  onClick={() => onAction?.("open", row)}
-                >
-                  <EyeIcon className="size-4.5" strokeWidth={2} />
-                </button>
-              </Tooltip>
+              <Dropdown placement="bottom-end">
+                <DropdownTrigger>
+                  <Button
+                    isIconOnly
+                    aria-label="Mais opções"
+                    className="size-8 min-w-8 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 rounded-lg"
+                    size="sm"
+                    variant="light"
+                  >
+                    <EllipsisVerticalIcon className="size-4" />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Ações do agendamento">
+                  {isActive ? (
+                    <>
+                      <DropdownItem
+                        key="open"
+                        startContent={
+                          <EyeIcon className="size-4 text-slate-500" />
+                        }
+                        onPress={() => onAction?.("open", row)}
+                      >
+                        Ver prontuário
+                      </DropdownItem>
+                      <DropdownItem
+                        key="done"
+                        startContent={
+                          <CheckIcon className="size-4 text-emerald-600" />
+                        }
+                        onPress={() => onAction?.("done", row)}
+                      >
+                        Finalizar atendimento
+                      </DropdownItem>
+                      <DropdownItem
+                        key="cancel"
+                        className="text-danger"
+                        color="danger"
+                        startContent={<XMarkIcon className="size-4" />}
+                        onPress={() => onAction?.("delete", row)}
+                      >
+                        Cancelar agendamento
+                      </DropdownItem>
+                    </>
+                  ) : isFinalized ? (
+                    <DropdownItem
+                      key="open"
+                      startContent={
+                        <EyeIcon className="size-4 text-slate-500" />
+                      }
+                      onPress={() => onAction?.("open", row)}
+                    >
+                      Ver prontuário completo
+                    </DropdownItem>
+                  ) : (
+                    <DropdownItem
+                      key="open"
+                      startContent={
+                        <EyeIcon className="size-4 text-slate-500" />
+                      }
+                      onPress={() => onAction?.("open", row)}
+                    >
+                      Ver detalhes do agendamento
+                    </DropdownItem>
+                  )}
+                </DropdownMenu>
+              </Dropdown>
             </div>
           );
+        }
         default:
           return (row as any)[k];
       }
@@ -434,6 +523,11 @@ export function AgendaTable({
     const quickTabs = [
       { id: "all", label: "Todos", count: rows.length },
       {
+        id: "active",
+        label: "Fila de Atendimento",
+        count: rows.filter((r) => r.status === "ativo").length,
+      },
+      {
         id: "today",
         label: "Hoje",
         count: rows.filter((r) => r.hora.includes(todayStr)).length,
@@ -444,11 +538,6 @@ export function AgendaTable({
         count: rows.filter((r) => r.risco === "critical").length,
       },
       {
-        id: "active",
-        label: "Ativos",
-        count: rows.filter((r) => r.status === "ativo").length,
-      },
-      {
         id: "finalized",
         label: "Finalizados",
         count: rows.filter((r) => r.status === "finalizado").length,
@@ -456,57 +545,72 @@ export function AgendaTable({
     ] as const;
 
     return (
-      <div className="flex flex-col gap-3.5 px-1">
-        {/* Quick Filter Segmented Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
-          {quickTabs.map((tab) => {
-            const isActive = quickFilter === tab.id;
+      <div className="flex flex-col gap-3">
+        {/* Linha superior: Tabs de filtro rápido + Contador total de registros */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-zinc-800/80 rounded-xl w-fit border border-slate-200/80 dark:border-zinc-700/80 max-w-full overflow-x-auto shadow-2xs">
+            {quickTabs.map((tab) => {
+              const isActive = quickFilter === tab.id;
 
-            return (
-              <button
-                key={tab.id}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-primary text-white shadow-2xs font-semibold"
-                    : "bg-slate-100 hover:bg-slate-200/70 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-zinc-300"
-                }`}
-                type="button"
-                onClick={() => {
-                  setQuickFilter(tab.id);
-                  setPage(1);
-                }}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+              return (
+                <button
+                  key={tab.id}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap",
                     isActive
-                      ? "bg-white/25 text-white"
-                      : "bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200/60 dark:border-zinc-700/60"
-                  }`}
+                      ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs font-semibold"
+                      : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 font-medium",
+                  )}
+                  type="button"
+                  onClick={() => {
+                    setQuickFilter(tab.id);
+                    setPage(1);
+                  }}
                 >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
+                  <span>{tab.label}</span>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums",
+                      isActive
+                        ? "bg-primary/10 text-primary dark:text-primary-400"
+                        : "bg-slate-200/70 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-400",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+            Total de{" "}
+            <strong className="font-semibold text-slate-700 dark:text-zinc-200">
+              {totalFiltered}
+            </strong>{" "}
+            {totalFiltered === 1 ? "registro" : "registros"}
+          </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Linha de busca e filtros: alinhada de ponta a ponta com altura h-10 uniforme */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
           <Input
             isClearable
-            className="w-full sm:max-w-md"
+            className="w-full sm:flex-1"
             classNames={{
+              base: "h-10",
+              mainWrapper: "h-full",
               inputWrapper:
-                "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
+                "h-10 min-h-[40px] bg-white dark:bg-zinc-800/80 border border-slate-200/80 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary shadow-2xs rounded-xl",
               input:
-                "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
+                "text-xs sm:text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
             }}
             placeholder="Buscar por paciente, condição ou local…"
             radius="md"
             startContent={
               <svg
                 aria-hidden
-                className="size-4 text-slate-400 dark:text-zinc-500"
+                className="size-4 text-slate-400 dark:text-zinc-500 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
@@ -531,17 +635,17 @@ export function AgendaTable({
             }}
           />
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 shrink-0">
             <Dropdown>
               <DropdownTrigger>
                 <Button
-                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  className="h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs rounded-xl"
                   radius="md"
                   variant="bordered"
                 >
                   Risco
                   {riskFilter !== "all" && riskFilter.size > 0 && (
-                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                    <span className="ml-1 rounded-full bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-bold">
                       {riskFilter.size}
                     </span>
                   )}
@@ -570,13 +674,13 @@ export function AgendaTable({
             <Dropdown>
               <DropdownTrigger>
                 <Button
-                  className="hidden sm:inline-flex h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  className="h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs rounded-xl"
                   radius="md"
                   variant="bordered"
                 >
                   Status
                   {statusFilter !== "all" && statusFilter.size > 0 && (
-                    <span className="ml-1 rounded-full bg-slate-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                    <span className="ml-1 rounded-full bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-bold">
                       {statusFilter.size}
                     </span>
                   )}
@@ -604,30 +708,29 @@ export function AgendaTable({
               </DropdownMenu>
             </Dropdown>
 
-            <label className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 ml-1">
-              Por página:
+            <div className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-600 dark:text-zinc-400 shadow-2xs">
+              <span className="whitespace-nowrap">Exibir:</span>
               <select
                 aria-label="Linhas por página"
-                className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-2 py-1.5 text-xs text-slate-700 dark:text-zinc-200 outline-none focus:border-primary shadow-2xs"
+                className="bg-transparent text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none cursor-pointer"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
               >
-                <option value="8">8</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
+                <option className="dark:bg-zinc-800" value="8">
+                  8
+                </option>
+                <option className="dark:bg-zinc-800" value="12">
+                  12
+                </option>
+                <option className="dark:bg-zinc-800" value="20">
+                  20
+                </option>
               </select>
-            </label>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-slate-500 dark:text-zinc-400">
-            Total de {totalFiltered}{" "}
-            {totalFiltered === 1 ? "registro" : "registros"}
-          </span>
         </div>
       </div>
     );
@@ -638,6 +741,8 @@ export function AgendaTable({
     riskFilter,
     statusFilter,
     pageSize,
+    quickFilter,
+    rows,
   ]);
 
   const bottomContent = React.useMemo(() => {
@@ -689,7 +794,10 @@ export function AgendaTable({
             key={column.uid}
             align={column.align}
             allowsSorting={!!column.sortable}
-            className="text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50"
+            className={cn(
+              "text-xs uppercase tracking-wider font-semibold text-slate-500 dark:text-zinc-400 bg-slate-50/80 dark:bg-zinc-800/50",
+              column.uid === "actions" && "w-[160px]",
+            )}
           >
             {column.name}
           </TableColumn>
@@ -734,7 +842,8 @@ export function AgendaTable({
         {(item: AgendaRow) => (
           <TableRow
             key={item.id}
-            className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors"
+            className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            onClick={() => onAction?.("open", item)}
           >
             {(columnKey: Key) => (
               <TableCell>{renderCell(item, columnKey)}</TableCell>

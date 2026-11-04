@@ -16,120 +16,45 @@ export type KpiItem = {
   accent: "brand" | "amber" | "blue" | "green" | "red";
 };
 
-interface PatientsResponse {
-  results?: any[];
-  count?: number;
-  [key: string]: any;
-}
-
-interface AppointmentsResponse {
-  results?: Array<{
-    id: number;
-    risk_level?: "Seguro" | "Moderado" | "Crítico";
-    status?: string;
-  }>;
-  count?: number;
-  [key: string]: any;
-}
-
-interface AlertsResponse {
-  results?: Array<{
-    id: number;
-    risk_level?: "safe" | "moderate" | "critical";
-  }>;
-  [key: string]: any;
-}
-
-/**
- * Hook para buscar total de pacientes
- */
-function usePatientsCount() {
-  return useQuery({
-    queryKey: ["patients-count"],
-    queryFn: async () => {
-      const resp = await apiGet<PatientsResponse>("/api/v1/accounts/patients/");
-
-      return (
-        resp?.count ??
-        (Array.isArray(resp) ? resp.length : (resp?.results?.length ?? 0))
-      );
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) return false;
-
-      return failureCount < 2;
-    },
-  });
-}
-
-/**
- * Hook para buscar dados de agendamentos
- */
-function useAppointmentsData() {
-  return useQuery({
-    queryKey: ["appointments-data"],
-    queryFn: async () => {
-      const resp = await apiGet<AppointmentsResponse>(
-        "/api/v1/appointments/appointments/",
-      );
-      const appointments = Array.isArray(resp) ? resp : (resp?.results ?? []);
-
-      const totalAppointments = resp?.count ?? appointments.length;
-      const criticalAppointments = appointments.filter(
-        (a) => a.risk_level === "Crítico",
-      ).length;
-
-      return { totalAppointments, criticalAppointments };
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) return false;
-
-      return failureCount < 2;
-    },
-  });
-}
-
-/**
- * Hook para buscar alertas críticos
- */
-function useCriticalAlerts() {
-  return useQuery({
-    queryKey: ["critical-alerts"],
-    queryFn: async () => {
-      const resp = await apiGet<AlertsResponse>("/api/v1/alerts/alerts/");
-      const alerts = Array.isArray(resp) ? resp : (resp?.results ?? []);
-
-      return alerts.filter((a) => a.risk_level === "critical").length;
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) return false;
-
-      return failureCount < 2;
-    },
-  });
+export interface DashboardKPIsResponse {
+  total_patients: number;
+  total_appointments: number;
+  critical_appointments: number;
+  critical_alerts: number;
 }
 
 /**
  * Hook principal para buscar todos os KPIs do gestor
+ * Utiliza o endpoint consolidado de agregação SQL (/api/v1/reports/kpis/)
  */
 export function useGestorKpis() {
-  const { data: totalPatients = 0, isLoading: isLoadingPatients } =
-    usePatientsCount();
-  const {
-    data: appointmentsData = { totalAppointments: 0, criticalAppointments: 0 },
-    isLoading: isLoadingAppointments,
-  } = useAppointmentsData();
-  const { data: criticalAlerts = 0, isLoading: isLoadingAlerts } =
-    useCriticalAlerts();
+  const { data, isLoading, isError } = useQuery<DashboardKPIsResponse>({
+    queryKey: ["dashboard-kpis"],
+    queryFn: async () => {
+      const resp = await apiGet<DashboardKPIsResponse>("/api/v1/reports/kpis/");
 
-  const isLoading =
-    isLoadingPatients || isLoadingAppointments || isLoadingAlerts;
+      return (
+        resp ?? {
+          total_patients: 0,
+          total_appointments: 0,
+          critical_appointments: 0,
+          critical_alerts: 0,
+        }
+      );
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 3, // 3 min
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401) return false;
+
+      return failureCount < 2;
+    },
+  });
+
+  const totalPatients = data?.total_patients ?? 0;
+  const criticalAppointments = data?.critical_appointments ?? 0;
+  const totalAppointments = data?.total_appointments ?? 0;
+  const criticalAlerts = data?.critical_alerts ?? 0;
 
   const kpis: KpiItem[] = [
     {
@@ -142,14 +67,14 @@ export function useGestorKpis() {
     {
       key: "atRisk",
       label: "Agendamentos Críticos",
-      value: appointmentsData.criticalAppointments,
+      value: criticalAppointments,
       delta: 0,
       accent: "amber",
     },
     {
       key: "appointments",
       label: "Atendimentos",
-      value: appointmentsData.totalAppointments,
+      value: totalAppointments,
       delta: 0,
       accent: "blue",
     },
@@ -165,5 +90,6 @@ export function useGestorKpis() {
   return {
     data: kpis,
     isLoading,
+    isError,
   };
 }

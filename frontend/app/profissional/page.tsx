@@ -7,7 +7,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
-import { Spinner } from "@heroui/spinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,6 +18,9 @@ import {
   type AgendaRow,
 } from "@/components/profissional/AgendaTable";
 import ProfessionalAppointmentDetailsModal from "@/components/profissional/ProfessionalAppointmentDetailsModal";
+import { AlertsListSkeleton } from "@/components/skeletons/AlertsListSkeleton";
+import { StatCardSkeleton } from "@/components/skeletons/StatCardSkeleton";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { apiGet, apiPatch } from "@/lib/api";
 import { useAlertsQuery } from "@/lib/hooks/alerts/useAlertsQuery";
@@ -81,7 +83,7 @@ export default function ProfissionalPage() {
     tone: "default",
     onConfirm: () => {},
   });
-  const { data: KPIS } = useProfissionalKpis();
+  const { data: KPIS = [], isLoading: isLoadingKpis } = useProfissionalKpis();
   const [selectedAppointment, setSelectedAppointment] =
     useState<AgendaRow | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -164,6 +166,7 @@ export default function ProfissionalPage() {
   const AGENDA_ROWS: AgendaRow[] =
     appointments?.map((a) => ({
       id: String(a.id),
+      patientId: a.patient?.id ? String(a.patient.id) : undefined,
       paciente:
         `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
         "Desconhecido",
@@ -171,10 +174,12 @@ export default function ProfissionalPage() {
         dateStyle: "short",
         timeStyle: "short",
       }),
+      rawDate: a.scheduled_datetime,
       local: a.local?.name ?? "UBS",
-      type: a.type ?? "-",
+      type: a.type ?? "Consulta",
       risco: mapRiskLevel(a.risk_level),
       condicao: a.patient.conditions ?? "—",
+      description: a.description || "",
       docMasked: "",
       status: a.status || "ativo",
     })) ?? [];
@@ -266,16 +271,25 @@ export default function ProfissionalPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {KPIS.map((kpi) => (
-            <KpiCard
-              key={kpi.key}
-              accent={kpi.accent}
-              delta={kpi.delta}
-              icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
-              label={kpi.label}
-              value={kpi.value}
-            />
-          ))}
+          {isLoadingKpis ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            KPIS.map((kpi) => (
+              <KpiCard
+                key={kpi.key}
+                accent={kpi.accent}
+                delta={kpi.delta}
+                icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
+                label={kpi.label}
+                value={kpi.value}
+              />
+            ))
+          )}
         </section>
 
         <section className="mt-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all flex flex-col justify-between">
@@ -323,9 +337,7 @@ export default function ProfissionalPage() {
             />
 
             {isLoadingAlerts ? (
-              <div className="flex justify-center py-8">
-                <Spinner color="warning" />
-              </div>
+              <AlertsListSkeleton count={3} />
             ) : alerts && alerts.length > 0 ? (
               <div className="max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
                 <ul className="space-y-2.5">
@@ -395,9 +407,7 @@ export default function ProfissionalPage() {
         </div>
 
         {isLoading ? (
-          <div className="p-6 text-slate-500 dark:text-zinc-400">
-            Carregando agendamentos...
-          </div>
+          <TableSkeleton rows={8} />
         ) : isError ? (
           <div className="p-6 text-red-600 dark:text-red-400">
             Erro ao carregar agendamentos.
@@ -416,7 +426,15 @@ export default function ProfissionalPage() {
       <ProfessionalAppointmentDetailsModal
         data={selectedAppointment}
         open={isModalOpen}
+        onCancel={(row) => {
+          setIsModalOpen(false);
+          handleAction("delete", row);
+        }}
         onClose={() => setIsModalOpen(false)}
+        onDone={(row) => {
+          setIsModalOpen(false);
+          handleAction("done", row);
+        }}
       />
 
       <ConfirmModal

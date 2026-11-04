@@ -14,7 +14,11 @@ import {
   MapPinIcon,
   ClockIcon,
   HeartIcon,
+  ArrowTopRightOnSquareIcon,
+  CheckIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 import { AgendaRow } from "./AgendaTable";
 
@@ -24,12 +28,16 @@ interface Props {
   open: boolean;
   onClose: () => void;
   data?: AgendaRow | null;
+  onDone?: (row: AgendaRow) => void;
+  onCancel?: (row: AgendaRow) => void;
 }
 
 export default function ProfessionalAppointmentDetailsModal({
   open,
   onClose,
   data,
+  onDone,
+  onCancel,
 }: Props) {
   if (!data) return null;
 
@@ -59,10 +67,10 @@ export default function ProfessionalAppointmentDetailsModal({
     <Modal
       backdrop="blur"
       classNames={{
-        base: "dark:bg-gray-900",
-        header: "border-b border-gray-200 dark:border-gray-800",
+        base: "dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800",
+        header: "border-b border-slate-200 dark:border-zinc-800",
         body: "py-6",
-        footer: "border-t border-gray-200 dark:border-gray-800",
+        footer: "border-t border-slate-200 dark:border-zinc-800",
       }}
       isOpen={open}
       size="lg"
@@ -71,110 +79,97 @@ export default function ProfessionalAppointmentDetailsModal({
       <ModalContent>
         {(close) => (
           <>
-            <ModalHeader className="flex items-center gap-3 text-gray-900 dark:text-gray-100">
-              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                <CalendarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <ModalHeader className="flex items-center gap-3 text-slate-900 dark:text-zinc-100">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <CalendarIcon className="size-6" />
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-semibold truncate">
                   Detalhes do Agendamento
                 </h2>
-                <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-normal text-slate-500 dark:text-zinc-400">
                   Informações completas da consulta
                 </p>
               </div>
             </ModalHeader>
 
-            <ModalBody className="space-y-1">
+            <ModalBody className="space-y-3">
               {/* Paciente */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <UserIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                  <UserIcon className="size-5" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-0.5">
                     Paciente
                   </p>
-                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  <p className="text-base font-semibold text-slate-900 dark:text-zinc-100 truncate">
                     {data.paciente}
                   </p>
                   {data.docMasked && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Doc: {data.docMasked}
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 font-mono">
+                      CPF / Documento: {data.docMasked}
                     </p>
                   )}
                 </div>
               </div>
 
               {/* Condição */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <HeartIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Condição de Saúde
-                  </p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">
-                    {data.condicao}
-                  </p>
-                </div>
-              </div>
-
-              {/* Local */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <MapPinIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                  <HeartIcon className="size-5 text-rose-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Local
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-0.5">
+                    Condição Clínica / Diagnóstico
                   </p>
-                  <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                    {data.local}
-                  </p>
-                </div>
-              </div>
-
-              {/* Horário */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Horário
-                  </p>
-                  <p className="text-sm text-gray-900 dark:text-gray-100 tabular-nums">
-                    {data.hora}
+                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100">
+                    {data.condicao && data.condicao !== "—"
+                      ? data.condicao
+                      : "Sem diagnóstico crônico específico"}
                   </p>
                 </div>
               </div>
 
-              {/* Tipo */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              {/* Local e Horário */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                    <MapPinIcon className="size-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-0.5">
+                      Local
+                    </p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">
+                      {data.local}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Tipo da Consulta
-                  </p>
 
-                  <StatusChip size="md" tone={"safe"}>
-                    {data.type}
-                  </StatusChip>
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                    <ClockIcon className="size-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-0.5">
+                      Horário
+                    </p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 tabular-nums">
+                      {data.hora}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Status e Risco */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                     Status
                   </p>
                   <StatusChip
-                    size="md"
+                    size="sm"
                     tone={
                       data.status === "finalizado"
                         ? "safe"
@@ -191,39 +186,95 @@ export default function ProfessionalAppointmentDetailsModal({
                   </StatusChip>
                 </div>
 
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                     Nível de Risco
                   </p>
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-2 h-2 rounded-full ${
+                      className={`size-2 rounded-full ${
                         data.risco === "critical"
-                          ? "bg-rose-500"
+                          ? "bg-rose-500 animate-pulse"
                           : data.risco === "moderate"
                             ? "bg-amber-500"
                             : "bg-emerald-500"
                       }`}
                     />
                     <span
-                      className={`font-semibold ${getRiskColor(data.risco)}`}
+                      className={`text-xs font-semibold ${getRiskColor(data.risco)}`}
                     >
                       {getRiskLabel(data.risco)}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {data.description && (
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-1">
+                    Observações
+                  </p>
+                  <p className="text-xs text-slate-700 dark:text-zinc-300">
+                    {data.description}
+                  </p>
+                </div>
+              )}
             </ModalBody>
 
-            <ModalFooter>
-              <Button
-                className="font-medium"
-                color="primary"
-                variant="light"
-                onPress={close}
-              >
-                Fechar
-              </Button>
+            <ModalFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5">
+              <div>
+                {data.patientId ? (
+                  <Button
+                    as={Link}
+                    className="font-medium text-xs text-primary bg-primary/10 hover:bg-primary/20"
+                    endContent={
+                      <ArrowTopRightOnSquareIcon className="size-3.5" />
+                    }
+                    href={`/pacientes/${data.patientId}/editar`}
+                    size="sm"
+                  >
+                    Ver Prontuário
+                  </Button>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                {data.status === "ativo" && onCancel && (
+                  <Button
+                    className="font-medium text-xs"
+                    color="danger"
+                    size="sm"
+                    startContent={<XMarkIcon className="size-3.5" />}
+                    variant="light"
+                    onPress={() => onCancel(data)}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+
+                {data.status === "ativo" && onDone && (
+                  <Button
+                    className="font-medium text-xs text-white shadow-2xs"
+                    color="primary"
+                    size="sm"
+                    startContent={
+                      <CheckIcon className="size-3.5" strokeWidth={2.5} />
+                    }
+                    onPress={() => onDone(data)}
+                  >
+                    Finalizar Atendimento
+                  </Button>
+                )}
+
+                <Button
+                  className="font-medium text-xs"
+                  size="sm"
+                  variant="bordered"
+                  onPress={close}
+                >
+                  Fechar
+                </Button>
+              </div>
             </ModalFooter>
           </>
         )}

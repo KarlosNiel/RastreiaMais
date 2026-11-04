@@ -8,6 +8,7 @@ import {
   PacientesTable,
   type PatientRow,
 } from "@/components/pacientes/PacientesTable";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 export default function Page() {
   const router = useRouter();
@@ -61,9 +62,7 @@ export default function Page() {
         </header>
 
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-            Carregando pacientes...
-          </div>
+          <TableSkeleton rows={8} />
         ) : isError ? (
           <div className="p-8 text-center text-red-600 dark:text-red-400">
             Erro ao carregar pacientes.

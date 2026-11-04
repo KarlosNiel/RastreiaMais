@@ -1,13 +1,26 @@
 // frontend/components/skeletons/StatCardSkeleton.tsx
-import Skeleton from "./Skeleton";
+import { Skeleton } from "./Skeleton";
 
-export function StatCardSkeleton() {
+import { cn } from "@/lib/utils";
+
+export function StatCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className="rounded-2xl border border-divider bg-content1 p-4 shadow-soft">
-      <div className="stack-2">
-        <Skeleton className="h-3 w-24" />
+    <div
+      className={cn(
+        "flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs",
+        "dark:border-zinc-800 dark:bg-zinc-900",
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="size-9 rounded-lg shrink-0" />
+      </div>
+      <div className="mt-3 flex items-baseline gap-2">
         <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-3 w-28" />
+      </div>
+      <div className="mt-2">
+        <Skeleton className="h-3 w-32" />
       </div>
     </div>
   );
