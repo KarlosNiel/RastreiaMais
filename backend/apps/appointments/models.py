@@ -32,6 +32,13 @@ class Appointment(BaseModel):
             models.Index(fields=['patient', 'scheduled_datetime']),
             models.Index(fields=['status', 'risk_level']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['professional', 'scheduled_datetime'],
+                condition=models.Q(is_deleted=False) & ~models.Q(status='cancelado'),
+                name='unique_active_professional_appointment_slot'
+            )
+        ]
 
     patient = models.ForeignKey(PatientUser, on_delete=models.PROTECT)
     professional = models.ForeignKey(ProfessionalUser, on_delete=models.PROTECT)

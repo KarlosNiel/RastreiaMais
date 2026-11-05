@@ -43,6 +43,9 @@ class SocialdemographicData(models.Model):
     cpf = models.CharField(
         "CPF", max_length=20, null=True, blank=True, db_index=True
     )
+    sus = models.CharField(
+        "Cartão SUS / CNS", max_length=20, null=True, blank=True, db_index=True
+    )
     birth_date = models.DateField(
         "Data de Nascimento", null=True, blank=True
     )

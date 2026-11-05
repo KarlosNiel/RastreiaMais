@@ -22,4 +22,3 @@ def log_medical_access(user, action: str, patient_id: int, resource_name: str, r
 
     lgpd_logger.info(message)
     audit_logger.info(message)
-

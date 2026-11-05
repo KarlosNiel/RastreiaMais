@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from apps.commons.models import BaseModel
 from django.core.exceptions import ValidationError
@@ -27,6 +28,23 @@ class PatientUser(SingleProfileMixin, BaseModel, SocialdemographicData, LifeStyl
     class Meta:
         verbose_name = "Paciente"
         verbose_name_plural = 'Pacientes'
+        indexes = [
+            models.Index(fields=['cpf']),
+            models.Index(fields=['sus']),
+            models.Index(fields=['birth_date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cpf'],
+                condition=Q(is_deleted=False) & Q(cpf__isnull=False) & ~Q(cpf=''),
+                name='unique_active_patient_cpf'
+            ),
+            models.UniqueConstraint(
+                fields=['sus'],
+                condition=Q(is_deleted=False) & Q(sus__isnull=False) & ~Q(sus=''),
+                name='unique_active_patient_sus'
+            ),
+        ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -43,6 +61,16 @@ class PatientUser(SingleProfileMixin, BaseModel, SocialdemographicData, LifeStyl
                 valid = isinstance(creator, (ManagerUser, ProfessionalUser))
                 if not valid and not self.created_by.is_staff:
                     raise ValidationError('Apenas Gestores ou Profissionais podem criar Pacientes.')
+
+    def delete(self, user=None):
+        super().delete(user=user)
+        # Cancela agendamentos futuros pendentes para evitar slots órfãos
+        from apps.appointments.models import Appointment
+        Appointment.objects.filter(
+            patient=self,
+            status='ativo',
+            is_deleted=False
+        ).update(status='cancelado')
 
 #Professional=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 class ProfessionalUser(SingleProfileMixin, BaseModel): 

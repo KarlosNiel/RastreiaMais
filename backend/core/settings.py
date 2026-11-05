@@ -76,6 +76,7 @@ INSTALLED_APPS = [
 ] + THIRD_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    'apps.commons.middleware.CorrelationIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -123,9 +124,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR}/db.sqlite3",
-        conn_max_age=600
+        conn_max_age=600,
+        conn_health_checks=True,
     )
 }
+
+# Limites defensivos de payload (proteção contra DoS de memória)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024   # 5 MB
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 
 # Password validation
@@ -355,13 +362,18 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'correlation_id': {
+            '()': 'apps.commons.middleware.correlation_id.CorrelationIdFilter',
+        },
+    },
     'formatters': {
         'verbose': {
-            'format': '[{asctime}] {levelname} [{name}:{lineno}] {message}',
+            'format': '[{asctime}] [{request_id}] {levelname} [{name}:{lineno}] {message}',
             'style': '{',
         },
         'audit': {
-            'format': '[{asctime}] [LGPD-AUDIT] {message}',
+            'format': '[{asctime}] [{request_id}] [LGPD-AUDIT] {message}',
             'style': '{',
         },
     },
@@ -369,6 +381,7 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+            'filters': ['correlation_id'],
         },
         'file_django': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -376,6 +389,7 @@ LOGGING = {
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 3,
             'formatter': 'verbose',
+            'filters': ['correlation_id'],
         },
         'file_audit': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -383,6 +397,7 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 5,
             'formatter': 'audit',
+            'filters': ['correlation_id'],
         },
         'file_lgpd': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -390,6 +405,7 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 5,
             'formatter': 'audit',
+            'filters': ['correlation_id'],
         },
     },
     'loggers': {

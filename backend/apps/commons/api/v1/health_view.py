@@ -39,6 +39,7 @@ class HealthCheckView(APIView):
             "status": "healthy" if db_healthy else "unhealthy",
             "database": "connected" if db_healthy else "disconnected",
             "timestamp": timezone.now().isoformat(),
+            "request_id": getattr(request, "request_id", None),
         }
 
         if not db_healthy:
@@ -46,4 +47,3 @@ class HealthCheckView(APIView):
             return Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         return Response(data, status=status.HTTP_200_OK)
-

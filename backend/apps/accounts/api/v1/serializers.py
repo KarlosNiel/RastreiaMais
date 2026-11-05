@@ -6,6 +6,7 @@ from apps.accounts.models import *
 from apps.commons.api.v1.serializers import BaseSerializer
 from apps.locations.api.v1.serializers import AddressSerializer
 from apps.locations.models import Address
+from apps.commons.utils.validators import validate_brazilian_cpf, validate_cns
 
 def _update_user_instance(user_instance, user_data):
     if not user_data:
@@ -67,31 +68,35 @@ class PatientUserSerializer(BaseSerializer):
     def validate_cpf(self, value):
         """Valida se o CPF já está em uso por outro paciente"""
         if value:
+            clean_cpf = validate_brazilian_cpf(value)
             # Para criação, verifica se CPF já existe
-            if not self.instance and PatientUser.objects.filter(cpf=value).exists():
+            if not self.instance and PatientUser.objects.filter(cpf=clean_cpf).exists():
                 raise serializers.ValidationError(
                     "Este CPF já está cadastrado no sistema. Verifique a lista de pacientes."
                 )
             # Para edição, verifica se CPF já existe em outro paciente
-            elif self.instance and PatientUser.objects.filter(cpf=value).exclude(id=self.instance.id).exists():
+            elif self.instance and PatientUser.objects.filter(cpf=clean_cpf).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError(
                     "Este CPF já está cadastrado em outro paciente."
                 )
+            return clean_cpf
         return value
 
     def validate_sus(self, value):
         """Valida se o cartão SUS já está em uso por outro paciente"""
         if value:
+            clean_sus = validate_cns(value)
             # Para criação, verifica se SUS já existe
-            if not self.instance and PatientUser.objects.filter(sus=value).exists():
+            if not self.instance and PatientUser.objects.filter(sus=clean_sus).exists():
                 raise serializers.ValidationError(
                     "Este cartão SUS já está cadastrado no sistema. Verifique a lista de pacientes."
                 )
             # Para edição, verifica se SUS já existe em outro paciente
-            elif self.instance and PatientUser.objects.filter(sus=value).exclude(id=self.instance.id).exists():
+            elif self.instance and PatientUser.objects.filter(sus=clean_sus).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError(
                     "Este cartão SUS já está cadastrado em outro paciente."
                 )
+            return clean_sus
         return value
 
     @extend_schema_field(serializers.CharField())
