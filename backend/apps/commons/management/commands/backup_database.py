@@ -90,3 +90,4 @@ class Command(BaseCommand):
                         self.stdout.write(f"Backup rotacionado e removido: {os.path.basename(old_backup)}")
                     except Exception as e:
                         self.stderr.write(f"Erro ao remover backup antigo {old_backup}: {e}")
+

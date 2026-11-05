@@ -70,3 +70,4 @@ class Command(BaseCommand):
         finally:
             if os.path.exists(temp_restore_json):
                 os.remove(temp_restore_json)
+

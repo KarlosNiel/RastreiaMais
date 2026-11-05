@@ -32,3 +32,4 @@ def connect_kpi_signals():
     for model in [Appointment, Alert, PatientUser]:
         post_save.connect(invalidate_dashboard_kpis_cache, sender=model, weak=False)
         post_delete.connect(invalidate_dashboard_kpis_cache, sender=model, weak=False)
+

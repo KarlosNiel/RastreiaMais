@@ -68,3 +68,4 @@ class AccountLockout(models.Model):
         clean_id = (identifier or "").strip().lower()
         if clean_id:
             cls.objects.filter(identifier=clean_id).update(failed_attempts=0, locked_until=None)
+
