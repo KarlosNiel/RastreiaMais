@@ -456,5 +456,5 @@ if SENTRY_DSN:
         ],
         environment=os.environ.get("ENV", "production" if not DEBUG else "development"),
         traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
-        send_default_pii=False,  # Conformidade LGPD: não envia PII de pacientes por padrão
+        data_collection={"user_info": False},  # Conformidade LGPD: não envia PII de pacientes por padrão
     )

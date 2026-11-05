@@ -38,8 +38,15 @@ from apps.accounts.api.v1.password_reset_views import (
 )
 from apps.commons.api.v1.health_view import HealthCheckView
 
+
+def trigger_sentry_error(request):
+    """Endpoint oficial para verificação de integração do Sentry"""
+    return 1 / 0
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('sentry-debug/', trigger_sentry_error, name='sentry_debug'),
     path('api/health/', HealthCheckView.as_view(), name='health_check'),
     path(
         'api/',
