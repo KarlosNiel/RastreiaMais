@@ -1,0 +1,78 @@
+name: Continuous Integration (CI)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-ci:
+    name: Backend CI (Security, Migrations & Tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: "backend/requirements.txt"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Check Missing Database Migrations
+        run: |
+          cd backend
+          python manage.py makemigrations --check --dry-run
+
+      - name: Run Bandit Security Scanner
+        run: |
+          cd backend
+          bandit -r apps/ -ll
+
+      - name: Lint with Flake8 (Fatal Syntax & Undefined Names)
+        run: |
+          cd backend
+          flake8 --count --select=E9,F63,F7,F82 --show-source --statistics apps/
+
+      - name: Run Automated Pytest Suite
+        run: |
+          cd backend
+          pytest
+
+  frontend-ci:
+    name: Frontend CI (Types & Lint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install Node Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Check TypeScript Types
+        run: |
+          cd frontend
+          npm run typecheck
+
+      - name: Run ESLint
+        run: |
+          cd frontend
+          npm run lint

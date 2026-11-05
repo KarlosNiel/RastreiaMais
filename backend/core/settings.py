@@ -431,3 +431,30 @@ LOGGING = {
         },
     },
 }
+
+# Sentry Error Tracking & APM (Ativo quando SENTRY_DSN for configurado no ambiente)
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    import logging
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.ERROR,
+    )
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(
+                transaction_style="url",
+                middleware_spans=True,
+            ),
+            sentry_logging,
+        ],
+        environment=os.environ.get("ENV", "production" if not DEBUG else "development"),
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
+        send_default_pii=False,  # Conformidade LGPD: não envia PII de pacientes por padrão
+    )
