@@ -64,8 +64,8 @@ export default function LoginProfissionalPage() {
 
   return (
     <AuthCard
-      heading="Acesso do Profissional"
-      subheading="Entre com seu e-mail institucional ou usuário APS para acessar os prontuários e painéis clínicos."
+      heading="Acesso Profissional"
+      subheading="Entre com seu e-mail ou usuário para continuar."
     >
       <form
         noValidate
@@ -73,17 +73,14 @@ export default function LoginProfissionalPage() {
         className="space-y-4"
         onSubmit={handleSubmit}
       >
-        {/* Banner de Erro Humanizado */}
+        {/* Banner de Erro Direto */}
         {errorMsg && (
           <div
-            className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
+            className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
             role="alert"
           >
-            <ExclamationCircleIcon className="size-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-            <div className="leading-relaxed">
-              <span className="font-bold block">Falha na autenticação</span>
-              {errorMsg}
-            </div>
+            <ExclamationCircleIcon className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            <span className="font-medium">{errorMsg}</span>
           </div>
         )}
 
@@ -92,7 +89,7 @@ export default function LoginProfissionalPage() {
           autoCapitalize="none"
           autoComplete="username"
           enterKeyHint="next"
-          label="E-mail ou Usuário APS"
+          label="E-mail ou Usuário"
           name="username"
           placeholder="seu.email@saude.gov.br ou usuario"
           spellCheck="false"
@@ -124,7 +121,7 @@ export default function LoginProfissionalPage() {
             </button>
           }
           enterKeyHint="done"
-          label="Senha de Acesso"
+          label="Senha"
           name="password"
           placeholder="••••••••"
           startContent={
@@ -146,11 +143,11 @@ export default function LoginProfissionalPage() {
             }}
             onValueChange={setRememberMe}
           >
-            Manter conectado
+            Lembrar-me
           </Checkbox>
 
           <Link
-            className="text-xs font-semibold text-primary hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+            className="text-xs font-medium text-primary hover:underline transition-colors"
             href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
@@ -160,10 +157,9 @@ export default function LoginProfissionalPage() {
         <div className="pt-2">
           <SubmitButton
             disabled={loading || !isValid}
-            endContent={<ArrowRight className="size-4" />}
             isLoading={loading}
           >
-            {loading ? "Autenticando..." : "Entrar no Sistema"}
+            {loading ? "Entrando..." : "Entrar"}
           </SubmitButton>
         </div>
       </form>

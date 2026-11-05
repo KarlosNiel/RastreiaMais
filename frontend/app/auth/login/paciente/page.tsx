@@ -64,8 +64,8 @@ export default function LoginPacientePage() {
 
   return (
     <AuthCard
-      heading="Portal do Cidadão"
-      subheading="Acompanhe suas aferições de pressão, exames e agendamentos na sua Unidade de Saúde da Família."
+      heading="Acesso do Paciente"
+      subheading="Entre com seu CPF ou e-mail cadastrado."
     >
       <form
         noValidate
@@ -73,17 +73,14 @@ export default function LoginPacientePage() {
         className="space-y-4"
         onSubmit={handleSubmit}
       >
-        {/* Banner de Erro Humanizado */}
+        {/* Banner de Erro Direto */}
         {error && (
           <div
-            className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
+            className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
             role="alert"
           >
-            <ExclamationCircleIcon className="size-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-            <div className="leading-relaxed">
-              <span className="font-bold block">Falha no acesso</span>
-              {error}
-            </div>
+            <ExclamationCircleIcon className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
@@ -92,9 +89,9 @@ export default function LoginPacientePage() {
           autoCapitalize="none"
           autoComplete="username"
           enterKeyHint="next"
-          label="CPF ou E-mail do Paciente"
+          label="CPF ou E-mail"
           name="login"
-          placeholder="000.000.000-00 ou seu e-mail"
+          placeholder="000.000.000-00 ou email"
           spellCheck="false"
           startContent={
             <User className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
@@ -146,11 +143,11 @@ export default function LoginPacientePage() {
             }}
             onValueChange={setRememberMe}
           >
-            Lembrar meu acesso
+            Lembrar-me
           </Checkbox>
 
           <Link
-            className="text-xs font-semibold text-primary hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+            className="text-xs font-medium text-primary hover:underline transition-colors"
             href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
@@ -160,10 +157,9 @@ export default function LoginPacientePage() {
         <div className="pt-2">
           <SubmitButton
             disabled={loading}
-            endContent={<ArrowRight className="size-4" />}
             isLoading={loading}
           >
-            {loading ? "Acessando..." : "Entrar no Meu Espaço"}
+            {loading ? "Entrando..." : "Entrar"}
           </SubmitButton>
         </div>
       </form>
