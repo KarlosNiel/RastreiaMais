@@ -1,8 +1,11 @@
 // frontend/app/auth/login/profissional/page.tsx
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { loginAndAssertRole, pickDashboard, setRoleCookie } from "@/lib/auth";
@@ -40,12 +43,12 @@ export default function LoginProfissionalPage() {
         rememberMe,
       );
 
-      // 2) Define cookie leve para o middleware (prioridade MANAGER > PROFESSIONAL)
+      // Define cookie leve para o middleware (prioridade MANAGER > PROFESSIONAL)
       const role = me.roles.includes("MANAGER") ? "MANAGER" : "PROFESSIONAL";
 
       setRoleCookie(role);
 
-      // 3) Redireciona para o dashboard adequado
+      // Redireciona para o dashboard adequado
       router.replace(pickDashboard(me.roles));
     } catch (err: any) {
       const msg =
@@ -61,26 +64,42 @@ export default function LoginProfissionalPage() {
 
   return (
     <AuthCard
-      heading="Seja Bem Vindo Profissional!"
-      imageSrc="/auth/profissional.jpg"
+      heading="Acesso do Profissional"
+      subheading="Entre com seu e-mail institucional ou usuário APS para acessar os prontuários e painéis clínicos."
     >
       <form
         noValidate
         aria-label="Formulário de login do profissional"
-        className="stack-6"
+        className="space-y-4"
         onSubmit={handleSubmit}
       >
+        {/* Banner de Erro Humanizado */}
+        {errorMsg && (
+          <div
+            className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
+            role="alert"
+          >
+            <ExclamationCircleIcon className="size-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+            <div className="leading-relaxed">
+              <span className="font-bold block">Falha na autenticação</span>
+              {errorMsg}
+            </div>
+          </div>
+        )}
+
         <TextField
           isRequired
           autoCapitalize="none"
-          autoComplete="email"
-          className="pb-5"
+          autoComplete="username"
           enterKeyHint="next"
-          label="E-mail"
-          name="email"
-          placeholder="nome@exemplo.com"
+          label="E-mail ou Usuário APS"
+          name="username"
+          placeholder="seu.email@saude.gov.br ou usuario"
           spellCheck="false"
-          type="email"
+          startContent={
+            <Mail className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
+          }
+          type="text"
           value={email}
           onValueChange={setEmail}
         />
@@ -88,12 +107,12 @@ export default function LoginProfissionalPage() {
         <TextField
           isRequired
           autoComplete="current-password"
-          className="pb-5"
           endContent={
             <button
               aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
               aria-pressed={showPwd}
-              className="text-foreground/60 hover:text-foreground focus-visible:outline-none"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors p-1"
+              tabIndex={-1}
               type="button"
               onClick={() => setShowPwd((v) => !v)}
             >
@@ -105,41 +124,48 @@ export default function LoginProfissionalPage() {
             </button>
           }
           enterKeyHint="done"
-          label="Senha"
+          label="Senha de Acesso"
           name="password"
           placeholder="••••••••"
+          startContent={
+            <Lock className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
+          }
           type={showPwd ? "text" : "password"}
           value={pwd}
           onValueChange={setPwd}
         />
 
-        <div className="flex items-center justify-between mb-6">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              checked={rememberMe}
-              className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-              type="checkbox"
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-            <span>Lembrar-me</span>
-          </label>
-          <a
-            className="text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition"
+        <div className="flex items-center justify-between pt-1">
+          <Checkbox
+            color="primary"
+            isSelected={rememberMe}
+            size="sm"
+            classNames={{
+              label:
+                "text-xs text-slate-600 dark:text-zinc-400 select-none font-medium",
+            }}
+            onValueChange={setRememberMe}
+          >
+            Manter conectado
+          </Checkbox>
+
+          <Link
+            className="text-xs font-semibold text-primary hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
             href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
-          </a>
+          </Link>
         </div>
 
-        {errorMsg && (
-          <div className="text-danger-500 text-sm" role="alert">
-            {errorMsg}
-          </div>
-        )}
-
-        <SubmitButton disabled={loading || !isValid} isLoading={loading}>
-          Entrar
-        </SubmitButton>
+        <div className="pt-2">
+          <SubmitButton
+            disabled={loading || !isValid}
+            endContent={<ArrowRight className="size-4" />}
+            isLoading={loading}
+          >
+            {loading ? "Autenticando..." : "Entrar no Sistema"}
+          </SubmitButton>
+        </div>
       </form>
     </AuthCard>
   );

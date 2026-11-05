@@ -26,7 +26,21 @@ export function AppShell({ children }: AppShellProps) {
     setMounted(true);
   }, []);
 
-  // Rotas públicas (landing e autenticação) não exibem a barra lateral do dashboard
+  // Rotas de formulário de autenticação dedicada (não exibem header/footer de marketing para foco total)
+  const isAuthFormRoute =
+    pathname.startsWith("/auth/login/") ||
+    pathname.startsWith("/auth/recuperar-senha") ||
+    pathname.startsWith("/auth/redefinir-senha");
+
+  if (isAuthFormRoute) {
+    return (
+      <main className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950 transition-colors">
+        {children}
+      </main>
+    );
+  }
+
+  // Rotas públicas de apresentação (landing page e portal geral)
   const isPublicRoute =
     pathname === "/" || pathname.startsWith("/auth/") || pathname === "/auth";
 
