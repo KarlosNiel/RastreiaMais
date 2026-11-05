@@ -2,20 +2,22 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.accounts.api.v1.serializers import UserSerializer
-from apps.accounts.models import ManagerUser, ProfessionalUser, PatientUser
 from rest_framework_simplejwt.views import TokenObtainPairView
+from apps.accounts.utils.utils import get_user_profile
 from .auth_serializers import EmailOrUsernameOrCpfTokenObtainPairSerializer
 
 class EmailOrUsernameOrCpfTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailOrUsernameOrCpfTokenObtainPairSerializer
+    throttle_scope = 'auth_token'
 
 
 def _roles_for(user):
-    roles = []
-    if ManagerUser.objects.filter(user=user).exists(): roles.append("MANAGER")
-    if ProfessionalUser.objects.filter(user=user).exists(): roles.append("PROFESSIONAL")
-    if PatientUser.objects.filter(user=user).exists(): roles.append("PATIENT")
-    return roles
+    role, _ = get_user_profile(user)
+    if role and role in ('manager', 'professional', 'patient'):
+        return [role.upper()]
+    if user.is_superuser:
+        return ["MANAGER"]
+    return []
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]

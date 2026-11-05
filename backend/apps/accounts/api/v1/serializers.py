@@ -1,3 +1,5 @@
+import re
+from django.db import transaction
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from apps.accounts.models import *
@@ -5,19 +7,38 @@ from apps.commons.api.v1.serializers import BaseSerializer
 from apps.locations.api.v1.serializers import AddressSerializer
 from apps.locations.models import Address
 
+def _update_user_instance(user_instance, user_data):
+    if not user_data:
+        return user_instance
+    password = user_data.pop("password", None)
+    for attr, val in user_data.items():
+        setattr(user_instance, attr, val)
+    if password:
+        user_instance.set_password(password)
+    user_instance.save()
+    return user_instance
+
 class UserSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model = User
         fields = ["id", "username", "first_name", "last_name", "email", "password"]
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "username": {"validators": []},
+        }
 
     def validate_username(self, value):
-        # Check if username already exists (only for creation)
-        if not self.instance and User.objects.filter(username=value).exists():
-            # Busca informações do usuário existente
-            existing_user = User.objects.filter(username=value).first()
+        target_instance = self.instance
+        if not target_instance and self.parent and getattr(self.parent, 'instance', None):
+            target_instance = getattr(self.parent.instance, 'user', None)
+
+        qs = User.objects.filter(username=value)
+        if target_instance:
+            qs = qs.exclude(pk=target_instance.pk)
+
+        if qs.exists():
+            existing_user = qs.first()
             user_name = existing_user.get_full_name() if existing_user else "desconhecido"
-            
             raise serializers.ValidationError(
                 f"Este CPF já está cadastrado no sistema (Paciente: {user_name}). "
                 "Verifique a lista de pacientes antes de criar um novo registro."
@@ -89,7 +110,12 @@ class PatientUserSerializer(BaseSerializer):
             pass
         
         try:
-            if obj.otherdcnt_set.exists():
+            # Evita N+1: se otherdcnt_set estiver no cache de prefetch, usa len() em memória
+            if hasattr(obj, '_prefetched_objects_cache') and 'otherdcnt_set' in obj._prefetched_objects_cache:
+                has_other = len(obj.otherdcnt_set.all()) > 0
+            else:
+                has_other = obj.otherdcnt_set.exists()
+            if has_other:
                 conditions.append("OUTRAS DCNTs")
         except:
             pass
@@ -98,10 +124,20 @@ class PatientUserSerializer(BaseSerializer):
 
     def create(self, validated_data):
         user_data = validated_data.pop("user")
-        user = User.objects.create_user(**user_data)
-        patient = PatientUser.objects.create(user=user, **validated_data)
-
+        with transaction.atomic():
+            user = User.objects.create_user(**user_data)
+            patient = PatientUser.objects.create(user=user, **validated_data)
         return patient
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        with transaction.atomic():
+            if user_data:
+                _update_user_instance(instance.user, user_data)
+            for attr, val in validated_data.items():
+                setattr(instance, attr, val)
+            instance.save()
+        return instance
 
 class ProfessionalUserSerializer(BaseSerializer):
     user = UserSerializer()
@@ -110,13 +146,22 @@ class ProfessionalUserSerializer(BaseSerializer):
         model = ProfessionalUser
         fields = '__all__'
 
-
     def create(self, validated_data):
         user_data = validated_data.pop("user")
-        user = User.objects.create_user(**user_data)
-        professional = ProfessionalUser.objects.create(user=user, **validated_data)
-
+        with transaction.atomic():
+            user = User.objects.create_user(**user_data)
+            professional = ProfessionalUser.objects.create(user=user, **validated_data)
         return professional
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        with transaction.atomic():
+            if user_data:
+                _update_user_instance(instance.user, user_data)
+            for attr, val in validated_data.items():
+                setattr(instance, attr, val)
+            instance.save()
+        return instance
 
 class ManagerUserSerializer(BaseSerializer):
     user = UserSerializer()
@@ -127,7 +172,17 @@ class ManagerUserSerializer(BaseSerializer):
 
     def create(self, validated_data):
         user_data = validated_data.pop("user")
-        user = User.objects.create_user(**user_data)
-        manager = ManagerUser.objects.create(user=user, **validated_data)
-
+        with transaction.atomic():
+            user = User.objects.create_user(**user_data)
+            manager = ManagerUser.objects.create(user=user, **validated_data)
         return manager
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        with transaction.atomic():
+            if user_data:
+                _update_user_instance(instance.user, user_data)
+            for attr, val in validated_data.items():
+                setattr(instance, attr, val)
+            instance.save()
+        return instance

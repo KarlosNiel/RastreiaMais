@@ -13,6 +13,16 @@ class BaseModelViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins
     queryset = None
     serializer_class = None
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if hasattr(qs.model, 'is_deleted') and getattr(self, 'action', None) not in ('restore_object', 'hard_delete_object'):
+            include_deleted = False
+            if hasattr(self, 'request') and self.request:
+                include_deleted = self.request.query_params.get('include_deleted', '').lower() in ('true', '1')
+            if not include_deleted:
+                qs = qs.filter(is_deleted=False)
+        return qs
+
     def perform_create(self, serializer):
         extra_data = {}
         if 'created_by' in serializer.fields:

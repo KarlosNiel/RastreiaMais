@@ -36,9 +36,11 @@ from apps.accounts.api.v1.password_reset_views import (
     PasswordResetValidateView,
     PasswordResetConfirmView,
 )
+from apps.commons.api.v1.health_view import HealthCheckView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/health/', HealthCheckView.as_view(), name='health_check'),
     path(
         'api/',
         include(

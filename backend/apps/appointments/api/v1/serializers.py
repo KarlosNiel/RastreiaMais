@@ -51,6 +51,28 @@ class AppointmentSerializer(BaseSerializer):
             "updated_by",
         ]
 
+    def validate(self, attrs):
+        professional = attrs.get("professional") or (self.instance.professional if self.instance else None)
+        scheduled_datetime = attrs.get("scheduled_datetime") or (self.instance.scheduled_datetime if self.instance else None)
+        status_val = attrs.get("status") or (self.instance.status if self.instance else "ativo")
+
+        if professional and scheduled_datetime and status_val != "cancelado":
+            conflict_qs = Appointment.objects.filter(
+                professional=professional,
+                scheduled_datetime=scheduled_datetime,
+                is_deleted=False
+            ).exclude(status="cancelado")
+
+            if self.instance:
+                conflict_qs = conflict_qs.exclude(pk=self.instance.pk)
+
+            if conflict_qs.exists():
+                raise serializers.ValidationError(
+                    {"scheduled_datetime": "O profissional selecionado já possui um agendamento neste mesmo horário."}
+                )
+
+        return attrs
+
     def create(self, validated_data):
         """
         Ao criar um agendamento, calcula automaticamente o risk_level

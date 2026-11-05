@@ -15,10 +15,21 @@ class PatientUserViewset(BaseModelViewSet):
     queryset = PatientUser.all_objects
     serializer_class = PatientUserSerializer    
     permission_classes = [IsAuthenticated, PatientDataPermission]
+    filterset_fields = ['micro_area', 'gender', 'bolsa_familia']
+    search_fields = ['user__first_name', 'user__last_name', 'cpf', 'user__username', 'sus', 'phone']
+    ordering_fields = ['created_at', 'user__first_name', 'age']
+    ordering = ['-created_at']
 
     @action(detail=False, methods=['get'], url_path='check-cpf')
     def check_cpf(self, request):
-        """Verifica se um CPF já está cadastrado no sistema"""
+        """Verifica se um CPF já está cadastrado no sistema (Apenas Gestores, Profissionais e Admins)"""
+        role, profile = get_user_profile(request.user)
+        if role == 'patient':
+            return Response(
+                {"detail": "Pacientes não têm permissão para consultar status de outros CPFs."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         cpf = request.query_params.get('cpf', '').strip()
         
         if not cpf:

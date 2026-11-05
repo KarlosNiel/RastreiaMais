@@ -49,3 +49,30 @@ def update_appointment_risk_on_clinical_change(sender, instance, **kwargs):
             patient,
             sender.__name__,
         )
+
+    # Disparo automático de alerta clínico quando o paciente atinge risco crítico
+    if new_risk == "Crítico":
+        try:
+            from apps.alerts.models import Alert
+            existing_alert = Alert.objects.filter(
+                patient=patient,
+                risk_level="critical",
+                status="pending",
+                is_deleted=False
+            ).exists()
+
+            if not existing_alert:
+                condition_type = "Hipertensão Arterial" if isinstance(instance, HAS) else "Diabetes Mellitus"
+                Alert.objects.create(
+                    patient=patient,
+                    title=f"Risco Crítico Identificado: {condition_type}",
+                    description=(
+                        f"Parâmetros clínicos críticos detectados para {patient.user.get_full_name() or 'o paciente'}. "
+                        "Requer avaliação e conduta prioritária pela equipe da UBS."
+                    ),
+                    risk_level="critical",
+                    status="pending",
+                )
+                logger.info("Alerta clínico automático gerado para paciente %s", patient)
+        except Exception as e:
+            logger.error("Falha ao gerar alerta clínico automático: %s", e)

@@ -10,6 +10,7 @@ from apps.accounts.models_password_reset import PasswordResetToken
 # Create your models here.
 
 ROLE_CHOICES = [
+    ("Médico", "Médico"),
     ("Odontologista", "Odontologista"),
     ("Enfermeiro", "Enfermeiro"),
     ("ACS", "ACS"),
@@ -51,6 +52,7 @@ class ProfessionalUser(SingleProfileMixin, BaseModel):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(choices=ROLE_CHOICES, max_length=100)
+    professional_registry = models.CharField("Registro Profissional", max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"{self.role}: {self.user.get_full_name()}"

@@ -79,10 +79,10 @@ class SocialdemographicData(models.Model):
         "Bolsa Família", null=True, blank=True
     )
     micro_area = models.ForeignKey(
-        MicroArea, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Micro Área"
+        MicroArea, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Micro Área"
     )
     address = models.OneToOneField(
-        Address, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Endereço"
+        Address, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Endereço"
     )
     phone = models.CharField(
         "Telefone", max_length=40, null=True, blank=True

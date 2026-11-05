@@ -5,6 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
+from apps.accounts.models import PatientUser
+from apps.accounts.utils.utils import get_user_profile
+from apps.commons.utils.audit import log_medical_access
 from apps.reports.soap_service import generate_soap_report
 from .soap_serializer import SOAPGenerateRequestSerializer, SOAPReportResponseSerializer
 
@@ -29,9 +32,28 @@ class SOAPReportViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
 
         patient_id = serializer.validated_data["patient_id"]
+        role, profile = get_user_profile(request.user)
+
+        if role == 'patient' and (not profile or profile.id != patient_id):
+            return Response(
+                {"detail": "Você não tem permissão para acessar o prontuário deste paciente."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if role not in ('patient', 'professional', 'manager', 'superuser'):
+            return Response(
+                {"detail": "Você não possui perfil com permissão para acessar este recurso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             report = generate_soap_report(patient_id)
+            log_medical_access(request.user, "GENERATE_SOAP_REPORT", patient_id, "SOAPReport", request=request)
+        except PatientUser.DoesNotExist:
+            return Response(
+                {"detail": "Paciente não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
             return Response(
                 {"detail": f"Erro ao gerar relatório: {str(e)}"},
@@ -40,6 +62,64 @@ class SOAPReportViewSet(ViewSet):
 
         response_serializer = SOAPReportResponseSerializer(report)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Exportar Relatório SOAP em HTML para Impressão",
+        description="Retorna documento HTML estilizado pronto para impressão médica ou PDF.",
+        tags=['Reports - SOAP']
+    )
+    @action(detail=False, methods=["get"], url_path="export-html")
+    def export_html(self, request):
+        """GET /api/v1/reports/soap/export-html/?patient_id=123"""
+        from django.http import HttpResponse
+        from apps.reports.soap_export import render_soap_html
+
+        patient_id_raw = request.query_params.get("patient_id")
+        if not patient_id_raw:
+            return Response(
+                {"detail": "Parâmetro 'patient_id' é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            patient_id = int(patient_id_raw)
+        except ValueError:
+            return Response(
+                {"detail": "Parâmetro 'patient_id' inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        role, profile = get_user_profile(request.user)
+
+        if role == 'patient' and (not profile or profile.id != patient_id):
+            return Response(
+                {"detail": "Você não tem permissão para acessar o prontuário deste paciente."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if role not in ('patient', 'professional', 'manager', 'superuser'):
+            return Response(
+                {"detail": "Você não possui perfil com permissão para acessar este recurso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            report = generate_soap_report(patient_id)
+            log_medical_access(request.user, "EXPORT_SOAP_HTML", patient_id, "SOAPReport", request=request)
+        except PatientUser.DoesNotExist:
+            return Response(
+                {"detail": "Paciente não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Erro ao gerar relatório: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        prof_name = request.user.get_full_name() or request.user.username
+        html = render_soap_html(report, professional_name=prof_name)
+        return HttpResponse(html, content_type="text/html; charset=utf-8")
 
 
 @extend_schema(tags=['Reports - KPIs'])
@@ -83,7 +163,7 @@ class DashboardKPIsViewSet(ViewSet):
 
         total_appointments = appointments_qs.count()
         critical_appointments = appointments_qs.filter(risk_level="Crítico").count()
-        critical_alerts = alerts_qs.filter(risk_level="critical").count()
+        critical_alerts = alerts_qs.filter(risk_level="critical", status="pending").count()
 
         return Response({
             "total_patients": total_patients,

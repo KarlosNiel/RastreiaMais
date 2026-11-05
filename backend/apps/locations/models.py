@@ -4,8 +4,13 @@ from apps.commons.models import BaseModel
 import re
 
 UF_CHOICE = [
-    ("PB", "Paraíba"),
-    ("PE", "Pernambuco")
+    ("AC", "Acre"), ("AL", "Alagoas"), ("AP", "Amapá"), ("AM", "Amazonas"),
+    ("BA", "Bahia"), ("CE", "Ceará"), ("DF", "Distrito Federal"), ("ES", "Espírito Santo"),
+    ("GO", "Goiás"), ("MA", "Maranhão"), ("MT", "Mato Grosso"), ("MS", "Mato Grosso do Sul"),
+    ("MG", "Minas Gerais"), ("PA", "Pará"), ("PB", "Paraíba"), ("PR", "Paraná"),
+    ("PE", "Pernambuco"), ("PI", "Piauí"), ("RJ", "Rio de Janeiro"), ("RN", "Rio Grande do Norte"),
+    ("RS", "Rio Grande do Sul"), ("RO", "Rondônia"), ("RR", "Roraima"), ("SC", "Santa Catarina"),
+    ("SP", "São Paulo"), ("SE", "Sergipe"), ("TO", "Tocantins"),
 ]
 
 # Create your models here.
@@ -20,7 +25,7 @@ class Address(BaseModel):
     city = models.CharField(max_length=100)
     district = models.CharField(max_length=100)
     street = models.CharField(max_length=100)
-    number = models.PositiveIntegerField()
+    number = models.CharField(max_length=20, default="S/N")
     complement = models.CharField(max_length=100, null=True, blank=True)
     zipcode = models.CharField(max_length=10, null=True, blank=True)
 

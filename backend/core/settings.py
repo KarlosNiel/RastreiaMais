@@ -18,6 +18,11 @@ import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -26,7 +31,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dnpwhzlros7+-00c1yd4xe*x2mxt5s1uwuxd#=hc#9he$b7wz1')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True' if 'RENDER' not in os.environ and os.environ.get('ENV') != 'production' else 'False').lower() in ('true', '1')
+DEBUG_ENV = os.environ.get('DJANGO_DEBUG') or os.environ.get('DEBUG')
+DEBUG = (DEBUG_ENV if DEBUG_ENV is not None else ('True' if 'RENDER' not in os.environ and os.environ.get('ENV') != 'production' else 'False')).lower() in ('true', '1')
 
 ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -44,6 +50,7 @@ THIRD_APPS = [
     'drf_spectacular_sidecar',
     'corsheaders',
     'behave_django',
+    'django_filters',
 ]
 
 LOCAL_APPS = [
@@ -170,13 +177,23 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'apps.commons.api.v1.pagination.StandardResultsSetPagination',
+    'EXCEPTION_HANDLER': 'apps.commons.api.v1.exception_handler.custom_exception_handler',
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '120/minute',
         'user': '1200/minute',
+        'auth_token': '20/minute',
+        'password_reset': '5/minute',
     },
 }
 
@@ -319,3 +336,82 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_FROM_EMAIL = 'noreply@rastreiamais.com'
 FRONTEND_URL = 'http://localhost:3000'
+
+# Security Headers para Produção
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Logging e Auditoria LGPD
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} [{name}:{lineno}] {message}',
+            'style': '{',
+        },
+        'audit': {
+            'format': '[{asctime}] [LGPD-AUDIT] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file_django': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'django.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
+        'file_audit': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'audit.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'audit',
+        },
+        'file_lgpd': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'lgpd.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'audit',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file_django'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps': {
+            'handlers': ['console', 'file_django'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'audit': {
+            'handlers': ['console', 'file_audit'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'lgpd': {
+            'handlers': ['console', 'file_lgpd'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

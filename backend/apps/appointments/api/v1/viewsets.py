@@ -13,6 +13,10 @@ class AppointmentViewset(BaseModelViewSet):
 
     queryset = Appointment.all_objects
     serializer_class = AppointmentSerializer
+    filterset_fields = ['patient', 'professional', 'status', 'risk_level', 'local']
+    search_fields = ['patient__user__first_name', 'patient__user__last_name', 'patient__cpf', 'description']
+    ordering_fields = ['scheduled_datetime', 'risk_level', 'created_at']
+    ordering = ['scheduled_datetime']
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related(
@@ -31,14 +35,20 @@ class AppointmentViewset(BaseModelViewSet):
             return queryset.none()
 
         if role == 'patient':
-            return queryset.filter(patient=profile)
+            queryset = queryset.filter(patient=profile)
+        elif role == 'professional':
+            queryset = queryset.filter(professional=profile)
+        elif role not in ('manager', 'superuser'):
+            return queryset.none()
 
-        if role == 'professional':
-            return queryset.filter(professional=profile)
+        patient_id = self.request.query_params.get('patient_id')
+        if patient_id:
+            queryset = queryset.filter(patient_id=patient_id)
 
-        if role == 'manager' or role == 'superuser':
-            return queryset
+        date = self.request.query_params.get('date')
+        if date:
+            queryset = queryset.filter(scheduled_datetime__date=date)
 
-        return queryset.none()
+        return queryset
             
     

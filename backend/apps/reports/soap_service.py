@@ -89,6 +89,7 @@ _COMPLICATION_MAP = {
 }
 
 _REFERRAL_MAP = {
+    "MEDICO": "Médico",
     "PSICOLOGO": "Psicólogo",
     "MEDICO_VETERINARIO": "Médico Veterinário",
     "FISIOTERAPEUTA": "Fisioterapeuta",

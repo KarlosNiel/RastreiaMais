@@ -3,6 +3,13 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 import secrets
+import hashlib
+
+
+def hash_token(raw: str) -> str:
+    if not raw:
+        return ""
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
 
 class PasswordResetToken(models.Model):
@@ -31,6 +38,27 @@ class PasswordResetToken(models.Model):
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(hours=24)
         super().save(*args, **kwargs)
+
+    @classmethod
+    def create_for_user(cls, user):
+        raw_token = secrets.token_urlsafe(32)
+        hashed_token = hash_token(raw_token)
+        instance = cls.objects.create(
+            user=user,
+            token=hashed_token,
+            expires_at=timezone.now() + timedelta(hours=24)
+        )
+        return instance, raw_token
+
+    @classmethod
+    def find_token(cls, token_str: str):
+        if not token_str:
+            return None
+        hashed = hash_token(token_str)
+        return (
+            cls.objects.select_related('user').filter(token=hashed).first()
+            or cls.objects.select_related('user').filter(token=token_str).first()
+        )
 
     def is_valid(self):
         """Verifica se o token ainda é válido"""

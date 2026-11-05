@@ -1,3 +1,4 @@
+import logging
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,6 +17,8 @@ from .password_reset_serializers import (
     PasswordResetConfirmSerializer
 )
 
+logger = logging.getLogger(__name__)
+
 
 class PasswordResetRequestView(APIView):
     """
@@ -23,6 +26,7 @@ class PasswordResetRequestView(APIView):
     Aceita email, username ou CPF.
     """
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
     @extend_schema(
         request=PasswordResetRequestSerializer,
@@ -54,12 +58,12 @@ class PasswordResetRequestView(APIView):
                 expires_at__gt=timezone.now()
             ).update(used=True, used_at=timezone.now())
 
-            # Cria novo token
-            reset_token = PasswordResetToken.objects.create(user=user)
+            # Cria novo token seguro (armazena hash no banco)
+            reset_token, raw_token = PasswordResetToken.create_for_user(user=user)
 
-            # Monta o link de recuperação
+            # Monta o link de recuperação com o token original
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-            reset_link = f"{frontend_url}/auth/redefinir-senha?token={reset_token.token}"
+            reset_link = f"{frontend_url}/auth/redefinir-senha?token={raw_token}"
 
             # Envia email
             try:
@@ -85,8 +89,7 @@ Equipe Rastreia+
                     fail_silently=False,
                 )
             except Exception as e:
-                # Log do erro (em produção, usar logging adequado)
-                print(f"Erro ao enviar email: {e}")
+                logger.error("Erro ao enviar email de recuperação de senha: %s", e)
 
         return Response({
             'message': 'Se o email informado estiver cadastrado, você receberá instruções para recuperação de senha.'
@@ -98,6 +101,7 @@ class PasswordResetValidateView(APIView):
     Endpoint para validar um token de recuperação.
     """
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
     @extend_schema(
         request=PasswordResetValidateSerializer,
@@ -118,27 +122,19 @@ class PasswordResetValidateView(APIView):
             )
 
         token_str = serializer.validated_data['token']
+        token = PasswordResetToken.find_token(token_str)
 
-        try:
-            token = PasswordResetToken.objects.select_related('user').get(token=token_str)
-            
-            if not token.is_valid():
-                return Response({
-                    'valid': False,
-                    'message': 'Token inválido ou expirado.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({
-                'valid': True,
-                'email': token.user.email,
-                'username': token.user.username
-            }, status=status.HTTP_200_OK)
-
-        except PasswordResetToken.DoesNotExist:
+        if not token or not token.is_valid():
             return Response({
                 'valid': False,
-                'message': 'Token não encontrado.'
+                'message': 'Token inválido ou expirado.'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'valid': True,
+            'email': token.user.email,
+            'username': token.user.username
+        }, status=status.HTTP_200_OK)
 
 
 class PasswordResetConfirmView(APIView):
@@ -146,6 +142,7 @@ class PasswordResetConfirmView(APIView):
     Endpoint para confirmar a nova senha.
     """
     permission_classes = [AllowAny]
+    throttle_scope = 'password_reset'
 
     @extend_schema(
         request=PasswordResetConfirmSerializer,
@@ -168,36 +165,30 @@ class PasswordResetConfirmView(APIView):
         token_str = serializer.validated_data['token']
         new_password = serializer.validated_data['password']
 
-        try:
-            token = PasswordResetToken.objects.select_related('user').get(token=token_str)
-            
-            if not token.is_valid():
-                return Response({
-                    'message': 'Token inválido ou expirado.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+        token = PasswordResetToken.find_token(token_str)
 
-            user = token.user
-
-            # Valida a senha usando os validadores do Django
-            try:
-                validate_password(new_password, user=user)
-            except DjangoValidationError as e:
-                return Response({
-                    'password': list(e.messages)
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Atualiza a senha
-            user.set_password(new_password)
-            user.save()
-
-            # Marca o token como usado
-            token.mark_as_used()
-
+        if not token or not token.is_valid():
             return Response({
-                'message': 'Senha alterada com sucesso!'
-            }, status=status.HTTP_200_OK)
-
-        except PasswordResetToken.DoesNotExist:
-            return Response({
-                'message': 'Token não encontrado.'
+                'message': 'Token inválido ou expirado.'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = token.user
+
+        # Valida a senha usando os validadores do Django
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
+            return Response({
+                'password': list(e.messages)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Atualiza a senha
+        user.set_password(new_password)
+        user.save()
+
+        # Marca o token como usado
+        token.mark_as_used()
+
+        return Response({
+            'message': 'Senha alterada com sucesso!'
+        }, status=status.HTTP_200_OK)
