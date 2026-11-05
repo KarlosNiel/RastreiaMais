@@ -134,12 +134,21 @@ class DashboardKPIsViewSet(ViewSet):
         description="Retorna contadores otimizados (SQL COUNT) para gestores e profissionais.",
     )
     def list(self, request):
+        from django.core.cache import cache
         from apps.accounts.utils.utils import get_user_profile
         from apps.accounts.models import PatientUser
         from apps.appointments.models import Appointment
         from apps.alerts.models import Alert
+        from apps.reports.signals import get_kpis_cache_version
 
         role, profile = get_user_profile(request.user)
+        version = get_kpis_cache_version()
+        profile_key = getattr(profile, "id", "global")
+        cache_key = f"dashboard_kpis_v{version}_{role}_{profile_key}"
+
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
         patients_qs = PatientUser.objects.filter(is_deleted=False)
         appointments_qs = Appointment.objects.filter(is_deleted=False)
@@ -165,9 +174,12 @@ class DashboardKPIsViewSet(ViewSet):
         critical_appointments = appointments_qs.filter(risk_level="Crítico").count()
         critical_alerts = alerts_qs.filter(risk_level="critical", status="pending").count()
 
-        return Response({
+        data = {
             "total_patients": total_patients,
             "total_appointments": total_appointments,
             "critical_appointments": critical_appointments,
             "critical_alerts": critical_alerts,
-        }, status=status.HTTP_200_OK)
+        }
+        cache.set(cache_key, data, timeout=300)
+
+        return Response(data, status=status.HTTP_200_OK)
