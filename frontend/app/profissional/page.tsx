@@ -96,11 +96,18 @@ export default function ProfissionalPage() {
 
   const queryClient = useQueryClient();
   const { data: rawAlerts, isLoading: isLoadingAlerts } = useAlertsQuery();
-  const alerts = Array.isArray(rawAlerts)
-    ? rawAlerts
-    : (rawAlerts as any)?.results && Array.isArray((rawAlerts as any).results)
-      ? ((rawAlerts as any).results as any[])
-      : [];
+  const alerts = useMemo<any[]>(() => {
+    if (Array.isArray(rawAlerts)) return rawAlerts;
+    if (
+      rawAlerts &&
+      typeof rawAlerts === "object" &&
+      "results" in (rawAlerts as any) &&
+      Array.isArray((rawAlerts as any).results)
+    ) {
+      return (rawAlerts as any).results as any[];
+    }
+    return [];
+  }, [rawAlerts]);
 
   const {
     data: appointments,
@@ -134,8 +141,22 @@ export default function ProfissionalPage() {
     },
   });
 
+  // Normalização defensiva para garantir que nunca quebre caso a resposta venha paginada
+  const safeAppointments = useMemo<AppointmentResponse[]>(() => {
+    if (Array.isArray(appointments)) return appointments;
+    if (
+      appointments &&
+      typeof appointments === "object" &&
+      "results" in (appointments as any) &&
+      Array.isArray((appointments as any).results)
+    ) {
+      return (appointments as any).results as AppointmentResponse[];
+    }
+    return [];
+  }, [appointments]);
+
   const { data: KPIS = [], isLoading: isLoadingKpis } = useProfissionalKpis({
-    appointments,
+    appointments: safeAppointments,
     alerts,
     isLoading: isLoading || isLoadingAlerts,
   });
@@ -191,7 +212,7 @@ export default function ProfissionalPage() {
 
   const AGENDA_ROWS: AgendaRow[] = useMemo(() => {
     return (
-      appointments?.map((a) => {
+      safeAppointments.map((a) => {
         const rawName =
           `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
           "Desconhecido";
@@ -213,9 +234,9 @@ export default function ProfissionalPage() {
           docMasked: a.patient?.cpf ? formatCpf(a.patient.cpf) : "",
           status: a.status || "ativo",
         };
-      }) ?? []
+      })
     );
-  }, [appointments]);
+  }, [safeAppointments]);
 
   const handleAction = (action: "done" | "delete" | "open", row: AgendaRow) => {
     if (action === "open") {

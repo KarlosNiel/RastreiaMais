@@ -1,51 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { Input, Textarea, Select, SelectItem } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
 import { useQuery } from "@tanstack/react-query";
+import {
+  CalendarDaysIcon,
+  ExclamationCircleIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 
 import { apiGet } from "@/lib/api";
 import { useAppointments } from "@/lib/hooks/appointments/useAppointments";
+import { notifyError, notifySuccess } from "@/components/ui/notify";
+import { capitalizeWords, formatCpf } from "@/lib/utils";
 
-function SuccessModal({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  return (
-    <Modal
-      classNames={{
-        base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
-      }}
-      isOpen={open}
-      size="sm"
-      onOpenChange={onClose}
-    >
-      <ModalContent>
-        <ModalHeader className="text-emerald-600 font-semibold text-base">
-          Agendamento criado
-        </ModalHeader>
-        <ModalBody className="pb-6">
-          <p className="text-sm text-slate-600 dark:text-zinc-400">
-            O agendamento foi registrado com sucesso.
-          </p>
-          <Button
-            className="mt-4 font-medium"
-            color="success"
-            radius="md"
-            onPress={onClose}
-          >
-            Fechar
-          </Button>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
-  );
+function getTomorrowDefaultTime(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
 export default function CreateAppointmentsModal({
@@ -59,71 +41,152 @@ export default function CreateAppointmentsModal({
 }) {
   const { create } = useAppointments();
 
-  const [successOpen, setSuccessOpen] = useState(false);
-
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [form, setForm] = useState({
     professional_id: "",
-    professional_name: "",
     local_id: "",
-    scheduled_datetime: "",
+    scheduled_datetime: getTomorrowDefaultTime(),
     risk_level: "Seguro",
     type: "Consulta",
     description: "",
   });
 
-  const { data: patient, isLoading: loadingPatient } = useQuery({
+  const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Busca de paciente individual caso venha pré-selecionado
+  const { data: preSelectedPatient, isLoading: loadingPatient } = useQuery({
     queryKey: ["patient", preSelectedPatientId],
     queryFn: async () => {
       if (!preSelectedPatientId) return null;
-
       return apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
     },
     enabled: open && !!preSelectedPatientId,
   });
 
-  const { data: professionals = [], isLoading: loadingProfessionals } =
-    useQuery({
-      queryKey: ["professionals"],
-      queryFn: async () => {
-        const resp = await apiGet<any>("/api/v1/accounts/professionals/");
-
-        return Array.isArray(resp) ? resp : resp?.results || [];
-      },
-      enabled: open,
-    });
-
-  const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
-    queryKey: ["institutions"],
+  // Lista de todos os pacientes caso o modal seja aberto livremente pelo botão de topo
+  const { data: allPatients = [], isLoading: loadingPatientsList } = useQuery({
+    queryKey: ["patients-selector"],
     queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/locations/institutions/");
+      const resp = await apiGet<any>("/api/v1/accounts/patients/");
+      if (Array.isArray(resp)) return resp;
+      if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
+        return resp.results;
+      }
+      return [];
+    },
+    enabled: open && !preSelectedPatientId,
+  });
 
-      return Array.isArray(resp) ? resp : resp?.results || [];
+  // Lista de profissionais de saúde
+  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
+    queryKey: ["professionals"],
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+      if (Array.isArray(resp)) return resp;
+      if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
+        return resp.results;
+      }
+      return [];
     },
     enabled: open,
   });
 
+  // Lista de instituições / UBS
+  const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
+    queryKey: ["institutions"],
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/locations/institutions/");
+      if (Array.isArray(resp)) return resp;
+      if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
+        return resp.results;
+      }
+      return [];
+    },
+    enabled: open,
+  });
+
+  // Inicializa e pré-seleciona valores inteligentes ao abrir
   useEffect(() => {
-    if (!open) {
-      setForm({
-        professional_id: "",
-        professional_name: "",
-        local_id: "",
-        scheduled_datetime: "",
-        risk_level: "Seguro",
-        type: "Consulta",
-        description: "",
-      });
+    if (open) {
+      setSubmitted(false);
+      setErrorMessage(null);
+
+      // Preenche o paciente se houver pré-selecionado
+      if (preSelectedPatientId) {
+        setSelectedPatientId(String(preSelectedPatientId));
+      } else {
+        setSelectedPatientId("");
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        scheduled_datetime: prev.scheduled_datetime || getTomorrowDefaultTime(),
+      }));
     }
-  }, [open]);
+  }, [open, preSelectedPatientId]);
+
+  // Pré-seleciona profissional e UBS caso haja apenas 1 opção ou padrões convenientes
+  useEffect(() => {
+    if (open && professionals.length > 0 && !form.professional_id) {
+      setForm((prev) => ({
+        ...prev,
+        professional_id: String(professionals[0].id),
+      }));
+    }
+  }, [open, professionals, form.professional_id]);
+
+  useEffect(() => {
+    if (open && institutions.length > 0 && !form.local_id) {
+      setForm((prev) => ({
+        ...prev,
+        local_id: String(institutions[0].id),
+      }));
+    }
+  }, [open, institutions, form.local_id]);
+
+  const activePatient = useMemo(() => {
+    if (preSelectedPatientId && preSelectedPatient) {
+      return preSelectedPatient;
+    }
+    if (selectedPatientId) {
+      return allPatients.find((p: any) => String(p.id) === String(selectedPatientId));
+    }
+    return null;
+  }, [preSelectedPatientId, preSelectedPatient, selectedPatientId, allPatients]);
 
   const onSubmit = async () => {
-    if (!preSelectedPatientId) return;
-    if (!form.professional_id) return;
-    if (!form.local_id) return;
-    if (!form.scheduled_datetime) return;
+    setSubmitted(true);
+    setErrorMessage(null);
+
+    const targetPatientId = preSelectedPatientId || selectedPatientId;
+
+    if (!targetPatientId) {
+      setErrorMessage("Por favor, selecione um paciente para o agendamento.");
+      notifyError("Paciente não selecionado", "Selecione o paciente que será atendido.");
+      return;
+    }
+
+    if (!form.professional_id) {
+      setErrorMessage("Por favor, selecione um profissional de saúde.");
+      notifyError("Profissional não selecionado", "Escolha o profissional responsável.");
+      return;
+    }
+
+    if (!form.local_id) {
+      setErrorMessage("Por favor, selecione a instituição de atendimento.");
+      notifyError("Local obrigatório", "Selecione a Unidade de Saúde (UBS).");
+      return;
+    }
+
+    if (!form.scheduled_datetime) {
+      setErrorMessage("Por favor, defina a data e o horário da consulta.");
+      notifyError("Data e hora obrigatórias", "Informe quando a consulta ocorrerá.");
+      return;
+    }
 
     const payload: any = {
-      patient_id: Number(preSelectedPatientId),
+      patient_id: Number(targetPatientId),
       professional_id: Number(form.professional_id),
       local_id: Number(form.local_id),
       scheduled_datetime: form.scheduled_datetime,
@@ -132,155 +195,214 @@ export default function CreateAppointmentsModal({
       status: "ativo",
     };
 
-    if (form.description.trim()) payload.description = form.description.trim();
+    if (form.description.trim()) {
+      payload.description = form.description.trim();
+    }
 
     try {
       await create.mutateAsync(payload);
-      setSuccessOpen(true);
-    } catch {}
-  };
+      notifySuccess("Agendamento criado com sucesso!", "A consulta já está registrada na agenda.");
+      onOpenChange(false);
+    } catch (err: any) {
+      const data = err?.response?.data;
+      let msg = "Não foi possível registrar o agendamento.";
 
-  const handleSuccessClose = () => {
-    setSuccessOpen(false);
-    onOpenChange(false);
+      if (data?.scheduled_datetime) {
+        msg = Array.isArray(data.scheduled_datetime)
+          ? data.scheduled_datetime[0]
+          : String(data.scheduled_datetime);
+      } else if (data?.detail) {
+        msg = String(data.detail);
+      } else if (err?.message) {
+        msg = err.message;
+      }
+
+      setErrorMessage(msg);
+      notifyError("Erro ao agendar", msg);
+    }
   };
 
   const isLoading =
-    loadingPatient || loadingProfessionals || loadingInstitutions;
-
-  const formatCpf = (cpf?: string) => {
-    if (!cpf) return "";
-    const d = cpf.replace(/\D/g, "");
-
-    if (d.length !== 11) return cpf;
-
-    return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
+    loadingPatient ||
+    loadingPatientsList ||
+    loadingProfessionals ||
+    loadingInstitutions;
 
   return (
-    <>
-      <Modal
-        classNames={{
-          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
-        }}
-        isOpen={open}
-        scrollBehavior="inside"
-        size="lg"
-        onOpenChange={onOpenChange}
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1 pb-0 dark:text-gray-100">
-            <h2 className="text-xl font-semibold">Novo Agendamento</h2>
-            <p className="text-sm text-default-500 dark:text-gray-400">
-              Preencha as informações abaixo para criar o agendamento
-            </p>
-          </ModalHeader>
+    <Modal
+      classNames={{
+        base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+      }}
+      isOpen={open}
+      scrollBehavior="inside"
+      size="lg"
+      onOpenChange={onOpenChange}
+    >
+      <ModalContent>
+        <ModalHeader className="flex flex-col gap-1 pb-1 pt-6 px-6 dark:text-zinc-100">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400">
+              <CalendarDaysIcon className="size-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Novo Agendamento
+              </h2>
+              <p className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+                Preencha os dados clínicos para registrar a consulta na APS
+              </p>
+            </div>
+          </div>
+        </ModalHeader>
 
-          <ModalBody className="space-y-6 pt-2 pb-6">
-            {isLoading ? (
-              <div className="flex justify-center py-10">
-                <Spinner color="warning" size="lg" />
+        <ModalBody className="space-y-4 pt-4 pb-6 px-6">
+          {errorMessage && (
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5 shadow-2xs">
+              <ExclamationCircleIcon className="size-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+              <div className="flex-1">
+                <span className="font-semibold block">Atenção ao agendar:</span>
+                <span>{errorMessage}</span>
               </div>
-            ) : (
-              <>
-                <div className="bg-default-50 dark:bg-gray-800 rounded-xl p-4  shadow-sm">
-                  <p className="text-xs text-default-500 dark:text-gray-300 mb-1">
-                    Paciente
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Spinner color="warning" size="md" />
+              <span className="text-xs text-slate-500">Carregando dados da unidade...</span>
+            </div>
+          ) : (
+            <>
+              {/* Seção Paciente */}
+              {preSelectedPatientId && activePatient ? (
+                <div className="bg-slate-50 dark:bg-zinc-800/60 rounded-xl p-4 border border-slate-200/80 dark:border-zinc-700/80">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                      Paciente Selecionado
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
+                      Vinculado
+                    </span>
+                  </div>
+                  <p className="font-bold text-slate-900 dark:text-zinc-100 text-base">
+                    {capitalizeWords(`${activePatient.user?.first_name || ""} ${activePatient.user?.last_name || ""}`)}
                   </p>
-                  <p className="font-semibold text-default-900 dark:text-gray-100 text-base">
-                    {patient?.user?.first_name} {patient?.user?.last_name}
-                  </p>
-                  <p className="text-sm text-default-700 dark:text-gray-300">
-                    CPF: {formatCpf(patient?.cpf)}
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
+                    CPF: {formatCpf(activePatient.cpf) || "Não informado"}
                   </p>
                 </div>
-
+              ) : (
                 <Select
-                  classNames={{
-                    trigger:
-                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
-                  }}
-                  label="Profissional *"
-                  placeholder="Selecione um profissional"
+                  isRequired
+                  errorMessage={submitted && !selectedPatientId ? "Selecione um paciente para o atendimento" : ""}
+                  isInvalid={submitted && !selectedPatientId}
+                  label="Paciente *"
+                  placeholder="Selecione o paciente cadastrado"
                   radius="lg"
-                  selectedKeys={
-                    form.professional_id ? [form.professional_id] : []
-                  }
-                  variant="flat"
+                  selectedKeys={selectedPatientId ? [selectedPatientId] : []}
+                  variant="bordered"
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0];
-                    const prof = professionals.find(
-                      (p: any) => String(p.id) === key,
-                    );
-
-                    setForm({
-                      ...form,
-                      professional_id: String(key),
-                      professional_name: prof
-                        ? `${prof.user?.first_name} ${prof.user?.last_name}`
-                        : "",
-                    });
+                    setSelectedPatientId(String(key || ""));
+                    setErrorMessage(null);
                   }}
                 >
-                  {professionals.map((p: any) => {
-                    const label = `${p.user?.first_name} ${p.user?.last_name}${
-                      p.specialty ? ` - ${p.specialty}` : ""
-                    }`;
+                  {allPatients.map((p: any) => {
+                    const name = capitalizeWords(`${p.user?.first_name || ""} ${p.user?.last_name || ""}`);
+                    const cpfMasked = formatCpf(p.cpf);
+                    const label = `${name} (${cpfMasked || "Sem CPF"})`;
 
                     return (
                       <SelectItem key={String(p.id)} textValue={label}>
-                        {label}
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium text-xs text-slate-900 dark:text-zinc-100">
+                            {name}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-mono">
+                            CPF: {cpfMasked || "—"} {p.conditions ? `• ${p.conditions}` : ""}
+                          </span>
+                        </div>
                       </SelectItem>
                     );
                   })}
                 </Select>
+              )}
 
+              {/* Profissional */}
+              <Select
+                isRequired
+                errorMessage={submitted && !form.professional_id ? "Selecione o profissional de saúde" : ""}
+                isInvalid={submitted && !form.professional_id}
+                label="Profissional *"
+                placeholder="Selecione um profissional"
+                radius="lg"
+                selectedKeys={form.professional_id ? [form.professional_id] : []}
+                variant="bordered"
+                onSelectionChange={(keys) => {
+                  const key = Array.from(keys)[0];
+                  setForm({ ...form, professional_id: String(key || "") });
+                  setErrorMessage(null);
+                }}
+              >
+                {professionals.map((p: any) => {
+                  const label = `${capitalizeWords(`${p.user?.first_name || ""} ${p.user?.last_name || ""}`)} (${p.role || "Profissional"}${p.professional_registry ? ` • ${p.professional_registry}` : ""})`;
+
+                  return (
+                    <SelectItem key={String(p.id)} textValue={label}>
+                      {label}
+                    </SelectItem>
+                  );
+                })}
+              </Select>
+
+              {/* Instituição / Local */}
+              <Select
+                isRequired
+                errorMessage={submitted && !form.local_id ? "Selecione a Unidade de Saúde (UBS)" : ""}
+                isInvalid={submitted && !form.local_id}
+                label="Instituição / UBS *"
+                placeholder="Selecione a unidade de saúde"
+                radius="lg"
+                selectedKeys={form.local_id ? [form.local_id] : []}
+                variant="bordered"
+                onSelectionChange={(keys) => {
+                  const key = Array.from(keys)[0];
+                  setForm({ ...form, local_id: String(key || "") });
+                  setErrorMessage(null);
+                }}
+              >
+                {institutions.map((i: any) => (
+                  <SelectItem key={String(i.id)} textValue={i.name}>
+                    {i.name}
+                  </SelectItem>
+                ))}
+              </Select>
+
+              {/* Data e Hora */}
+              <Input
+                isRequired
+                errorMessage={submitted && !form.scheduled_datetime ? "Defina a data e o horário da consulta" : ""}
+                isInvalid={submitted && !form.scheduled_datetime}
+                label="Data e Hora *"
+                placeholder="dd/mm/aaaa, --:--"
+                radius="lg"
+                type="datetime-local"
+                value={form.scheduled_datetime}
+                variant="bordered"
+                onChange={(e) => {
+                  setForm({ ...form, scheduled_datetime: e.target.value });
+                  setErrorMessage(null);
+                }}
+              />
+
+              {/* Tipo e Nível de Risco em Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Select
-                  classNames={{
-                    trigger:
-                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
-                  }}
-                  label="Instituição *"
-                  placeholder="Selecione a instituição"
-                  radius="lg"
-                  selectedKeys={form.local_id ? [form.local_id] : []}
-                  variant="flat"
-                  onSelectionChange={(keys) => {
-                    const key = Array.from(keys)[0];
-
-                    setForm({ ...form, local_id: String(key) });
-                  }}
-                >
-                  {institutions.map((i: any) => (
-                    <SelectItem key={String(i.id)}>{i.name}</SelectItem>
-                  ))}
-                </Select>
-
-                <Input
-                  classNames={{
-                    inputWrapper: "bg-transparent  dark:bg-gray-800",
-                    input: "dark:text-gray-100",
-                  }}
-                  label="Data e Hora *"
-                  placeholder="dd/mm/aaaa"
-                  radius="lg"
-                  type="datetime-local"
-                  value={form.scheduled_datetime}
-                  variant="flat"
-                  onChange={(e) =>
-                    setForm({ ...form, scheduled_datetime: e.target.value })
-                  }
-                />
-
-                <Select
-                  classNames={{
-                    trigger:
-                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
-                  }}
+                  isRequired
                   label="Tipo *"
                   radius="lg"
                   selectedKeys={[form.type]}
-                  variant="flat"
+                  variant="bordered"
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
                   <SelectItem key="Consulta">Consulta</SelectItem>
@@ -290,65 +412,54 @@ export default function CreateAppointmentsModal({
                 </Select>
 
                 <Select
-                  classNames={{
-                    trigger:
-                      "bg-transparent  dark:bg-gray-800 dark:text-gray-100",
-                  }}
+                  isRequired
                   label="Nível de Risco *"
                   radius="lg"
                   selectedKeys={[form.risk_level]}
-                  variant="flat"
-                  onChange={(e) =>
-                    setForm({ ...form, risk_level: e.target.value })
-                  }
+                  variant="bordered"
+                  onChange={(e) => setForm({ ...form, risk_level: e.target.value })}
                 >
-                  <SelectItem key="Seguro">Seguro</SelectItem>
+                  <SelectItem key="Seguro">Seguro (Baixo)</SelectItem>
                   <SelectItem key="Moderado">Moderado</SelectItem>
-                  <SelectItem key="Crítico">Crítico</SelectItem>
+                  <SelectItem key="Crítico">Crítico (Alto)</SelectItem>
                 </Select>
+              </div>
 
-                <Textarea
-                  classNames={{
-                    inputWrapper: "bg-transparent  dark:bg-gray-800",
-                    input: "dark:text-gray-100",
-                  }}
-                  label="Descrição"
-                  minRows={3}
-                  radius="md"
-                  value={form.description}
-                  variant="flat"
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                />
+              {/* Descrição */}
+              <Textarea
+                label="Descrição / Observações Clínicas"
+                minRows={2.5}
+                placeholder="Observações complementares ou queixas prévias..."
+                radius="lg"
+                value={form.description}
+                variant="bordered"
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
 
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    className="font-medium text-slate-700 dark:text-zinc-300"
-                    radius="md"
-                    variant="flat"
-                    onPress={() => onOpenChange(false)}
-                  >
-                    Cancelar
-                  </Button>
+              {/* Botões de Ação */}
+              <div className="flex justify-end items-center gap-2.5 pt-3">
+                <Button
+                  className="font-medium text-xs text-slate-700 dark:text-zinc-300"
+                  radius="lg"
+                  variant="light"
+                  onPress={() => onOpenChange(false)}
+                >
+                  Cancelar
+                </Button>
 
-                  <Button
-                    className="font-medium"
-                    color="primary"
-                    isLoading={create.isPending}
-                    radius="md"
-                    onPress={onSubmit}
-                  >
-                    Criar Agendamento
-                  </Button>
-                </div>
-              </>
-            )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-
-      <SuccessModal open={successOpen} onClose={handleSuccessClose} />
-    </>
+                <Button
+                  className="font-semibold text-xs bg-orange-600 hover:bg-orange-700 text-white shadow-2xs"
+                  isLoading={create.isPending}
+                  radius="lg"
+                  onPress={onSubmit}
+                >
+                  Criar Agendamento
+                </Button>
+              </div>
+            </>
+          )}
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 }

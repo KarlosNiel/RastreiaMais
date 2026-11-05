@@ -530,7 +530,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
             </div>
           ) : (
             /* Modo Compacto / Colapsado */
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-1.5 p-1 rounded-xl border border-slate-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-800/40">
               <Tooltip
                 content="Configurações do Sistema"
                 offset={12}
@@ -538,11 +538,11 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
               >
                 <button
                   aria-label="Configurações do Sistema"
-                  className="flex size-10 items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/80 transition-colors mx-auto"
+                  className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/80 transition-colors mx-auto"
                   type="button"
                   onClick={() => setIsSettingsOpen(true)}
                 >
-                  <Cog6ToothIcon className="size-5" strokeWidth={1.8} />
+                  <Cog6ToothIcon className="size-4.5" strokeWidth={1.8} />
                 </button>
               </Tooltip>
 
@@ -550,11 +550,11 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                 <DropdownTrigger>
                   <button
                     aria-label="Menu do usuário"
-                    className="relative flex size-10 items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 text-slate-700 dark:text-zinc-200 font-bold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 mx-auto"
+                    className="relative flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 font-bold text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 mx-auto"
                     type="button"
                   >
                     <span>{userInitials}</span>
-                    <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                    <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
                   </button>
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Ações do usuário" variant="flat">

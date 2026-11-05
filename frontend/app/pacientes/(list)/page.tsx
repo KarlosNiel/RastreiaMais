@@ -43,6 +43,10 @@ export default function Page() {
           id: String(p.id),
           user: p.user ?? { first_name: "", last_name: "" },
           cpf: p.cpf ?? "",
+          sus: p.sus ?? "",
+          birth_date: p.birth_date ?? "",
+          phone: p.phone ?? "",
+          conditions: p.conditions ?? [],
           address: addr,
         };
       });
@@ -52,7 +56,7 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-background dark:bg-zinc-950 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col gap-1 pb-6">
+        <header className="flex flex-col gap-1 pb-6 border-b border-slate-100 dark:border-zinc-800/80 mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
             Pacientes
           </h1>

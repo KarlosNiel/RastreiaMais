@@ -519,7 +519,6 @@ export function AgendaTable({
 
   const topContent = React.useMemo(() => {
     if (!enableToolbar) return null;
-    const totalFiltered = filteredItems.length;
     const todayStr = new Date().toLocaleDateString("pt-BR");
 
     const quickTabs = [

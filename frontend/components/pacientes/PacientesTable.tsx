@@ -2,9 +2,11 @@
 "use client";
 
 import type { Key, SortDescriptor } from "@react-types/shared";
+import type { SOAPReport } from "@/lib/api/soap";
 
 import {
   CalendarDaysIcon,
+  DocumentTextIcon,
   PencilSquareIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
@@ -12,6 +14,7 @@ import {
   Button,
   Input,
   Pagination,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -24,6 +27,15 @@ import Link from "next/link";
 import * as React from "react";
 
 import CreateAppointmentsModal from "@/components/appointments/CreateAppointmentsModal";
+import SOAPReportModal from "@/components/pacientes/SOAPReportModal";
+import { generateSOAPReport } from "@/lib/api/soap";
+import { notifyError, notifyWarn } from "@/components/ui/notify";
+import {
+  calculateAge,
+  capitalizeWords,
+  formatCns,
+  formatCpf,
+} from "@/lib/utils";
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
@@ -35,6 +47,10 @@ export type PatientRow = {
     last_name: string;
   };
   cpf: string;
+  sus?: string;
+  birth_date?: string;
+  phone?: string;
+  conditions?: string[] | string;
   address?: {
     uf?: string;
     city?: string;
@@ -54,9 +70,19 @@ type Column = {
 };
 
 const COLUMNS: Column[] = [
-  { name: "Nome", uid: "user", sortable: true, align: "start" },
-  { name: "CPF", uid: "cpf", sortable: true, align: "start" },
-  { name: "Endereço", uid: "address", sortable: true, align: "start" },
+  {
+    name: "Paciente & Identificação",
+    uid: "user",
+    sortable: true,
+    align: "start",
+  },
+  { name: "CPF / Cartão SUS", uid: "cpf", sortable: true, align: "start" },
+  {
+    name: "Endereço / Território",
+    uid: "address",
+    sortable: true,
+    align: "start",
+  },
   { name: "Ações", uid: "actions", align: "end" },
 ];
 
@@ -82,6 +108,10 @@ export function PacientesTable({
   const [selectedPatientId, setSelectedPatientId] = React.useState<
     string | null
   >(null);
+  const [isSoapModalOpen, setIsSoapModalOpen] = React.useState(false);
+  const [soapReport, setSoapReport] = React.useState<SOAPReport | null>(null);
+  const [loadingSoapId, setLoadingSoapId] = React.useState<string | null>(null);
+
   const [filterValue, setFilterValue] = React.useState("");
   const [debouncedFilter, setDebouncedFilter] = React.useState("");
   const [page, setPage] = React.useState(initialPage);
@@ -109,11 +139,17 @@ export function PacientesTable({
         const nome =
           `${r.user?.first_name ?? ""} ${r.user?.last_name ?? ""}`.toLowerCase();
         const cpf = r.cpf ?? "";
+        const sus = r.sus ?? "";
         const endereco = r.address
           ? `${r.address.street ?? ""} ${r.address.number ?? ""} ${r.address.district ?? ""} ${r.address.city ?? ""} ${r.address.uf ?? ""}`.toLowerCase()
           : "";
 
-        return nome.includes(q) || cpf.includes(q) || endereco.includes(q);
+        return (
+          nome.includes(q) ||
+          cpf.includes(q) ||
+          sus.includes(q) ||
+          endereco.includes(q)
+        );
       });
     }
 
@@ -165,13 +201,22 @@ export function PacientesTable({
     return arr.slice(start, start + pageSize);
   }, [filteredItems, sortDescriptor, page, pageSize]);
 
-  const formatCpf = (cpf?: string) => {
-    if (!cpf) return "—";
-    const digits = cpf.replace(/\D/g, "");
+  const handleOpenSoap = async (patientId: string) => {
+    try {
+      setLoadingSoapId(patientId);
+      const report = await generateSOAPReport(Number(patientId));
 
-    if (digits.length !== 11) return cpf;
-
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+      if (report) {
+        setSoapReport(report);
+        setIsSoapModalOpen(true);
+      } else {
+        notifyWarn("Relatório SOAP indisponível para este paciente.");
+      }
+    } catch {
+      notifyError("Erro ao carregar prontuário SOAP.");
+    } finally {
+      setLoadingSoapId(null);
+    }
   };
 
   /* ===== Render ===== */
@@ -180,22 +225,85 @@ export function PacientesTable({
       const k = String(colKey) as keyof PatientRow | "actions";
 
       switch (k) {
-        case "user":
+        case "user": {
+          const rawName = `${row.user.first_name} ${row.user.last_name}`.trim();
+          const fullName = capitalizeWords(rawName || "Paciente");
+          const initials =
+            `${row.user.first_name?.[0] || ""}${row.user.last_name?.[0] || ""}`.toUpperCase() ||
+            "P";
+          const age = calculateAge(row.birth_date);
+          const rawConditions = row.conditions;
+          const conditionsList = Array.isArray(rawConditions)
+            ? rawConditions
+            : typeof rawConditions === "string" && rawConditions
+              ? rawConditions
+                  .split(/[,/]/)
+                  .map((c) => c.trim())
+                  .filter(Boolean)
+              : [];
+
           return (
-            <span className="font-semibold text-slate-900 dark:text-zinc-100">
-              {row.user.first_name} {row.user.last_name}
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="size-9 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center text-xs font-semibold shadow-2xs">
+                {initials}
+              </div>
+              <div className="min-w-0 flex flex-col">
+                <button
+                  className="font-semibold text-slate-900 dark:text-zinc-100 hover:text-primary dark:hover:text-primary-400 text-sm text-left truncate transition-colors"
+                  type="button"
+                  onClick={() => onAction?.("open", row)}
+                >
+                  {fullName}
+                </button>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                  {age !== null && (
+                    <span className="font-medium text-slate-600 dark:text-zinc-300">
+                      {age} anos
+                    </span>
+                  )}
+                  {conditionsList.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      {conditionsList.map((cond, idx) => (
+                        <span
+                          key={idx}
+                          className="px-1.5 py-0.2 rounded bg-primary/10 text-primary dark:text-primary-400 font-bold text-[10px]"
+                        >
+                          {cond}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           );
-        case "cpf":
+        }
+
+        case "cpf": {
           return (
-            <span className="tabular-nums text-slate-600 dark:text-zinc-400 font-mono text-xs">
-              {formatCpf(row.cpf)}
-            </span>
+            <div className="flex flex-col">
+              <span className="tabular-nums text-slate-800 dark:text-zinc-200 font-mono text-xs font-medium">
+                {formatCpf(row.cpf)}
+              </span>
+              {row.sus && (
+                <span className="tabular-nums text-slate-400 dark:text-zinc-500 font-mono text-[11px] mt-0.5">
+                  CNS: {formatCns(row.sus)}
+                </span>
+              )}
+            </div>
           );
+        }
+
         case "address": {
           const a = row.address;
 
-          if (!a) return <span className="text-slate-400">—</span>;
+          if (!a) {
+            return (
+              <span className="text-xs text-slate-400 dark:text-zinc-500 italic">
+                Endereço não informado
+              </span>
+            );
+          }
 
           const street = a.street ?? "";
           const number = a.number ?? "";
@@ -203,27 +311,55 @@ export function PacientesTable({
           const city = a.city ?? "";
           const uf = a.uf ?? "";
 
-          if (!street && !number && !district && !city && !uf)
-            return <span className="text-slate-400">—</span>;
+          if (!street && !number && !district && !city && !uf) {
+            return (
+              <span className="text-xs text-slate-400 dark:text-zinc-500 italic">
+                Endereço não informado
+              </span>
+            );
+          }
+
+          const line1 = `${street}${street && number ? ", " : ""}${number}`;
+          const line2 = `${district}${district && city ? " • " : ""}${city}${city && uf ? "/" : ""}${uf}`;
 
           return (
-            <span className="text-slate-600 dark:text-zinc-400 text-sm">
-              {`${street || ""}${street && number ? ", " : ""}${number || ""}${
-                (street || number) && (district || city || uf) ? " - " : ""
-              }${district || ""}${district && city ? ", " : ""}${city || ""}${
-                city && uf ? "/" : ""
-              }${uf || ""}`}
-            </span>
+            <div className="flex flex-col text-xs">
+              <span className="text-slate-700 dark:text-zinc-300 font-medium truncate max-w-xs">
+                {line1 || line2}
+              </span>
+              {line1 && line2 && (
+                <span className="text-slate-400 dark:text-zinc-500 truncate max-w-xs mt-0.5">
+                  {line2}
+                </span>
+              )}
+            </div>
           );
         }
 
-        case "actions":
+        case "actions": {
+          const isLoadingSoap = loadingSoapId === row.id;
+
           return (
             <div className="flex items-center justify-end gap-1">
+              <Tooltip content="Ver Prontuário SOAP" delay={300}>
+                <button
+                  aria-label={`Prontuário SOAP de ${row.user.first_name}`}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 dark:text-zinc-400 dark:hover:text-primary-400 transition-colors focus:outline-none"
+                  disabled={isLoadingSoap}
+                  onClick={() => handleOpenSoap(row.id)}
+                >
+                  {isLoadingSoap ? (
+                    <Spinner color="primary" size="sm" />
+                  ) : (
+                    <DocumentTextIcon className="size-4.5" />
+                  )}
+                </button>
+              </Tooltip>
+
               <Tooltip content="Novo Agendamento" delay={300}>
                 <button
                   aria-label={`Novo agendamento para ${row.user.first_name}`}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors focus:outline-none"
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:text-zinc-400 dark:hover:bg-emerald-950/40 transition-colors focus:outline-none"
                   onClick={() => {
                     setSelectedPatientId(row.id);
                     setIsAppointmentModalOpen(true);
@@ -236,7 +372,7 @@ export function PacientesTable({
               <Tooltip content="Editar Paciente" delay={300}>
                 <button
                   aria-label={`Editar ${row.user.first_name}`}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-sky-50 dark:text-zinc-400 dark:hover:bg-sky-950/40 transition-colors focus:outline-none"
                   onClick={() => onAction?.("edit", row)}
                 >
                   <PencilSquareIcon className="size-4.5" />
@@ -244,11 +380,13 @@ export function PacientesTable({
               </Tooltip>
             </div>
           );
+        }
+
         default:
           return (row as any)[k];
       }
     },
-    [onAction],
+    [onAction, loadingSoapId],
   );
 
   const topContent = enableToolbar ? (
@@ -258,17 +396,18 @@ export function PacientesTable({
           isClearable
           className="w-full sm:max-w-md"
           classNames={{
+            base: "h-10",
             inputWrapper:
-              "h-10 bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors",
+              "h-10 min-h-[40px] bg-slate-50/80 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus-within:!border-primary focus-within:bg-white dark:focus-within:bg-zinc-900 shadow-2xs transition-colors rounded-xl",
             input:
-              "text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
+              "text-xs sm:text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
           }}
-          placeholder="Buscar por paciente, CPF ou endereço..."
+          placeholder="Buscar por paciente, CPF, CNS ou endereço..."
           radius="md"
           startContent={
             <svg
               aria-hidden
-              className="size-4 text-slate-400 dark:text-zinc-500"
+              className="size-4 text-slate-400 dark:text-zinc-500 shrink-0"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -289,7 +428,7 @@ export function PacientesTable({
 
         <Button
           as={Link}
-          className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+          className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs h-10"
           color="primary"
           href="/pacientes/novo"
           radius="md"
@@ -302,8 +441,11 @@ export function PacientesTable({
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-xs text-slate-500 dark:text-zinc-400">
-          Total: {filteredItems.length}{" "}
+        <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+          Total:{" "}
+          <strong className="text-slate-700 dark:text-zinc-200">
+            {filteredItems.length}
+          </strong>{" "}
           {filteredItems.length === 1 ? "paciente" : "pacientes"}
         </span>
       </div>
@@ -316,6 +458,12 @@ export function PacientesTable({
         open={isAppointmentModalOpen}
         preSelectedPatientId={selectedPatientId}
         onOpenChange={setIsAppointmentModalOpen}
+      />
+
+      <SOAPReportModal
+        isOpen={isSoapModalOpen}
+        report={soapReport}
+        onClose={() => setIsSoapModalOpen(false)}
       />
 
       <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">

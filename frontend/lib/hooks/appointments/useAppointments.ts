@@ -7,7 +7,16 @@ export function useAppointments() {
 
   const list = useQuery({
     queryKey: ["appointments"],
-    queryFn: () => apiGet("/api/v1/appointments/appointments/"),
+    queryFn: async () => {
+      const resp = await apiGet<any>("/api/v1/appointments/appointments/");
+
+      if (Array.isArray(resp)) return resp;
+      if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
+        return resp.results;
+      }
+
+      return [];
+    },
   });
 
   const create = useMutation({
