@@ -10,6 +10,7 @@ import {
 } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import Step1, { STEP1_FIELDS } from "./sections/Step1Sociodemo";
 import Step2, { STEP2_FIELDS } from "./sections/Step2Condicoes";
@@ -346,19 +347,54 @@ export default function PatientWizard({
 
   return (
     <>
-      <Modal isOpen={cancelModal} onClose={() => setCancelModal(false)}>
+      <Modal
+        backdrop="blur"
+        classNames={{
+          base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-1 max-w-sm",
+          header: "pb-2 pt-5 px-5",
+          body: "py-2 px-5",
+          footer: "pt-4 pb-5 px-5",
+        }}
+        isOpen={cancelModal}
+        placement="center"
+        size="sm"
+        onClose={() => setCancelModal(false)}
+      >
         <ModalContent>
-          <ModalHeader>Cancelar preenchimento</ModalHeader>
+          <ModalHeader className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 shrink-0">
+              <ExclamationTriangleIcon className="size-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Cancelar Cadastro
+              </h3>
+            </div>
+          </ModalHeader>
           <ModalBody>
-            Tem certeza que deseja cancelar? Informações não salvas serão
-            perdidas.
+            <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
+              Tem certeza que deseja cancelar? Todas as alterações não salvas serão
+              perdidas.
+            </p>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onClick={() => setCancelModal(false)}>
-              Voltar
+          <ModalFooter className="flex justify-end gap-2.5">
+            <Button
+              className="font-medium text-slate-700 dark:text-zinc-300"
+              radius="md"
+              size="sm"
+              variant="flat"
+              onPress={() => setCancelModal(false)}
+            >
+              Continuar Editando
             </Button>
-            <Button color="danger" onClick={confirmCancel}>
-              Cancelar mesmo assim
+            <Button
+              className="font-medium shadow-xs"
+              color="danger"
+              radius="md"
+              size="sm"
+              onPress={confirmCancel}
+            >
+              Cancelar Mesmo Assim
             </Button>
           </ModalFooter>
         </ModalContent>

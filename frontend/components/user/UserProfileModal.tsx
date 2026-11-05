@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/lib/hooks/useAuth";
+import { notifySuccess, notifyError } from "@/components/ui/notify";
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -57,11 +58,21 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   ).toUpperCase();
 
   const handleSave = () => {
+    if (!firstName.trim()) {
+      notifyError("Campo obrigatório", "Por favor, informe seu primeiro nome.");
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      notifyError("E-mail inválido", "Informe um endereço de e-mail institucional válido.");
+      return;
+    }
+
     setIsSaved(true);
+    notifySuccess("Perfil atualizado!", "Suas preferências foram salvas com sucesso.");
     setTimeout(() => {
       setIsSaved(false);
       onClose();
-    }, 1200);
+    }, 800);
   };
 
   return (

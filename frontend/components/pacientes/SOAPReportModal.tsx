@@ -188,7 +188,21 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
   if (!report) return null;
 
   return (
-    <Modal isOpen={isOpen} scrollBehavior="inside" size="4xl" onClose={onClose}>
+    <Modal
+      backdrop="blur"
+      classNames={{
+        base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+        header:
+          "border-b border-slate-100 dark:border-zinc-800/80 pb-4 pt-5 px-6 print:hidden",
+        body: "px-6 py-6",
+        footer:
+          "border-t border-slate-100 dark:border-zinc-800/80 py-4 px-6 bg-slate-50/50 dark:bg-zinc-900/50 print:hidden",
+      }}
+      isOpen={isOpen}
+      scrollBehavior="inside"
+      size="4xl"
+      onClose={onClose}
+    >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1 print:hidden">
           <h2 className="text-lg font-bold">Relatório SOAP — RASTREIA+</h2>

@@ -67,10 +67,10 @@ export default function PatientAppointmentDetailsModal({
     <Modal
       backdrop="blur"
       classNames={{
-        base: "dark:bg-gray-900",
-        header: "border-b border-gray-200 dark:border-gray-800",
-        body: "py-6",
-        footer: "border-t border-gray-200 dark:border-gray-800",
+        base: "bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-2xl rounded-2xl",
+        header: "border-b border-slate-100 dark:border-zinc-800/80 px-6 pt-6 pb-4",
+        body: "py-6 px-6 space-y-4",
+        footer: "border-t border-slate-100 dark:border-zinc-800/80 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/50",
       }}
       isOpen={open}
       size="lg"
@@ -79,131 +79,116 @@ export default function PatientAppointmentDetailsModal({
       <ModalContent>
         {(close) => (
           <>
-            <ModalHeader className="flex items-center gap-3 text-gray-900 dark:text-gray-100">
-              <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
-                <ClipboardDocumentListIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <ModalHeader className="flex items-center gap-3 text-slate-900 dark:text-zinc-100">
+              <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                <ClipboardDocumentListIcon className="size-6" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">
-                  Detalhes do Agendamento
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Detalhes do Atendimento
                 </h2>
-                <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                  Informações do agendamento
+                <p className="text-xs font-normal text-slate-500 dark:text-zinc-400">
+                  Informações da consulta agendada na Rede APS
                 </p>
               </div>
             </ModalHeader>
 
-            <ModalBody className="space-y-5">
+            <ModalBody className="space-y-3.5">
               {/* Profissional */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <UserIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                  <UserIcon className="size-5" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Profissional
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                    Profissional de Saúde
                   </p>
-                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                    {data.profissional || "—"}
+                  <p className="text-base font-bold text-slate-900 dark:text-zinc-100 truncate">
+                    {data.profissional || "Não informado"}
                   </p>
                 </div>
               </div>
 
-              {/* Cargo */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <BriefcaseIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              {/* Cargo / Especialidade */}
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                  <BriefcaseIcon className="size-5" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Cargo
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                    Especialidade / Função
                   </p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">
-                    {data.cargo || "—"}
+                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100">
+                    {data.cargo || "Clínica Geral"}
                   </p>
                 </div>
               </div>
 
               {/* Local */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <MapPinIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                  <MapPinIcon className="size-5" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Local de Atendimento
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                    Local de Atendimento (UBS)
                   </p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">
-                    {data.local || "—"}
+                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100">
+                    {data.local || "UBS Jardim Magnólia"}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Data */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                    <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              {/* Data e Horário em Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                    <CalendarIcon className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                      Data
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                      Data da Consulta
                     </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">
                       {data.data || "—"}
                     </p>
                   </div>
                 </div>
 
-                {/* Horário */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                    <ClockIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800">
+                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-900 text-slate-500 shadow-2xs">
+                    <ClockIcon className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                      Horário
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                      Horário Previsto
                     </p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 tabular-nums">
+                    <p className="text-sm font-bold text-slate-900 dark:text-zinc-100 tabular-nums">
                       {data.hora || "—"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Tipo da Consulta */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="p-2 rounded-lg bg-white dark:bg-gray-900">
-                  <ClipboardDocumentListIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Tipo do Agendamento
+              {/* Status do Agendamento */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Status do Agendamento
                   </p>
-                  <p className="text-base text-gray-900 dark:text-gray-100">
-                    <StatusChip size="md" tone="safe">
-                      {data.tipo || "—"}
-                    </StatusChip>
-                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">Situação atualizada no sistema</p>
                 </div>
-              </div>
-
-              {/* Status */}
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Status do Agendamento
-                </p>
                 <StatusChip size="md" tone={getStatusTone(data.status)}>
                   {getStatusLabel(data.status)}
                 </StatusChip>
               </div>
             </ModalBody>
 
-            <ModalFooter>
+            <ModalFooter className="flex justify-end">
               <Button
-                className="font-medium"
-                color="primary"
-                variant="light"
+                className="font-medium text-xs text-slate-700 dark:text-zinc-300"
+                radius="lg"
+                variant="bordered"
                 onPress={close}
               >
                 Fechar
@@ -215,4 +200,3 @@ export default function PatientAppointmentDetailsModal({
     </Modal>
   );
 }
-("x");

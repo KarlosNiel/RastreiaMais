@@ -17,6 +17,11 @@ import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import {
+  KeyIcon,
+  ClipboardDocumentCheckIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 import PatientWizard from "@/components/pacientes/PatientWizard";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
 import { apiGet } from "@/lib/api";
@@ -844,6 +849,13 @@ export default function PatientForm(props: Props) {
 
       {/* Modal para exibir a senha inicial do paciente */}
       <Modal
+        backdrop="blur"
+        classNames={{
+          base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-1 max-w-md",
+          header: "pb-2 pt-5 px-6",
+          body: "py-3 px-6",
+          footer: "pt-4 pb-5 px-6",
+        }}
         isOpen={passwordModal.open}
         onOpenChange={(open) => {
           if (!open) {
@@ -855,63 +867,98 @@ export default function PatientForm(props: Props) {
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 text-base font-semibold">
-                Senha inicial do paciente
+              <ModalHeader className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400">
+                  <KeyIcon className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    Senha de Acesso do Paciente
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-normal">
+                    Credencial gerada para o primeiro login no portal
+                  </p>
+                </div>
               </ModalHeader>
 
-              <ModalBody className="space-y-3 text-sm">
-                <p>
-                  Entregue esta senha ao paciente para o primeiro acesso ao
-                  portal. Ela poderá ser alterada depois do login.
+              <ModalBody className="space-y-3.5 text-sm">
+                <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed">
+                  Entregue esta senha provisória ao paciente. Ela será solicitada no
+                  primeiro acesso e poderá ser alterada pelo próprio cidadão.
                 </p>
 
-                <div className="mt-2 mb-1 rounded-lg bg-black/10 px-4 py-3 text-center font-mono text-lg">
-                  {passwordModal.password ?? "Senha não disponível"}
+                <div className="flex items-center justify-between rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 p-3.5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      Senha Temporária
+                    </span>
+                    <span className="font-mono text-lg font-bold text-slate-900 dark:text-white tracking-wider">
+                      {passwordModal.password ?? "Senha não disponível"}
+                    </span>
+                  </div>
+
+                  <Button
+                    className="font-medium text-xs"
+                    color="primary"
+                    radius="md"
+                    size="sm"
+                    startContent={<ClipboardDocumentCheckIcon className="size-4" />}
+                    variant="flat"
+                    onPress={() => {
+                      if (
+                        typeof navigator !== "undefined" &&
+                        passwordModal.password
+                      ) {
+                        navigator.clipboard
+                          ?.writeText(passwordModal.password)
+                          .then(() =>
+                            notifySuccess(
+                              "Senha copiada!",
+                              "A senha foi copiada para a área de transferência.",
+                            ),
+                          )
+                          .catch(() =>
+                            notifyWarn("Não foi possível copiar automaticamente."),
+                          );
+                      }
+                    }}
+                  >
+                    Copiar
+                  </Button>
                 </div>
 
-                <p className="text-xs opacity-80">
-                  Por segurança, esta senha não será exibida novamente após
-                  fechar esta janela.
+                <p className="text-[11px] text-amber-700 dark:text-amber-400/90 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/50 p-2.5 rounded-lg">
+                  ⚠️ Por segurança e conformidade LGPD, esta senha não poderá ser
+                  consultada novamente após fechar esta janela.
                 </p>
               </ModalBody>
 
-              <ModalFooter className="flex justify-between">
+              <ModalFooter className="flex justify-end gap-2 pt-2">
                 <Button
-                  className="font-medium text-slate-700 dark:text-zinc-300"
-                  radius="md"
-                  variant="light"
-                  onPress={() => {
-                    if (
-                      typeof navigator !== "undefined" &&
-                      passwordModal.password
-                    ) {
-                      navigator.clipboard
-                        ?.writeText(passwordModal.password)
-                        .catch(() => {});
-                    }
-                  }}
-                >
-                  Copiar senha
-                </Button>
-                <Button
-                  className="font-medium"
+                  className="font-medium shadow-xs"
                   color="primary"
                   radius="md"
+                  size="sm"
                   onPress={() => {
                     onClose(); // fechar modal → dispara onOpenChange(false) → push("/pacientes")
                   }}
                 >
-                  Fechar
+                  Concluir e Ir para Pacientes
                 </Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
+
       {/* Modal de Rascunho */}
       <Modal
+        backdrop="blur"
         classNames={{
-          base: "rounded-xl shadow-xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800",
+          base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 p-1 max-w-md",
+          header: "pb-2 pt-5 px-6",
+          body: "py-3 px-6",
+          footer: "pt-4 pb-5 px-6",
         }}
         isOpen={draftModal.open}
         onOpenChange={(open) => {
@@ -919,30 +966,42 @@ export default function PatientForm(props: Props) {
         }}
       >
         <ModalContent>
-          <ModalHeader className="text-lg font-semibold">
-            Rascunho Encontrado
+          <ModalHeader className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400">
+              <DocumentTextIcon className="size-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Rascunho Encontrado
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 font-normal">
+                Dados pendentes salvos localmente no navegador
+              </p>
+            </div>
           </ModalHeader>
-          <ModalBody className="text-sm text-slate-600 dark:text-zinc-400">
+          <ModalBody className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
             <p>
-              Você possui um cadastro não finalizado salvo no seu navegador.
+              Identificamos um cadastro de paciente não finalizado neste dispositivo.
             </p>
-            <p>
-              Deseja continuar de onde parou ou iniciar um novo registro limpo?
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+              Deseja recuperar as informações preenchidas ou iniciar um novo cadastro do zero?
             </p>
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter className="flex justify-end gap-2.5">
             <Button
               className="font-medium text-slate-700 dark:text-zinc-300"
               radius="md"
+              size="sm"
               variant="flat"
               onPress={() => handleDraftDecision(false)}
             >
               Iniciar Limpo
             </Button>
             <Button
-              className="font-medium"
+              className="font-medium shadow-xs"
               color="primary"
               radius="md"
+              size="sm"
               onPress={() => handleDraftDecision(true)}
             >
               Continuar Rascunho

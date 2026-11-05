@@ -29,6 +29,7 @@ import {
   SystemSettings,
   useSystemSettings,
 } from "@/lib/hooks/useSystemSettings";
+import { notifySuccess } from "@/components/ui/notify";
 import { cn } from "@/lib/utils";
 
 interface SystemSettingsModalProps {
@@ -61,10 +62,14 @@ export function SystemSettingsModal({
       setTheme(localSettings.theme);
     }
     setIsSaved(true);
+    notifySuccess(
+      "Preferências salvas!",
+      "As configurações da interface e alertas foram atualizadas.",
+    );
     setTimeout(() => {
       setIsSaved(false);
       onClose();
-    }, 1200);
+    }, 800);
   };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
