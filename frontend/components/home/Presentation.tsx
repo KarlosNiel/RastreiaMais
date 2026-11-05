@@ -2,6 +2,7 @@
 
 import { Button } from "@heroui/react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import {
   ChartBarIcon,
   UserGroupIcon,
@@ -13,10 +14,12 @@ export const Presentation = () => {
     <section className="relative min-h-[90vh] flex items-center ">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="flex items-center w-full justify-center py-8">
-            <h1 className="text-5xl md:text-6xl font-black text-primary tracking-tighter">
-              RastreiaCardio
-            </h1>
+          <div className="flex flex-col items-center justify-center py-6">
+            <BrandLogo size="xl" variant="horizontal" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 text-xs font-semibold tracking-wider uppercase mt-4">
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              Atenção Primária à Saúde • e-SUS APS
+            </div>
           </div>
 
           <p className="text-xl sm:text-2xl text-default-600 dark:text-gray-300 mb-8 leading-relaxed">

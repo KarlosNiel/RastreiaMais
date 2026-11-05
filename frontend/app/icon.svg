@@ -1,0 +1,27 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rc-icon-bg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#FB923C" />
+      <stop offset="60%" stopColor="#F97316" />
+      <stop offset="100%" stopColor="#EA580C" />
+    </linearGradient>
+  </defs>
+  <!-- Fundo Squircle do Ícone -->
+  <rect width="32" height="32" rx="9" fill="url(#rc-icon-bg)" />
+  <!-- Silhueta Translúcida do Coração -->
+  <path
+    d="M16 26.5C16 26.5 6 20 6 12.5C6 9 8.8 6.5 12 6.5C13.8 6.5 15.1 7.3 16 8.3C16.9 7.3 18.2 6.5 20 6.5C23.2 6.5 26 9 26 12.5C26 20 16 26.5 16 26.5Z"
+    fill="white"
+    fill-opacity="0.22"
+  />
+  <!-- Eletrocardiograma (ECG) -->
+  <path
+    d="M5 15H10.5L12.5 11L15.5 20L18.5 7.5L21 17.5L22.5 15H27"
+    stroke="white"
+    stroke-width="2.3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Ponto de Trajetória Ativa -->
+  <circle cx="27" cy="15" r="1.25" fill="white" />
+</svg>

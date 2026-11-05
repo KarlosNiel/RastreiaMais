@@ -30,6 +30,7 @@ import { useEffect, useState } from "react";
 
 import { SystemSettingsModal } from "@/components/user/SystemSettingsModal";
 import { UserProfileModal } from "@/components/user/UserProfileModal";
+import { BrandLogo, BrandIconMark } from "@/components/ui/BrandLogo";
 import { Role } from "@/lib/auth";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -213,57 +214,25 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
                 type="button"
                 onClick={toggleCollapse}
               >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs group-hover:scale-105 transition-transform">
-                  <svg
-                    className="size-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                    <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
-                  </svg>
-                </div>
+                <BrandIconMark
+                  className="group-hover:scale-105 transition-transform"
+                  size={36}
+                />
               </button>
             </Tooltip>
           ) : (
             /* No modo aberto, exibe logo completo + botão para recolher */
             <>
-              <Link
-                className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              <BrandLogo
                 href={
                   effectiveRoles.includes("MANAGER")
                     ? "/gestor"
                     : "/profissional"
                 }
-                title="RastreiaCardio"
-              >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs">
-                  <svg
-                    className="size-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                    <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
-                  </svg>
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate leading-tight">
-                    Rastreia<span className="text-primary">Cardio</span>
-                  </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                    APS Digital
-                  </span>
-                </div>
-              </Link>
+                size="sm"
+                subtitle="APS Digital"
+                variant="full"
+              />
 
               <button
                 aria-label="Recolher menu"
@@ -642,30 +611,7 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
           <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-zinc-900 shadow-2xl flex flex-col z-50">
             {/* Topo do drawer */}
             <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 text-white shadow-xs">
-                  <svg
-                    className="size-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                    <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                    Rastreia<span className="text-primary">Cardio</span>
-                  </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                    APS Digital
-                  </span>
-                </div>
-              </div>
+              <BrandLogo size="sm" subtitle="APS Digital" variant="full" />
 
               <button
                 aria-label="Fechar menu lateral"

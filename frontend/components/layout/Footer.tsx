@@ -1,5 +1,6 @@
 // frontend/components/layout/Footer.tsx
 import Link from "next/link";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -12,14 +13,12 @@ export const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-bold text-primary tracking-tight">
-                RastreiaCardio
-              </span>
+            <div className="mb-3">
+              <BrandLogo href="/" size="sm" subtitle="Gestão Cardiovascular APS" variant="full" />
             </div>
-            <div className="w-[80%]">
-              <p className="text-md text-gray-600 dark:text-gray-400">
-                Gestão inteligente de saúde para UBS e APS
+            <div className="w-[85%]">
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                Gestão inteligente e rastreamento de risco cardiovascular para UBS e APS.
               </p>
             </div>
           </div>
@@ -115,7 +114,7 @@ export const Footer = () => {
 
         <div className="pt-8 border-t border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-            © {currentYear} Rastreia+. Todos os direitos reservados.
+            © {currentYear} RastreiaCardio. Todos os direitos reservados.
           </p>
         </div>
       </div>

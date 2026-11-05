@@ -17,6 +17,7 @@ import {
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { cn } from "@/lib/utils";
 import { app as cfg } from "@/config/rastreiamais";
 
@@ -53,19 +54,15 @@ export function AuthCard({ children, heading, subheading, className }: Props) {
         <div className="absolute -top-24 -left-24 size-80 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 size-80 rounded-full bg-orange-600/15 blur-3xl pointer-events-none" />
 
-        {/* Topo: Logo & Identidade */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/30">
-            <Heart className="size-5 text-white fill-white/20" strokeWidth={2.2} />
-          </div>
-          <div>
-            <span className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-              Rastreia<span className="text-primary-400">Cardio</span>
-              <span className="text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-orange-200">
-                APS
-              </span>
-            </span>
-          </div>
+        {/* Topo: Logo & Identidade Oficial */}
+        <div className="relative z-10">
+          <BrandLogo
+            href="/"
+            inverted
+            size="md"
+            subtitle="APS Digital"
+            variant="full"
+          />
         </div>
 
         {/* Centro: Mensagem Direta & Onda de Pulso */}
@@ -132,14 +129,9 @@ export function AuthCard({ children, heading, subheading, className }: Props) {
 
         {/* Centro: Card Focado */}
         <div className="w-full max-w-sm mx-auto my-auto py-8">
-          {/* Logo no Mobile */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/25">
-              <Heart className="size-4.5 fill-white/20" strokeWidth={2.2} />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-              Rastreia<span className="text-primary">Cardio</span>
-            </span>
+          {/* Logo Padronizado no Mobile */}
+          <div className="lg:hidden flex items-center justify-center mb-6">
+            <BrandLogo href="/" size="sm" variant="horizontal" />
           </div>
 
           {/* Abas Alternadoras Diretas (Profissional | Paciente) */}

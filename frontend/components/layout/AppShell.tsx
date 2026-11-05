@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -88,25 +89,7 @@ export function AppShell({ children }: AppShellProps) {
             >
               <Bars3Icon className="size-6" strokeWidth={2} />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-600 text-white shadow-2xs">
-                <svg
-                  className="size-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.2}
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                  <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" />
-                </svg>
-              </div>
-              <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                Rastreia<span className="text-primary">Cardio</span>
-              </span>
-            </div>
+            <BrandLogo size="xs" variant="horizontal" />
           </div>
 
           <div className="flex items-center gap-1.5">
