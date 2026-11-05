@@ -69,24 +69,28 @@ export function useProfissionalKpis(props?: UseProfissionalKpisProps) {
         label: "Pacientes Totais",
         value: totalPatients,
         accent: "brand",
+        footerText: "Cadastrados na microárea",
       },
       {
         key: "riskPatients",
         label: "Agendamentos de Risco",
         value: riskPatients,
         accent: "amber",
+        footerText: "Acompanhamento prioritário",
       },
       {
         key: "appointments",
         label: "Atendimentos",
         value: appointmentsCount,
         accent: "blue",
+        footerText: "Registrados no período",
       },
       {
         key: "criticalAlerts",
         label: "Alertas Críticos",
         value: criticalAlerts,
         accent: "red",
+        footerText: "Atenção clínica imediata",
       },
     ];
   }, [props?.appointments, props?.alerts, remoteKpis]);

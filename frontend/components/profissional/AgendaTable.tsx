@@ -21,13 +21,14 @@ import {
 import {
   CalendarDaysIcon,
   CheckIcon,
+  ChevronDownIcon,
   EllipsisVerticalIcon,
   EyeIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { capitalizeWords, cn } from "@/lib/utils";
 
 /* ===== Tipos ===== */
 export type RiskTone = "safe" | "moderate" | "critical";
@@ -307,7 +308,7 @@ export function AgendaTable({
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-slate-900 dark:text-zinc-100 text-sm truncate">
-                    {row.paciente}
+                    {capitalizeWords(row.paciente)}
                   </span>
                   {row.docMasked && (
                     <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
@@ -369,10 +370,10 @@ export function AgendaTable({
                 className={cn(
                   "inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap shadow-2xs",
                   isCritical
-                    ? "bg-rose-50 text-rose-700 border-rose-200/70 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50"
+                    ? "bg-rose-50 text-rose-800 border-rose-200/70 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50"
                     : isModerate
-                      ? "bg-amber-50 text-amber-700 border-amber-200/70 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50",
+                      ? "bg-amber-50 text-amber-800 border-amber-200/70 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50"
+                      : "bg-emerald-50 text-emerald-800 border-emerald-200/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50",
                 )}
               >
                 {isCritical
@@ -389,16 +390,17 @@ export function AgendaTable({
           return (
             <div className="flex justify-center">
               {row.status === "finalizado" ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
                   <CheckIcon className="size-3" strokeWidth={2.5} />
                   Finalizado
                 </span>
               ) : row.status === "cancelado" ? (
-                <span className="inline-flex items-center text-xs font-medium text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-zinc-700/60">
+                  <span className="size-1.5 rounded-full bg-slate-400" />
                   Cancelado
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/40">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/40">
                   <span className="size-1.5 rounded-full bg-sky-500" />
                   Ativo
                 </span>
@@ -411,17 +413,17 @@ export function AgendaTable({
             <div className="w-[144px] ml-auto flex items-center justify-end gap-1.5">
               {isActive ? (
                 <Button
-                  className="h-8 w-24 text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-400 rounded-lg shadow-2xs"
+                  className="h-8 w-24 text-xs font-semibold bg-primary text-white hover:bg-primary/90 rounded-lg shadow-2xs"
                   color="primary"
                   size="sm"
-                  variant="flat"
+                  variant="solid"
                   onPress={() => onAction?.("open", row)}
                 >
                   Atender
                 </Button>
               ) : isFinalized ? (
                 <Button
-                  className="h-8 w-24 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-zinc-300 dark:hover:text-white bg-slate-100 hover:bg-slate-200/70 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg shadow-2xs"
+                  className="h-8 w-24 text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-zinc-200 dark:hover:text-white bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg shadow-2xs"
                   size="sm"
                   variant="flat"
                   onPress={() => onAction?.("open", row)}
@@ -430,7 +432,7 @@ export function AgendaTable({
                 </Button>
               ) : (
                 <Button
-                  className="h-8 w-24 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 bg-slate-100/60 hover:bg-slate-200/60 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 rounded-lg shadow-2xs"
+                  className="h-8 w-24 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-zinc-800/70 dark:hover:bg-zinc-700/70 rounded-lg shadow-2xs"
                   size="sm"
                   variant="flat"
                   onPress={() => onAction?.("open", row)}
@@ -582,14 +584,6 @@ export function AgendaTable({
               );
             })}
           </div>
-
-          <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-            Total de{" "}
-            <strong className="font-semibold text-slate-700 dark:text-zinc-200">
-              {totalFiltered}
-            </strong>{" "}
-            {totalFiltered === 1 ? "registro" : "registros"}
-          </span>
         </div>
 
         {/* Linha de busca e filtros: alinhada de ponta a ponta com altura h-10 uniforme */}
@@ -640,6 +634,9 @@ export function AgendaTable({
               <DropdownTrigger>
                 <Button
                   className="h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs rounded-xl"
+                  endContent={
+                    <ChevronDownIcon className="size-3.5 text-slate-400 dark:text-zinc-500" />
+                  }
                   radius="md"
                   variant="bordered"
                 >
@@ -675,6 +672,9 @@ export function AgendaTable({
               <DropdownTrigger>
                 <Button
                   className="h-10 font-medium text-xs text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs rounded-xl"
+                  endContent={
+                    <ChevronDownIcon className="size-3.5 text-slate-400 dark:text-zinc-500" />
+                  }
                   radius="md"
                   variant="bordered"
                 >

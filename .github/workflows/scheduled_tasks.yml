@@ -50,3 +50,4 @@ jobs:
           name: db-backup-${{ github.run_id }}
           path: backend/backups/
           retention-days: 30
+

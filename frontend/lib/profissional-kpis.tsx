@@ -19,6 +19,7 @@ export type KpiItem = {
   value: number | string;
   delta?: number;
   accent: "brand" | "amber" | "blue" | "green" | "red";
+  footerText?: string;
 };
 
 // Ícones padronizados com Heroicons

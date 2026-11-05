@@ -5,14 +5,16 @@ import {
   CalendarDaysIcon,
   PlusIcon,
   UserGroupIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import CreateAlertModal from "@/components/gestor/CreateAlertModal";
+import CreateAppointmentsModal from "@/components/appointments/CreateAppointmentsModal";
 import {
   AgendaTable,
   type AgendaRow,
@@ -28,6 +30,7 @@ import { useProfissionalKpis } from "@/lib/hooks/profissional/useProfissionalKpi
 import { KPI_ICONS } from "@/lib/profissional-kpis";
 import ConfirmModal from "@/components/profissional/ConfirmModal";
 import { notifyError, notifySuccess } from "@/components/ui/notify";
+import { capitalizeWords, formatCpf } from "@/lib/utils";
 
 type RiskTone = "safe" | "moderate" | "critical";
 type ChipTone = "safe" | "attention" | "critical" | "neutral";
@@ -37,6 +40,7 @@ interface AppointmentResponse {
   patient?: {
     id: number;
     conditions?: string;
+    cpf?: string;
     user?: {
       first_name?: string;
       last_name?: string;
@@ -88,6 +92,7 @@ export default function ProfissionalPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [isCreateAppointmentOpen, setIsCreateAppointmentOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: rawAlerts, isLoading: isLoadingAlerts } = useAlertsQuery();
@@ -96,15 +101,6 @@ export default function ProfissionalPage() {
     : (rawAlerts as any)?.results && Array.isArray((rawAlerts as any).results)
       ? ((rawAlerts as any).results as any[])
       : [];
-
-  const formatCpf = (cpf?: string) => {
-    if (!cpf) return "—";
-    const digits = cpf.replace(/\D/g, "");
-
-    if (digits.length !== 11) return cpf;
-
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
 
   const {
     data: appointments,
@@ -193,26 +189,33 @@ export default function ProfissionalPage() {
     },
   });
 
-  const AGENDA_ROWS: AgendaRow[] =
-    appointments?.map((a) => ({
-      id: String(a.id),
-      patientId: a.patient?.id ? String(a.patient.id) : undefined,
-      paciente:
-        `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
-        "Desconhecido",
-      hora: new Date(a.scheduled_datetime).toLocaleString("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }),
-      rawDate: a.scheduled_datetime,
-      local: a.local?.name ?? "UBS",
-      type: a.type ?? "Consulta",
-      risco: mapRiskLevel(a.risk_level),
-      condicao: a.patient?.conditions ?? "—",
-      description: a.description || "",
-      docMasked: "",
-      status: a.status || "ativo",
-    })) ?? [];
+  const AGENDA_ROWS: AgendaRow[] = useMemo(() => {
+    return (
+      appointments?.map((a) => {
+        const rawName =
+          `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
+          "Desconhecido";
+
+        return {
+          id: String(a.id),
+          patientId: a.patient?.id ? String(a.patient.id) : undefined,
+          paciente: capitalizeWords(rawName),
+          hora: new Date(a.scheduled_datetime).toLocaleString("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }),
+          rawDate: a.scheduled_datetime,
+          local: a.local?.name ?? "UBS Jardim Magnólia",
+          type: a.type ?? "Consulta",
+          risco: mapRiskLevel(a.risk_level),
+          condicao: a.patient?.conditions ?? "—",
+          description: a.description || "",
+          docMasked: a.patient?.cpf ? formatCpf(a.patient.cpf) : "",
+          status: a.status || "ativo",
+        };
+      }) ?? []
+    );
+  }, [appointments]);
 
   const handleAction = (action: "done" | "delete" | "open", row: AgendaRow) => {
     if (action === "open") {
@@ -255,179 +258,210 @@ export default function ProfissionalPage() {
     });
   };
 
+  // Formatação amigável da data atual
+  const dateFormatted = useMemo(() => {
+    const d = new Date();
+    const formatted = new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(d);
+
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }, []);
+
+  const criticalAlertsCount = alerts?.filter(
+    (a) => a.risk_level === "critical",
+  ).length;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
       {/* Cabeçalho */}
-      <header className="flex flex-col gap-4 pt-8 pb-4 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 pt-8 pb-3 md:flex-row md:items-center md:justify-between border-b border-slate-100 dark:border-zinc-800/80">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
             Dashboard do Profissional
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
-            Visão geral da APS &bull;{" "}
+            {dateFormatted} &bull;{" "}
             <span className="font-medium text-slate-700 dark:text-zinc-300">
               Microárea: Jardim Magnólia
             </span>
           </p>
         </div>
-        <div>
-          <nav aria-label="Ações" className="flex items-center gap-3">
-            <Button
-              as={Link}
-              className="font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 shadow-xs"
-              href="/pacientes"
-              radius="md"
-              size="md"
-              variant="bordered"
-            >
-              Lista de Pacientes
-            </Button>
+        <nav aria-label="Ações rápidas" className="flex items-center gap-2.5">
+          <Button
+            as={Link}
+            className="font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 shadow-2xs"
+            href="/pacientes/novo"
+            radius="md"
+            size="md"
+            startContent={
+              <UserPlusIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+            }
+            variant="bordered"
+          >
+            Novo Paciente
+          </Button>
 
-            <Button
-              as={Link}
-              className="font-medium text-white bg-primary hover:bg-primary/90 shadow-xs"
-              color="primary"
-              href="/pacientes/novo"
-              radius="md"
-              size="md"
-              startContent={<PlusIcon className="size-4" strokeWidth={2.5} />}
-              variant="solid"
-            >
-              Novo Registro
-            </Button>
-          </nav>
-        </div>
+          <Button
+            className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+            color="primary"
+            radius="md"
+            size="md"
+            startContent={
+              <CalendarDaysIcon className="size-4" strokeWidth={2.2} />
+            }
+            variant="solid"
+            onPress={() => setIsCreateAppointmentOpen(true)}
+          >
+            Agendar Atendimento
+          </Button>
+        </nav>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {isLoadingKpis ? (
-            <>
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-            </>
-          ) : (
-            KPIS.map((kpi) => (
-              <KpiCard
-                key={kpi.key}
-                accent={kpi.accent}
-                delta={kpi.delta}
-                icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
-                label={kpi.label}
-                value={kpi.value}
-              />
-            ))
-          )}
-        </section>
+      {/* Grid de 4 Indicadores KPIs */}
+      <section
+        aria-label="Indicadores gerais"
+        className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        {isLoadingKpis ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          KPIS.map((kpi) => (
+            <KpiCard
+              key={kpi.key}
+              accent={kpi.accent}
+              delta={kpi.delta}
+              footerText={(kpi as any).footerText}
+              icon={(KPI_ICONS as Record<string, React.ReactNode>)[kpi.key]}
+              label={kpi.label}
+              value={kpi.value}
+            />
+          ))
+        )}
+      </section>
 
-        <section className="mt-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <BellAlertIcon className="size-5 text-rose-500 dark:text-rose-400" />
-                  {alerts?.some((a) => a.risk_level === "critical") && (
-                    <span className="absolute -top-0.5 -right-0.5 flex size-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex size-2 rounded-full bg-rose-500" />
-                    </span>
-                  )}
-                </div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                  Alerta dos Pacientes
-                </h2>
+      {/* Seção de Alertas dos Pacientes */}
+      <section
+        aria-label="Alertas dos Pacientes"
+        className="mt-5 rounded-xl border border-slate-200/80 bg-white p-4.5 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all"
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800/80">
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex items-center justify-center size-8 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+              <BellAlertIcon className="size-4.5" />
+              {criticalAlertsCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex size-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-rose-500" />
+                </span>
+              )}
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                Alertas Clínicos dos Pacientes
                 {alerts && alerts.length > 0 && (
-                  <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-zinc-400">
+                  <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:text-zinc-400 tabular-nums">
                     {alerts.length}
                   </span>
                 )}
-              </div>
-              <Button
-                isIconOnly
-                aria-label="Adicionar alerta"
-                className="size-8 text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
-                radius="md"
-                size="sm"
-                variant="flat"
-                onPress={() => {
-                  setSelectedAlert(null);
-                  setIsAlertModalOpen(true);
-                }}
-              >
-                <PlusIcon className="size-4" />
-              </Button>
+              </h2>
             </div>
-
-            <CreateAlertModal
-              alertData={selectedAlert}
-              open={isAlertModalOpen}
-              onOpenChange={setIsAlertModalOpen}
-            />
-
-            {isLoadingAlerts ? (
-              <AlertsListSkeleton count={3} />
-            ) : alerts && alerts.length > 0 ? (
-              <div className="max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                <ul className="space-y-2.5">
-                  {alerts
-                    .slice()
-                    .reverse()
-                    .map((a, i) => (
-                      <li key={a.id || i}>
-                        <button
-                          className="group w-full cursor-pointer flex items-center justify-between gap-3 rounded-lg p-3 border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 hover:border-slate-200 dark:border-zinc-800 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/80 dark:hover:border-zinc-700 transition-all text-left"
-                          type="button"
-                          onClick={() => {
-                            setSelectedAlert(a);
-                            setIsAlertModalOpen(true);
-                          }}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 shadow-2xs group-hover:text-slate-700 dark:group-hover:text-zinc-200">
-                              <UserGroupIcon className="size-4.5" />
-                            </div>
-                            <div className="flex flex-col items-start min-w-0">
-                              <p className="text-sm font-medium text-slate-800 dark:text-zinc-100 truncate w-full">
-                                {a.patient?.user?.first_name ?? "—"}{" "}
-                                {a.patient?.user?.last_name ?? "—"}{" "}
-                                <span className="text-xs text-slate-400 dark:text-zinc-500 font-normal ml-1">
-                                  {formatCpf(a.patient?.cpf)}
-                                </span>
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-zinc-400 truncate w-full mt-0.5">
-                                {a.title}{" "}
-                                {a.description ? `— ${a.description}` : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="shrink-0">
-                            <StatusChip
-                              size="sm"
-                              tone={mapRiskToChip(a.risk_level)}
-                            >
-                              {a.risk_level === "critical"
-                                ? "Alto risco"
-                                : a.risk_level === "moderate"
-                                  ? "Risco moderado"
-                                  : "Baixo risco"}
-                            </StatusChip>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400 dark:text-zinc-500 text-center py-6">
-                Nenhum alerta encontrado.
-              </p>
-            )}
           </div>
-        </section>
-      </div>
 
+          <Button
+            className="text-xs font-medium text-slate-700 dark:text-zinc-300 bg-slate-100 hover:bg-slate-200/70 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 shadow-2xs"
+            radius="md"
+            size="sm"
+            startContent={<PlusIcon className="size-3.5" />}
+            variant="flat"
+            onPress={() => {
+              setSelectedAlert(null);
+              setIsAlertModalOpen(true);
+            }}
+          >
+            Novo Alerta
+          </Button>
+        </div>
+
+        {isLoadingAlerts ? (
+          <div className="pt-4">
+            <AlertsListSkeleton count={2} />
+          </div>
+        ) : alerts && alerts.length > 0 ? (
+          <div className="mt-3.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {alerts
+                .slice()
+                .reverse()
+                .map((a, i) => {
+                  const patientName = capitalizeWords(
+                    `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
+                      "Paciente não identificado",
+                  );
+
+                  return (
+                    <li key={a.id || i}>
+                      <button
+                        className="group w-full cursor-pointer flex items-center justify-between gap-3 rounded-xl p-3 border border-slate-100 bg-slate-50/50 hover:bg-slate-100/70 hover:border-slate-200 dark:border-zinc-800 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/70 dark:hover:border-zinc-700 transition-all text-left"
+                        type="button"
+                        onClick={() => {
+                          setSelectedAlert(a);
+                          setIsAlertModalOpen(true);
+                        }}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/70 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 shadow-2xs group-hover:text-slate-700 dark:group-hover:text-zinc-200">
+                            <UserGroupIcon className="size-4.5" />
+                          </div>
+                          <div className="flex flex-col items-start min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100 truncate w-full">
+                              {patientName}
+                              {a.patient?.cpf && (
+                                <span className="text-xs text-slate-400 dark:text-zinc-500 font-mono font-normal ml-1.5">
+                                  ({formatCpf(a.patient.cpf)})
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 truncate w-full mt-0.5">
+                              {a.title}
+                              {a.description ? ` — ${a.description}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0">
+                          <StatusChip
+                            size="sm"
+                            tone={mapRiskToChip(a.risk_level)}
+                          >
+                            {a.risk_level === "critical"
+                              ? "Alto risco"
+                              : a.risk_level === "moderate"
+                                ? "Risco moderado"
+                                : "Baixo risco"}
+                          </StatusChip>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
+        ) : (
+          <div className="py-6 text-center text-xs text-slate-500 dark:text-zinc-400">
+            Nenhum alerta crítico ativo no momento. Todos os pacientes estáveis.
+          </div>
+        )}
+      </section>
+
+      {/* Seção Agenda de Atendimentos */}
       <section className="mt-6 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">
         <div className="flex items-center gap-2 mb-4">
           <CalendarDaysIcon className="size-5 text-slate-600 dark:text-zinc-300" />
@@ -452,6 +486,18 @@ export default function ProfissionalPage() {
           />
         )}
       </section>
+
+      {/* Modais de ação */}
+      <CreateAlertModal
+        alertData={selectedAlert}
+        open={isAlertModalOpen}
+        onOpenChange={setIsAlertModalOpen}
+      />
+
+      <CreateAppointmentsModal
+        open={isCreateAppointmentOpen}
+        onOpenChange={setIsCreateAppointmentOpen}
+      />
 
       <ProfessionalAppointmentDetailsModal
         data={selectedAppointment}
