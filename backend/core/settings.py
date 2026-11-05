@@ -106,6 +106,15 @@ else:
         'https://rastreiamais.vercel.app,https://rastreia-three.vercel.app,http://localhost:3000,http://127.0.0.1:3000'
     )
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed.split(',') if origin.strip()]
+    for default_origin in [
+        'https://rastreia-three.vercel.app',
+        'https://rastreiamais.vercel.app',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]:
+        if default_origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(default_origin)
+
     CORS_ALLOWED_ORIGIN_REGEXES = [
         r"^https://.*\.vercel\.app$",
     ]
