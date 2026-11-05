@@ -38,7 +38,16 @@ ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('ALLOWED_HOSTS', 'localhost,1
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://rastreiamais.vercel.app',
+    'https://rastreia-three.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 
 # Application definition
@@ -94,9 +103,12 @@ else:
     CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() in ('true', '1')
     cors_allowed = os.environ.get(
         'CORS_ALLOWED_ORIGINS',
-        'https://rastreiamais.vercel.app,http://localhost:3000,http://127.0.0.1:3000'
+        'https://rastreiamais.vercel.app,https://rastreia-three.vercel.app,http://localhost:3000,http://127.0.0.1:3000'
     )
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed.split(',') if origin.strip()]
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://.*\.vercel\.app$",
+    ]
 
 ROOT_URLCONF = 'core.urls'
 
@@ -432,8 +444,11 @@ LOGGING = {
     },
 }
 
-# Sentry Error Tracking & APM (Ativo quando SENTRY_DSN for configurado no ambiente)
-SENTRY_DSN = os.environ.get("SENTRY_DSN")
+# Sentry Error Tracking & APM (Ativo quando SENTRY_DSN for configurado no ambiente ou com fallback de produção)
+SENTRY_DSN = os.environ.get(
+    "SENTRY_DSN",
+    "https://e80a3b8f588e5d318a9789d28cfd5427@o4512379320139776.ingest.us.sentry.io/4512379348123648"
+)
 if SENTRY_DSN:
     import logging
     import sentry_sdk

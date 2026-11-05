@@ -34,15 +34,15 @@ type ChipTone = "safe" | "attention" | "critical" | "neutral";
 
 interface AppointmentResponse {
   id: number;
-  patient: {
+  patient?: {
     id: number;
-    conditions: string;
-    user: {
-      first_name: string;
-      last_name: string;
+    conditions?: string;
+    user?: {
+      first_name?: string;
+      last_name?: string;
     };
-  };
-  professional: number;
+  } | null;
+  professional?: any;
   scheduled_datetime: string;
   local?: {
     name?: string;
@@ -208,7 +208,7 @@ export default function ProfissionalPage() {
       local: a.local?.name ?? "UBS",
       type: a.type ?? "Consulta",
       risco: mapRiskLevel(a.risk_level),
-      condicao: a.patient.conditions ?? "—",
+      condicao: a.patient?.conditions ?? "—",
       description: a.description || "",
       docMasked: "",
       status: a.status || "ativo",
