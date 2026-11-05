@@ -42,7 +42,12 @@ export default function GestorPage() {
   const { data: KPIS = [], isLoading: isLoadingKpis } = useGestorKpis();
 
   //! Busca alertas
-  const { data: alerts, isLoading: isLoadingAlerts } = useAlertsQuery();
+  const { data: rawAlerts, isLoading: isLoadingAlerts } = useAlertsQuery();
+  const alerts = Array.isArray(rawAlerts)
+    ? rawAlerts
+    : (rawAlerts as any)?.results && Array.isArray((rawAlerts as any).results)
+      ? ((rawAlerts as any).results as any[])
+      : [];
 
   const formatCpf = (cpf?: string) => {
     if (!cpf) return "—";

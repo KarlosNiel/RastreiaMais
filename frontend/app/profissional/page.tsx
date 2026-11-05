@@ -90,7 +90,12 @@ export default function ProfissionalPage() {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
-  const { data: alerts, isLoading: isLoadingAlerts } = useAlertsQuery();
+  const { data: rawAlerts, isLoading: isLoadingAlerts } = useAlertsQuery();
+  const alerts = Array.isArray(rawAlerts)
+    ? rawAlerts
+    : (rawAlerts as any)?.results && Array.isArray((rawAlerts as any).results)
+      ? ((rawAlerts as any).results as any[])
+      : [];
 
   const formatCpf = (cpf?: string) => {
     if (!cpf) return "—";

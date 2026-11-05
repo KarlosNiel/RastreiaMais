@@ -73,10 +73,14 @@ export type InstitutionApi = {
  * Lista instituições em `/api/v1/locations/institutions/`.
  */
 export async function listInstitutions(): Promise<InstitutionApi[]> {
-  const res = await apiGet<InstitutionApi[]>("/api/v1/locations/institutions/");
-
-  return ensureResponse(
-    res,
-    "Falha ao carregar instituições. A API retornou resposta vazia.",
+  const res = await apiGet<InstitutionApi[] | { results: InstitutionApi[] }>(
+    "/api/v1/locations/institutions/",
   );
+
+  if (Array.isArray(res)) return res;
+  if (res && typeof res === "object" && Array.isArray((res as any).results)) {
+    return (res as any).results as InstitutionApi[];
+  }
+
+  return [];
 }
