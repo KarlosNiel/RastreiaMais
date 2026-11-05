@@ -1,0 +1,52 @@
+name: Scheduled Routine & Database Backup
+
+on:
+  schedule:
+    # Executa todos os dias às 03:00 UTC (00:00 Horário de Brasília)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Permite disparo manual com 1 clique pela aba Actions do GitHub
+
+jobs:
+  daily-maintenance:
+    name: Daily Maintenance & Cloud Backup
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: core.settings
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY || 'ci-scheduled-routine-secret-key-12345' }}
+      DEBUG: 'False'
+      ENV: 'production'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Expire Old Medications
+        working-directory: ./backend
+        run: |
+          python manage.py update_expired_medications
+
+      - name: Create Database Backup with SHA-256 Checksum
+        working-directory: ./backend
+        run: |
+          mkdir -p backups
+          python manage.py backup_database --output-dir=backups --keep-last=14
+
+      - name: Securely Store Backup Artifact in GitHub Cloud (30 Days Retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backend/backups/
+          retention-days: 30

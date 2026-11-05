@@ -137,3 +137,17 @@ class EnterpriseFeaturesTest(TestCase):
         self.assertNotEqual(patient.cpf, "12345678909")
         self.assertEqual(patient.phone, "83999990000")
         self.assertFalse(patient.whatsapp)
+
+    def test_dynamic_frontend_url_and_password_reset_flow(self):
+        from django.core import mail
+        from django.conf import settings
+
+        # Solicita reset de senha para o usuário de teste usando identifier (email)
+        resp = self.client.post("/api/password-reset/request/", {"identifier": self.user.email})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Verifica se o e-mail foi gerado com o link dinâmico
+        self.assertEqual(len(mail.outbox), 1)
+        sent_email = mail.outbox[0]
+        self.assertIn(settings.FRONTEND_URL, sent_email.body)
+        self.assertIn("/auth/redefinir-senha?token=", sent_email.body)

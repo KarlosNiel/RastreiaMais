@@ -351,19 +351,47 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # Email Configuration
-# Para desenvolvimento, use console backend
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+if EMAIL_HOST:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1')
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Para produção, configure SMTP:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'seu-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'sua-senha-de-app'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@rastreiamais.com')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://rastreia-three.vercel.app' if not DEBUG else 'http://localhost:3000')
 
-DEFAULT_FROM_EMAIL = 'noreply@rastreiamais.com'
-FRONTEND_URL = 'http://localhost:3000'
+# Cloud Storage (AWS S3 / Cloudflare R2) - Ativo se credenciais forem fornecidas
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')  # Suporta Cloudflare R2 / MinIO
+AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'auto')
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+
+if AWS_STORAGE_BUCKET_NAME and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "endpoint_url": AWS_S3_ENDPOINT_URL,
+                "region_name": AWS_S3_REGION_NAME,
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # Security Headers para Produção
 if not DEBUG:
