@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from apps.accounts.models import PatientUser, ProfessionalUser
 from apps.locations.models import Institution
 from apps.appointments.models import Appointment
+from apps.appointments.utils import calculate_risk_from_patient
+from apps.conditions.models import HAS
+from apps.conditions.constants.has_choices import HypertensionComplicationsChoices
 from django.utils.timezone import now, timedelta
 from django.core.exceptions import ValidationError
 
@@ -94,3 +97,20 @@ class AppointmentModelTest(TestCase):
         )
         with self.assertRaises(ValidationError):
             appointment.full_clean()
+
+    def test_calculate_risk_from_patient_with_high_risk_complications(self):
+        # Sem HAS cadastrada -> Moderado
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Moderado")
+
+        # Com condição de alto risco direta (ex: AIT) -> Crítico
+        has = HAS.objects.create(
+            patient=self.patient,
+            any_complications_HBP=HypertensionComplicationsChoices.AIT,
+        )
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
+        # Com LOA -> Crítico
+        has.any_complications_HBP = HypertensionComplicationsChoices.LOA
+        has.save()
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
