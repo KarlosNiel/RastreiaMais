@@ -9,7 +9,12 @@ from apps.accounts.models import PatientUser
 from apps.accounts.utils.utils import get_user_profile
 from apps.commons.utils.audit import log_medical_access
 from apps.reports.soap_service import generate_soap_report
-from .soap_serializer import SOAPGenerateRequestSerializer, SOAPReportResponseSerializer
+from apps.reports.soap_ai_service import generate_ai_assisted_soap
+from .soap_serializer import (
+    SOAPGenerateRequestSerializer,
+    SOAPAssistRequestSerializer,
+    SOAPReportResponseSerializer,
+)
 
 
 @extend_schema(tags=['Reports - SOAP'])
@@ -62,6 +67,74 @@ class SOAPReportViewSet(ViewSet):
 
         response_serializer = SOAPReportResponseSerializer(report)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        request=SOAPAssistRequestSerializer,
+        responses={200: SOAPReportResponseSerializer},
+        summary="Aprimorar relatório SOAP com IA e Function Calling (Gemini)",
+        description="Recebe o ID do paciente ou estrutura SOAP base e utiliza IA com ferramentas clínicas da APS para aprimorar o SOAP.",
+    )
+    @action(detail=False, methods=["post"], url_path="assist")
+    def assist(self, request):
+        """POST /api/v1/reports/soap/assist/"""
+        serializer = SOAPAssistRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        patient_id = serializer.validated_data.get("patient_id")
+        base_soap = serializer.validated_data.get("base_soap")
+        prof_notes = serializer.validated_data.get("professional_notes", "")
+
+        role, profile = get_user_profile(request.user)
+
+        if role == 'patient':
+            if patient_id and (not profile or profile.id != patient_id):
+                return Response(
+                    {"detail": "Você não tem permissão para acessar o prontuário deste paciente."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not patient_id:
+                return Response(
+                    {"detail": "Acesso não autorizado para assistência livre por IA."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        if role not in ('patient', 'professional', 'manager', 'superuser'):
+            return Response(
+                {"detail": "Você não possui perfil com permissão para acessar este recurso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            if patient_id:
+                base_soap = generate_soap_report(patient_id)
+            elif not base_soap:
+                return Response(
+                    {"detail": "É necessário fornecer patient_id ou base_soap."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            enhanced_report = generate_ai_assisted_soap(base_soap, professional_notes=prof_notes)
+            log_medical_access(
+                request.user,
+                "SOAP_AI_ASSIST",
+                patient_id or 0,
+                "SOAPReport",
+                request=request,
+            )
+        except PatientUser.DoesNotExist:
+            return Response(
+                {"detail": "Paciente não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Erro na assistência do SOAP: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response_serializer = SOAPReportResponseSerializer(enhanced_report)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
 
     @extend_schema(
         summary="Exportar Relatório SOAP em HTML para Impressão",

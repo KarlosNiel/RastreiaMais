@@ -50,6 +50,10 @@ export type SOAPReport = {
   plano: SOAPPlano;
   indicadores_previne: SOAPIndicador[];
   gerado_em: string;
+  alertas_clinicos?: string[];
+  sugestoes_conduta?: string[];
+  is_ai_enhanced?: boolean;
+  ai_disclaimer?: string | null;
 };
 
 /**
@@ -60,5 +64,21 @@ export async function generateSOAPReport(
 ): Promise<SOAPReport | null> {
   return apiPost<SOAPReport>("/api/v1/reports/soap/generate/", {
     patient_id: patientId,
+  });
+}
+
+/**
+ * Aprimora o relatório SOAP utilizando a API Gemini com Function Calling
+ * (diretrizes clínicas da APS, RENAME e Previne Brasil).
+ */
+export async function assistSOAPReport(params: {
+  patientId?: number;
+  baseSoap?: SOAPReport;
+  professionalNotes?: string;
+}): Promise<SOAPReport | null> {
+  return apiPost<SOAPReport>("/api/v1/reports/soap/assist/", {
+    patient_id: params.patientId,
+    base_soap: params.baseSoap,
+    professional_notes: params.professionalNotes,
   });
 }

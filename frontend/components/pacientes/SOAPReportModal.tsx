@@ -11,13 +11,17 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ClipboardDocumentCheckIcon,
+  ExclamationTriangleIcon,
   PrinterIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
-import { notifySuccess, notifyWarn } from "@/components/ui/notify";
+import { assistSOAPReport } from "@/lib/api/soap";
+import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
+
 
 type Props = {
   isOpen: boolean;
@@ -144,35 +148,46 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
+  const [currentReport, setCurrentReport] = useState<SOAPReport | null>(report);
+  const [isAssisting, setIsAssisting] = useState(false);
+
+  useEffect(() => {
+    setCurrentReport(report);
+  }, [report]);
+
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
 
   const handleCopyFullSOAP = useCallback(() => {
-    if (!report) return;
+    if (!currentReport) return;
 
     const sections = [
-      `PACIENTE: ${report.paciente.nome} | CPF: ${report.paciente.cpf || "—"} | Idade: ${report.paciente.idade ?? "—"} anos`,
+      `PACIENTE: ${currentReport.paciente.nome} | CPF: ${currentReport.paciente.cpf || "—"} | Idade: ${currentReport.paciente.idade ?? "—"} anos`,
+      currentReport.is_ai_enhanced ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]` : null,
+      currentReport.alertas_clinicos && currentReport.alertas_clinicos.length > 0
+        ? `ALERTAS CLÍNICOS (APS):\n${currentReport.alertas_clinicos.map((a) => `• ${a}`).join("\n")}`
+        : null,
       `--- SUBJETIVO (S) ---`,
-      report.subjetivo.identificacao,
-      report.subjetivo.historico,
-      report.subjetivo.determinantes,
-      report.subjetivo.estilo_vida,
+      currentReport.subjetivo.identificacao,
+      currentReport.subjetivo.historico,
+      currentReport.subjetivo.determinantes,
+      currentReport.subjetivo.estilo_vida,
       `--- OBJETIVO (O) ---`,
-      report.objetivo.pressao_arterial,
-      report.objetivo.antropometria,
-      report.objetivo.glicemia_metabolico,
-      report.objetivo.exame_fisico,
+      currentReport.objetivo.pressao_arterial,
+      currentReport.objetivo.antropometria,
+      currentReport.objetivo.glicemia_metabolico,
+      currentReport.objetivo.exame_fisico,
       `--- AVALIAÇÃO (A) ---`,
-      report.avaliacao.hipertensao,
-      report.avaliacao.diabetes,
-      report.avaliacao.risco_cardiovascular,
-      report.avaliacao.riscos_psicossociais,
-      report.avaliacao.outras_dcnts,
+      currentReport.avaliacao.hipertensao,
+      currentReport.avaliacao.diabetes,
+      currentReport.avaliacao.risco_cardiovascular,
+      currentReport.avaliacao.riscos_psicossociais,
+      currentReport.avaliacao.outras_dcnts,
       `--- PLANO (P) ---`,
-      report.plano.conduta_clinica,
-      report.plano.exames_solicitados,
-      report.plano.encaminhamentos,
+      currentReport.plano.conduta_clinica,
+      currentReport.plano.exames_solicitados,
+      currentReport.plano.encaminhamentos,
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -183,9 +198,29 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
         notifySuccess("SOAP completo copiado para a área de transferência!"),
       )
       .catch(() => notifyWarn("Falha ao copiar SOAP."));
-  }, [report]);
+  }, [currentReport]);
 
-  if (!report) return null;
+  const handleAIAssist = useCallback(async () => {
+    if (!currentReport) return;
+    try {
+      setIsAssisting(true);
+      const enhanced = await assistSOAPReport({
+        patientId: currentReport.paciente.id || undefined,
+        baseSoap: currentReport,
+      });
+
+      if (enhanced) {
+        setCurrentReport(enhanced);
+        notifySuccess("SOAP aprimorado com sucesso pela Assistente Sofia!");
+      }
+    } catch {
+      notifyError("Erro ao processar assistência com IA.");
+    } finally {
+      setIsAssisting(false);
+    }
+  }, [currentReport]);
+
+  if (!currentReport) return null;
 
   return (
     <Modal
@@ -204,11 +239,33 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
       onClose={onClose}
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1 print:hidden">
-          <h2 className="text-lg font-bold">Relatório SOAP — RASTREIA+</h2>
-          <p className="text-xs text-foreground/60">
-            Modelo de Relatório SOAP para Integração com o PEC/e-SUS
-          </p>
+        <ModalHeader className="flex items-center justify-between gap-4 print:hidden">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold">Relatório SOAP — RASTREIA+</h2>
+              {currentReport.is_ai_enhanced && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                  <SparklesIcon className="size-3.5" />
+                  Assistente Sofia (APS)
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-foreground/60">
+              Modelo de Relatório SOAP para Integração com o PEC/e-SUS
+            </p>
+          </div>
+          {!currentReport.is_ai_enhanced && (
+            <Button
+              className="font-medium shrink-0 bg-teal-600 hover:bg-teal-700 text-white"
+              isLoading={isAssisting}
+              radius="lg"
+              size="sm"
+              startContent={<SparklesIcon className="size-4" />}
+              onPress={handleAIAssist}
+            >
+              Aprimorar com Sofia
+            </Button>
+          )}
         </ModalHeader>
 
         <ModalBody className="px-6">
@@ -226,28 +283,45 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-foreground/60 text-xs">Paciente</p>
-                <p className="font-semibold">{report.paciente.nome || "—"}</p>
+                <p className="font-semibold">{currentReport.paciente.nome || "—"}</p>
               </div>
               <div>
                 <p className="text-foreground/60 text-xs">CPF</p>
-                <p className="font-semibold">{report.paciente.cpf || "—"}</p>
+                <p className="font-semibold">{currentReport.paciente.cpf || "—"}</p>
               </div>
               <div>
                 <p className="text-foreground/60 text-xs">Nascimento</p>
                 <p className="font-semibold">
-                  {report.paciente.nascimento || "—"}
+                  {currentReport.paciente.nascimento || "—"}
                 </p>
               </div>
               <div>
                 <p className="text-foreground/60 text-xs">Idade</p>
                 <p className="font-semibold">
-                  {report.paciente.idade != null
-                    ? `${report.paciente.idade} anos`
+                  {currentReport.paciente.idade != null
+                    ? `${currentReport.paciente.idade} anos`
                     : "—"}
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Alertas Clínicos (se houver) */}
+          {currentReport.alertas_clinicos && currentReport.alertas_clinicos.length > 0 && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <ExclamationTriangleIcon className="size-4 text-amber-600 dark:text-amber-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  Alertas e Oportunidades Clínicas Identificadas por Sofia
+                </h4>
+              </div>
+              <ul className="list-disc list-inside space-y-1 text-xs text-amber-900 dark:text-amber-200">
+                {currentReport.alertas_clinicos.map((alerta, idx) => (
+                  <li key={idx}>{alerta}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Blocos SOAP */}
           <SOAPBlock
@@ -255,17 +329,17 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             sections={[
               {
                 label: "Identificação e queixas principais",
-                text: report.subjetivo.identificacao,
+                text: currentReport.subjetivo.identificacao,
               },
               {
                 label: "Histórico e contexto clínico",
-                text: report.subjetivo.historico,
+                text: currentReport.subjetivo.historico,
               },
               {
                 label: "Determinantes sociais e psicossociais",
-                text: report.subjetivo.determinantes,
+                text: currentReport.subjetivo.determinantes,
               },
-              { label: "Estilo de vida", text: report.subjetivo.estilo_vida },
+              { label: "Estilo de vida", text: currentReport.subjetivo.estilo_vida },
             ]}
             title="Subjetivo — o que o paciente relata e a história clínica"
           />
@@ -275,16 +349,16 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             sections={[
               {
                 label: "Pressão arterial",
-                text: report.objetivo.pressao_arterial,
+                text: currentReport.objetivo.pressao_arterial,
               },
-              { label: "Antropometria", text: report.objetivo.antropometria },
+              { label: "Antropometria", text: currentReport.objetivo.antropometria },
               {
                 label: "Glicemia e metabólico",
-                text: report.objetivo.glicemia_metabolico,
+                text: currentReport.objetivo.glicemia_metabolico,
               },
               {
                 label: "Exame físico sumário",
-                text: report.objetivo.exame_fisico,
+                text: currentReport.objetivo.exame_fisico,
               },
             ]}
             title="Objetivo — dados clínicos mensurados na avaliação"
@@ -295,23 +369,23 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             sections={[
               {
                 label: "Hipertensão arterial",
-                text: report.avaliacao.hipertensao,
+                text: currentReport.avaliacao.hipertensao,
               },
               {
                 label: "Diabetes mellitus",
-                text: report.avaliacao.diabetes,
+                text: currentReport.avaliacao.diabetes,
               },
               {
                 label: "Risco cardiovascular",
-                text: report.avaliacao.risco_cardiovascular,
+                text: currentReport.avaliacao.risco_cardiovascular,
               },
               {
                 label: "Riscos psicossociais e sociais identificados",
-                text: report.avaliacao.riscos_psicossociais,
+                text: currentReport.avaliacao.riscos_psicossociais,
               },
               {
                 label: "Outras DCNTs",
-                text: report.avaliacao.outras_dcnts,
+                text: currentReport.avaliacao.outras_dcnts,
               },
             ]}
             title="Avaliação — classificação consolidada e estratificação de risco"
@@ -322,22 +396,22 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             sections={[
               {
                 label: "Conduta clínica imediata",
-                text: report.plano.conduta_clinica,
+                text: currentReport.plano.conduta_clinica,
               },
               {
                 label: "Exames solicitados",
-                text: report.plano.exames_solicitados,
+                text: currentReport.plano.exames_solicitados,
               },
               {
                 label: "Encaminhamentos multiprofissionais",
-                text: report.plano.encaminhamentos,
+                text: currentReport.plano.encaminhamentos,
               },
             ]}
             title="Plano — condutas, encaminhamentos e agendamentos"
           />
 
           {/* Indicadores do Previne Brasil */}
-          {report.indicadores_previne.length > 0 && (
+          {currentReport.indicadores_previne.length > 0 && (
             <div className="rounded-lg border border-default-200 overflow-hidden mb-4 print:break-inside-avoid">
               <div className="bg-gray-700 px-4 py-2">
                 <h3 className="text-white font-semibold text-sm">
@@ -345,7 +419,7 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
                 </h3>
               </div>
               <div className="divide-y divide-default-200">
-                {report.indicadores_previne.map((ind, i) => (
+                {currentReport.indicadores_previne.map((ind, i) => (
                   <div
                     key={i}
                     className="flex items-center justify-between px-4 py-2.5"
@@ -358,9 +432,16 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             </div>
           )}
 
+          {/* Aviso Legal CFM/COFEN */}
+          {currentReport.ai_disclaimer && (
+            <p className="text-[11px] text-muted-foreground/80 italic text-center mt-3 mb-1 px-4">
+              {currentReport.ai_disclaimer}
+            </p>
+          )}
+
           {/* Rodapé */}
           <p className="text-xs text-foreground/50 text-center mt-4 mb-2">
-            Gerado em {report.gerado_em} — RASTREIA+ v1.0
+            Gerado em {currentReport.gerado_em} — RASTREIA+ v1.0
           </p>
         </ModalBody>
 

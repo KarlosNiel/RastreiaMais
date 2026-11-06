@@ -2,14 +2,25 @@
 "use client";
 
 import type { SOAPReport } from "@/lib/api/soap";
+import { assistSOAPReport } from "@/lib/api/soap";
 
-import { Button, Card, CardBody } from "@heroui/react";
+import { Button, Card, CardBody, Input } from "@heroui/react";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  ChatBubbleLeftRightIcon,
+  CheckCircleIcon,
+  ClipboardDocumentCheckIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  LightBulbIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 
 import SOAPReportModal from "@/components/pacientes/SOAPReportModal";
-import { notifySuccess, notifyWarn } from "@/components/ui/notify";
+import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
+
 
 /* ── Label maps (replicados do backend para montagem client-side) ── */
 
@@ -154,10 +165,12 @@ const BLOCK_COLORS = {
 function SOAPBlock({
   letter,
   title,
+  isSofiaEnhanced,
   sections,
 }: {
   letter: keyof typeof BLOCK_COLORS;
   title: string;
+  isSofiaEnhanced?: boolean;
   sections: { label: string; text: string | null | undefined }[];
 }) {
   const colors = BLOCK_COLORS[letter];
@@ -165,13 +178,13 @@ function SOAPBlock({
   const copyBlock = useCallback(() => {
     const text = sections
       .filter((s) => s.text)
-      .map((s) => `${s.label}\n${s.text}`)
+      .map((s) => `${s.label.toUpperCase()}:\n${s.text}`)
       .join("\n\n");
 
     navigator.clipboard
       ?.writeText(text)
-      .then(() => notifySuccess(`Bloco ${letter} copiado.`))
-      .catch(() => notifyWarn("Falha ao copiar."));
+      .then(() => notifySuccess(`Bloco ${letter} copiado para a área de transferência.`))
+      .catch(() => notifyWarn("Falha ao copiar bloco."));
   }, [sections, letter]);
 
   const nonEmpty = sections.filter((s) => s.text);
@@ -179,21 +192,27 @@ function SOAPBlock({
   if (nonEmpty.length === 0) return null;
 
   return (
-    <div className={`rounded-lg border ${colors.border} overflow-hidden`}>
+    <div className={`rounded-xl border ${colors.border} overflow-hidden shadow-2xs transition-all`}>
       <div
         className={`${colors.header} px-4 py-2.5 flex items-center justify-between`}
       >
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-white font-bold text-lg">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/20 text-white font-bold text-base shadow-xs">
             {letter}
           </span>
           <h3 className="text-white font-semibold text-sm">{title}</h3>
+          {isSofiaEnhanced && (
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/20 text-white backdrop-blur-xs">
+              <SparklesIcon className="size-3" /> Sofia
+            </span>
+          )}
         </div>
         <button
-          className="text-white/80 hover:text-white text-xs underline transition-colors"
+          className="text-white/90 hover:text-white text-xs font-medium px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors flex items-center gap-1"
           type="button"
           onClick={copyBlock}
         >
+          <ClipboardDocumentCheckIcon className="size-3.5" />
           Copiar bloco
         </button>
       </div>
@@ -202,12 +221,12 @@ function SOAPBlock({
         {nonEmpty.map((s, i) => (
           <div
             key={i}
-            className={`px-4 py-3 ${i > 0 ? `border-t ${colors.border}` : ""}`}
+            className={`px-4 py-3.5 ${i > 0 ? `border-t ${colors.border}` : ""}`}
           >
-            <p className="text-xs font-bold text-foreground/70 mb-1 uppercase tracking-wide">
+            <p className="text-[11px] font-bold text-foreground/70 mb-1 uppercase tracking-wider">
               {s.label}
             </p>
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
               {s.text}
             </p>
           </div>
@@ -242,6 +261,12 @@ function StatusBadge({ status }: { status: string }) {
 export default function Step6Resumo() {
   const { getValues } = useFormContext();
   const [modalOpen, setModalOpen] = useState(false);
+  const [aiReport, setAiReport] = useState<SOAPReport | null>(null);
+  const [activeMode, setActiveMode] = useState<"form" | "ai">("form");
+  const [isAssisting, setIsAssisting] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [notes, setNotes] = useState("");
+
 
   /* ── Extrai dados do formulário ── */
   const buildSOAPFromForm = useCallback((): SOAPReport => {
@@ -637,199 +662,443 @@ export default function Step6Resumo() {
   }, [getValues]);
 
   /* ── Dados montados a partir do form ── */
-  const report = useMemo(() => buildSOAPFromForm(), [buildSOAPFromForm]);
+  const formReport = useMemo(() => buildSOAPFromForm(), [buildSOAPFromForm]);
+  const activeReport = activeMode === "ai" && aiReport ? aiReport : formReport;
 
   const handleOpenModal = useCallback(() => {
     setModalOpen(true);
   }, []);
 
+  const handleCopyFullSOAP = useCallback(() => {
+    if (!activeReport) return;
+
+    const lines = [
+      `PACIENTE: ${activeReport.paciente.nome || "—"} | CPF: ${activeReport.paciente.cpf || "—"} | IDADE: ${activeReport.paciente.idade ?? "—"} anos`,
+      activeReport.is_ai_enhanced ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]` : null,
+      activeReport.alertas_clinicos && activeReport.alertas_clinicos.length > 0
+        ? `ALERTAS CLÍNICOS:\n${activeReport.alertas_clinicos.map((a) => `• ${a}`).join("\n")}`
+        : null,
+      `\n--- SUBJETIVO (S) ---`,
+      activeReport.subjetivo.identificacao,
+      activeReport.subjetivo.historico,
+      activeReport.subjetivo.determinantes,
+      activeReport.subjetivo.estilo_vida,
+      `\n--- OBJETIVO (O) ---`,
+      activeReport.objetivo.pressao_arterial,
+      activeReport.objetivo.antropometria,
+      activeReport.objetivo.glicemia_metabolico,
+      activeReport.objetivo.exame_fisico,
+      `\n--- AVALIAÇÃO (A) ---`,
+      activeReport.avaliacao.hipertensao,
+      activeReport.avaliacao.diabetes,
+      activeReport.avaliacao.risco_cardiovascular,
+      activeReport.avaliacao.riscos_psicossociais,
+      activeReport.avaliacao.outras_dcnts,
+      `\n--- PLANO (P) ---`,
+      activeReport.plano.conduta_clinica,
+      activeReport.plano.exames_solicitados,
+      activeReport.plano.encaminhamentos,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    navigator.clipboard
+      ?.writeText(lines)
+      .then(() => notifySuccess("SOAP completo copiado para a área de transferência!"))
+      .catch(() => notifyWarn("Falha ao copiar SOAP."));
+  }, [activeReport]);
+
+  const handleAIAssist = useCallback(
+    async (customNotes?: string) => {
+      const notesToUse = typeof customNotes === "string" ? customNotes : notes;
+      try {
+        setIsAssisting(true);
+        const enhanced = await assistSOAPReport({
+          baseSoap: formReport,
+          professionalNotes: notesToUse,
+        });
+
+        if (enhanced) {
+          setAiReport(enhanced);
+          setActiveMode("ai");
+          notifySuccess("Sofia refinou o resumo SOAP com sucesso!");
+        }
+      } catch {
+        notifyError("Erro ao processar assistência clínica.");
+      } finally {
+        setIsAssisting(false);
+      }
+    },
+    [formReport, notes],
+  );
+
+  const quickChips = [
+    "Tontura matinal ao levantar",
+    "Tosse seca suspeita de IECA",
+    "Reforçar dieta DASH e autocuidado",
+    "Rastreio anual de lesão de órgão-alvo",
+  ];
+
   return (
     <div className="space-y-6">
-      <Card
-        className="border border-slate-200/80 bg-white dark:bg-zinc-900/60 dark:border-zinc-800 rounded-xl p-3 sm:p-5 shadow-2xs"
-        shadow="none"
-      >
-        <CardBody className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">6. Resumo SOAP</h2>
+      {/* ── Sofia Copilot Hero Card ── */}
+      <div className="rounded-2xl border border-teal-200/80 dark:border-teal-900/60 bg-gradient-to-br from-teal-50/70 via-white to-slate-50 dark:from-teal-950/20 dark:via-zinc-900 dark:to-zinc-950 p-4 sm:p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="relative flex items-center justify-center size-11 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-base shadow-sm shrink-0">
+              SF
+              <span className="absolute -top-0.5 -right-0.5 flex size-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full size-3 bg-emerald-500 border-2 border-white dark:border-zinc-900" />
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                  Assistente Sofia
+                </h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                  <SparklesIcon className="size-3" />
+                  Copiloto Clínico APS
+                </span>
+                {activeMode === "ai" && aiReport && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    <CheckCircleIcon className="size-3.5" /> Ativa no SOAP
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-foreground/70 mt-0.5">
+                Apoio especializado na estratificação de risco, metas do Previne Brasil e RENAME.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              className="font-medium"
-              color="primary"
-              radius="md"
+              className="font-medium bg-teal-600 hover:bg-teal-700 text-white shadow-xs"
+              isLoading={isAssisting}
+              radius="lg"
+              size="sm"
+              startContent={!isAssisting ? <SparklesIcon className="size-4" /> : undefined}
+              type="button"
+              onPress={() => handleAIAssist()}
+            >
+              {aiReport ? "Atualizar com Sofia" : "Aprimorar com Sofia"}
+            </Button>
+            <Button
+              className="font-medium border-default-300 text-foreground"
+              radius="lg"
+              size="sm"
+              startContent={<ClipboardDocumentCheckIcon className="size-4" />}
+              type="button"
+              variant="bordered"
+              onPress={handleCopyFullSOAP}
+            >
+              Copiar para PEC
+            </Button>
+            <Button
+              className="font-medium text-foreground/80 hover:text-foreground"
+              radius="lg"
+              size="sm"
               startContent={<DocumentTextIcon className="size-4" />}
               type="button"
+              variant="flat"
               onPress={handleOpenModal}
             >
-              Gerar Relatório SOAP
+              Ver / Imprimir
+            </Button>
+          </div>
+        </div>
+
+        {/* ── Seletor de Versão (Segmented Control) ── */}
+        <div className="mt-4 pt-4 border-t border-teal-100 dark:border-teal-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="inline-flex p-1 bg-slate-200/70 dark:bg-zinc-800/80 rounded-xl max-w-fit">
+            <button
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                activeMode === "ai" && aiReport
+                  ? "bg-white dark:bg-zinc-900 text-teal-700 dark:text-teal-300 shadow-xs"
+                  : "text-foreground/70 hover:text-foreground"
+              }`}
+              type="button"
+              onClick={() => {
+                if (aiReport) {
+                  setActiveMode("ai");
+                } else {
+                  handleAIAssist();
+                }
+              }}
+            >
+              <SparklesIcon className="size-3.5 text-teal-600" />
+              Versão Sofia (Aprimorada)
+            </button>
+            <button
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeMode === "form" || !aiReport
+                  ? "bg-white dark:bg-zinc-900 text-foreground shadow-xs"
+                  : "text-foreground/70 hover:text-foreground"
+              }`}
+              type="button"
+              onClick={() => setActiveMode("form")}
+            >
+              Dados Brutos do Formulário
+            </button>
+          </div>
+
+          <p className="text-[11px] text-foreground/60 italic">
+            {activeMode === "ai" && aiReport
+              ? "Exibindo narrativa clínica estruturada com RENAME e metas do SUS."
+              : "Exibindo valores padrão capturados diretamente das etapas 1 a 5."}
+          </p>
+        </div>
+
+        {/* ── Barra Interativa: Pedir ajuste à Sofia ── */}
+        <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-zinc-800/80">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                aria-label="Pedir ajuste à Sofia"
+                className="w-full text-xs"
+                placeholder="Pedir ajuste à Sofia (ex: paciente relatou tontura matinal, tosse por enalapril, trocar medicação)..."
+                radius="lg"
+                size="sm"
+                startContent={<ChatBubbleLeftRightIcon className="size-4 text-teal-600 shrink-0" />}
+                value={notes}
+                variant="bordered"
+                onChange={(e) => setNotes(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isAssisting) {
+                    handleAIAssist();
+                  }
+                }}
+              />
+            </div>
+            <Button
+              className="bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs shrink-0"
+              isLoading={isAssisting}
+              radius="lg"
+              size="sm"
+              type="button"
+              onPress={() => handleAIAssist()}
+            >
+              Refinar com Sofia
             </Button>
           </div>
 
-          <p className="text-sm text-foreground/60">
-            Visualize o resumo da avaliação no formato SOAP antes de finalizar.
-            Use os botões &quot;Copiar bloco&quot; para colar diretamente no
-            PEC/e-SUS.
-          </p>
-
-          {/* Paciente info */}
-          <div className="rounded-lg border border-default-200 bg-default-50 p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-foreground/60 text-xs">Paciente</p>
-                <p className="font-semibold">{report.paciente.nome || "—"}</p>
-              </div>
-              <div>
-                <p className="text-foreground/60 text-xs">CPF</p>
-                <p className="font-semibold">{report.paciente.cpf || "—"}</p>
-              </div>
-              <div>
-                <p className="text-foreground/60 text-xs">Nascimento</p>
-                <p className="font-semibold">
-                  {report.paciente.nascimento || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-foreground/60 text-xs">Idade</p>
-                <p className="font-semibold">
-                  {report.paciente.idade != null
-                    ? `${report.paciente.idade} anos`
-                    : "—"}
-                </p>
-              </div>
-            </div>
+          {/* Chips de sugestões rápidas */}
+          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+            <span className="text-[11px] text-foreground/50 flex items-center gap-1 font-medium mr-1">
+              <LightBulbIcon className="size-3" /> Sugestões:
+            </span>
+            {quickChips.map((chip, idx) => (
+              <button
+                key={idx}
+                className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-foreground/75 hover:text-foreground hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:border-teal-300 dark:hover:border-teal-700 border border-slate-200/80 dark:border-zinc-700 transition-colors"
+                type="button"
+                onClick={() => {
+                  setNotes(chip);
+                  handleAIAssist(chip);
+                }}
+              >
+                + {chip}
+              </button>
+            ))}
           </div>
+        </div>
+      </div>
 
-          {/* SOAP Blocks */}
-          <div className="space-y-5">
-            <SOAPBlock
-              letter="S"
-              sections={[
-                {
-                  label: "Identificação e queixas principais",
-                  text: report.subjetivo.identificacao,
-                },
-                {
-                  label: "Histórico e contexto clínico",
-                  text: report.subjetivo.historico,
-                },
-                {
-                  label: "Determinantes sociais e psicossociais",
-                  text: report.subjetivo.determinantes,
-                },
-                {
-                  label: "Estilo de vida",
-                  text: report.subjetivo.estilo_vida,
-                },
-              ]}
-              title="Subjetivo — o que o paciente relata e a história clínica"
-            />
-
-            <SOAPBlock
-              letter="O"
-              sections={[
-                {
-                  label: "Pressão arterial",
-                  text: report.objetivo.pressao_arterial,
-                },
-                { label: "Antropometria", text: report.objetivo.antropometria },
-                {
-                  label: "Glicemia e metabólico",
-                  text: report.objetivo.glicemia_metabolico,
-                },
-                {
-                  label: "Exame físico sumário",
-                  text: report.objetivo.exame_fisico,
-                },
-              ]}
-              title="Objetivo — dados clínicos mensurados na avaliação"
-            />
-
-            <SOAPBlock
-              letter="A"
-              sections={[
-                {
-                  label: "Hipertensão arterial",
-                  text: report.avaliacao.hipertensao,
-                },
-                {
-                  label: "Diabetes mellitus",
-                  text: report.avaliacao.diabetes,
-                },
-                {
-                  label: "Risco cardiovascular",
-                  text: report.avaliacao.risco_cardiovascular,
-                },
-                {
-                  label: "Riscos psicossociais e sociais identificados",
-                  text: report.avaliacao.riscos_psicossociais,
-                },
-                {
-                  label: "Outras DCNTs",
-                  text: report.avaliacao.outras_dcnts,
-                },
-              ]}
-              title="Avaliação — classificação consolidada e estratificação de risco"
-            />
-
-            <SOAPBlock
-              letter="P"
-              sections={[
-                {
-                  label: "Conduta clínica imediata",
-                  text: report.plano.conduta_clinica,
-                },
-                {
-                  label: "Exames solicitados",
-                  text: report.plano.exames_solicitados,
-                },
-                {
-                  label: "Encaminhamentos multiprofissionais",
-                  text: report.plano.encaminhamentos,
-                },
-              ]}
-              title="Plano — condutas, encaminhamentos e agendamentos"
-            />
-          </div>
-
-          {/* Indicadores do Previne Brasil */}
-          <div className="rounded-lg border border-default-200 overflow-hidden">
-            <div className="bg-gray-700 dark:bg-gray-800 px-4 py-2.5">
-              <h3 className="text-white font-semibold text-sm">
-                Indicadores do Previne Brasil ativados por este SOAP
+      {/* ── Card de Alertas e Oportunidades Clínicas ── */}
+      {activeReport.alertas_clinicos && activeReport.alertas_clinicos.length > 0 && (
+        <div className="rounded-xl border border-amber-300/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 shadow-2xs">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center size-6 rounded-lg bg-amber-500 text-white shrink-0">
+                <ExclamationTriangleIcon className="size-3.5" />
+              </span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                Alertas e Oportunidades Clínicas Identificadas por Sofia
               </h3>
             </div>
-            <div className="divide-y divide-default-200">
-              {report.indicadores_previne.map((ind, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between px-4 py-2.5"
-                >
-                  <span className="text-sm">{ind.indicador}</span>
-                  <StatusBadge status={ind.status} />
-                </div>
-              ))}
-            </div>
+            <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+              {activeReport.alertas_clinicos.length} ponto(s) de atenção
+            </span>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+            {activeReport.alertas_clinicos.map((alerta, idx) => (
+              <div
+                key={idx}
+                className="flex items-start gap-2 bg-white/70 dark:bg-zinc-900/60 rounded-lg p-2.5 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-950 dark:text-amber-200"
+              >
+                <span className="text-amber-600 font-bold shrink-0 mt-0.5">•</span>
+                <span className="leading-relaxed">{alerta}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-          {/* Info note */}
-          <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-1">
-              Importante
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-300">
-              O SOAP gerado pelo RASTREIA+ é um rascunho estruturado, não um
-              texto definitivo. O profissional de saúde é responsável por
-              revisar e validar o conteúdo antes de colar no PEC. Informações
-              clínicas devem ser conferidas com os dados reais do paciente no
-              momento do atendimento.
+      {/* ── Metadados do Paciente ── */}
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-2xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p className="text-foreground/50 text-xs uppercase font-medium">Paciente</p>
+            <p className="font-semibold text-foreground mt-0.5">{activeReport.paciente.nome || "—"}</p>
+          </div>
+          <div>
+            <p className="text-foreground/50 text-xs uppercase font-medium">CPF</p>
+            <p className="font-semibold text-foreground mt-0.5">{activeReport.paciente.cpf || "—"}</p>
+          </div>
+          <div>
+            <p className="text-foreground/50 text-xs uppercase font-medium">Nascimento</p>
+            <p className="font-semibold text-foreground mt-0.5">
+              {activeReport.paciente.nascimento || "—"}
             </p>
           </div>
-        </CardBody>
-      </Card>
+          <div>
+            <p className="text-foreground/50 text-xs uppercase font-medium">Idade</p>
+            <p className="font-semibold text-foreground mt-0.5">
+              {activeReport.paciente.idade != null
+                ? `${activeReport.paciente.idade} anos`
+                : "—"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Blocos SOAP (S, O, A, P) ── */}
+      <div className="space-y-4">
+        <SOAPBlock
+          isSofiaEnhanced={activeMode === "ai" && Boolean(aiReport)}
+          letter="S"
+          sections={[
+            {
+              label: "Identificação e queixas principais",
+              text: activeReport.subjetivo.identificacao,
+            },
+            {
+              label: "Histórico e contexto clínico",
+              text: activeReport.subjetivo.historico,
+            },
+            {
+              label: "Determinantes sociais e psicossociais",
+              text: activeReport.subjetivo.determinantes,
+            },
+            {
+              label: "Estilo de vida e hábitos",
+              text: activeReport.subjetivo.estilo_vida,
+            },
+          ]}
+          title="Subjetivo — História clínica, queixas e contexto social"
+        />
+
+        <SOAPBlock
+          isSofiaEnhanced={activeMode === "ai" && Boolean(aiReport)}
+          letter="O"
+          sections={[
+            {
+              label: "Pressão arterial (aferições e média)",
+              text: activeReport.objetivo.pressao_arterial,
+            },
+            {
+              label: "Perfil antropométrico",
+              text: activeReport.objetivo.antropometria,
+            },
+            {
+              label: "Glicemia e perfil metabólico",
+              text: activeReport.objetivo.glicemia_metabolico,
+            },
+            {
+              label: "Exame físico sumário",
+              text: activeReport.objetivo.exame_fisico,
+            },
+          ]}
+          title="Objetivo — Dados clínicos mensurados e exame físico"
+        />
+
+        <SOAPBlock
+          isSofiaEnhanced={activeMode === "ai" && Boolean(aiReport)}
+          letter="A"
+          sections={[
+            {
+              label: "Hipertensão arterial e controle clínico",
+              text: activeReport.avaliacao.hipertensao,
+            },
+            {
+              label: "Diabetes mellitus e rastreio metabólico",
+              text: activeReport.avaliacao.diabetes,
+            },
+            {
+              label: "Estratificação de risco cardiovascular",
+              text: activeReport.avaliacao.risco_cardiovascular,
+            },
+            {
+              label: "Riscos psicossociais e determinantes",
+              text: activeReport.avaliacao.riscos_psicossociais,
+            },
+            {
+              label: "Outras patologias e DCNTs",
+              text: activeReport.avaliacao.outras_dcnts,
+            },
+          ]}
+          title="Avaliação — Raciocínio clínico diagnóstico e estratificação de risco"
+        />
+
+        <SOAPBlock
+          isSofiaEnhanced={activeMode === "ai" && Boolean(aiReport)}
+          letter="P"
+          sections={[
+            {
+              label: "Conduta clínica e farmacologia (RENAME)",
+              text: activeReport.plano.conduta_clinica,
+            },
+            {
+              label: "Exames solicitados (Rastreio LOA no SUS)",
+              text: activeReport.plano.exames_solicitados,
+            },
+            {
+              label: "Encaminhamentos multiprofissionais e seguimento",
+              text: activeReport.plano.encaminhamentos,
+            },
+          ]}
+          title="Plano — Condutas terapêuticas, exames e agendamento na APS"
+        />
+      </div>
+
+      {/* ── Indicadores do Previne Brasil ── */}
+      <div className="rounded-xl border border-default-200 overflow-hidden bg-white dark:bg-zinc-900 shadow-2xs">
+        <div className="bg-slate-800 dark:bg-slate-900 px-4 py-2.5 flex items-center justify-between">
+          <h3 className="text-white font-semibold text-xs uppercase tracking-wider">
+            Indicadores de Saúde da APS ativados por este SOAP
+          </h3>
+          <span className="text-[11px] text-slate-300">Atenção Primária / e-SUS</span>
+        </div>
+        <div className="divide-y divide-default-100">
+          {activeReport.indicadores_previne.map((ind, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-4 py-3"
+            >
+              <span className="text-sm text-foreground/90 font-medium">{ind.indicador}</span>
+              <StatusBadge status={ind.status} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Aviso Legal CFM/COFEN ── */}
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/40 p-4">
+        <p className="text-xs font-semibold text-foreground/80 mb-1">
+          Aviso Legal &amp; Responsabilidade Técnica
+        </p>
+        <p className="text-xs text-foreground/60 leading-relaxed">
+          {activeReport.ai_disclaimer ||
+            "Documento elaborado com apoio da Assistente Sofia (Rastreia+). A responsabilidade técnica do diagnóstico, condutas e prescrições é exclusiva do profissional de saúde assistente. Revise e valide antes de colar no PEC/e-SUS."}
+        </p>
+      </div>
 
       {/* Modal do relatório completo */}
       <SOAPReportModal
         isOpen={modalOpen}
-        report={report}
+        report={activeReport}
         onClose={() => setModalOpen(false)}
       />
     </div>

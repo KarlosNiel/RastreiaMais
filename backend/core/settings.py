@@ -515,3 +515,8 @@ if SENTRY_DSN:
         traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "1.0")),
         data_collection={"user_info": False},  # Conformidade LGPD: não envia PII de pacientes por padrão
     )
+
+# Google Gemini AI Configuration
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+

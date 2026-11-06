@@ -8,6 +8,34 @@ class SOAPGenerateRequestSerializer(serializers.Serializer):
     )
 
 
+class SOAPAssistRequestSerializer(serializers.Serializer):
+    """Serializer para request de assistência clínica por IA para SOAP."""
+    patient_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="ID do PatientUser (se já cadastrado)."
+    )
+    base_soap = serializers.DictField(
+        required=False,
+        allow_null=True,
+        help_text="Objeto SOAP base em rascunho (para pacientes em preenchimento)."
+    )
+    professional_notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="Notas ou queixas adicionais do profissional de saúde para a IA incorporar."
+    )
+
+    def validate(self, attrs):
+        if not attrs.get("patient_id") and not attrs.get("base_soap"):
+            raise serializers.ValidationError(
+                "Informe ao menos 'patient_id' ou 'base_soap' para o aprimoramento do SOAP."
+            )
+        return attrs
+
+
+
 class SOAPIndicadorSerializer(serializers.Serializer):
     """Indicador do Previne Brasil."""
     indicador = serializers.CharField()
@@ -64,3 +92,13 @@ class SOAPReportResponseSerializer(serializers.Serializer):
     plano = SOAPPlanoSerializer()
     indicadores_previne = SOAPIndicadorSerializer(many=True)
     gerado_em = serializers.CharField()
+    alertas_clinicos = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+    sugestoes_conduta = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+    is_ai_enhanced = serializers.BooleanField(required=False, default=False)
+    ai_disclaimer = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True, default=None
+    )
