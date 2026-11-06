@@ -174,12 +174,17 @@ export default function ProfissionalPage() {
       >(["appointments"]);
 
       if (previousAppointments) {
-        queryClient.setQueryData<AppointmentResponse[]>(
+        queryClient.setQueryData<any>(
           ["appointments"],
-          (old) => {
+          (old: any) => {
             if (!old) return [];
+            const list = Array.isArray(old)
+              ? old
+              : Array.isArray(old?.results)
+                ? old.results
+                : [];
 
-            return old.map((appt) =>
+            return list.map((appt: any) =>
               String(appt.id) === String(id) ? { ...appt, status } : appt,
             );
           },
