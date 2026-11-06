@@ -213,8 +213,20 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
         setCurrentReport(enhanced);
         notifySuccess("SOAP aprimorado com sucesso pela Assistente Sofia!");
       }
-    } catch {
-      notifyError("Erro ao processar assistência com IA.");
+    } catch (err: any) {
+      console.error("Assist error:", err);
+      const status = err?.response?.status;
+      let msg = "Erro ao processar assistência com IA.";
+
+      if (status === 404) {
+        msg = "O endpoint de IA ainda não foi atualizado no servidor (404). Verifique o deploy do backend.";
+      } else if (err?.response?.data?.detail) {
+        msg = err.response.data.detail;
+      } else if (err?.message) {
+        msg = err.message;
+      }
+
+      notifyError(msg);
     } finally {
       setIsAssisting(false);
     }
