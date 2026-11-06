@@ -1,14 +1,13 @@
 // frontend/components/ui/BrandLogo.tsx
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface BrandLogoProps {
   /** Variante de exibição do logo */
-  variant?: "full" | "horizontal" | "icon" | "mark-only" | "image";
+  variant?: "full" | "horizontal" | "icon" | "mark-only";
   /** Escala de tamanho */
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   /** Se deve ser clicável como Link para a Home ou Dashboard */
@@ -19,118 +18,92 @@ export interface BrandLogoProps {
   className?: string;
   /** Se deve inverter tipografia para superfícies escuras */
   inverted?: boolean;
-  /** Se deve forçar uso da imagem raster oficial em vez do lockup vetorial */
-  useOfficialImage?: boolean;
+  /** Se deve exibir o micro-badge suave ao redor do ícone */
+  badge?: boolean;
 }
 
 /**
- * Ícone e Símbolo Oficial do RastreiaCardio:
- * Coração estilizado em fita gradiente laranja (Cuidado Cardiovascular),
- * linha ativa de Eletrocardiograma (Rastreamento Contínuo de Risco)
- * e malha geométrica de nós interconectados (Saúde Digital e APS Multidisciplinar).
+ * Símbolo Oficial Moderno do RastreiaCardio:
+ * Design limpo, minimalista e de alta precisão vetorial (estilo Linear / Apple Health).
+ * Combina o contorno geométrico do Coração (cuidado e vida)
+ * com o pulso ativo de Eletrocardiograma (rastreamento contínuo e monitoramento na APS).
  * 
- * Sem caixas pesadas artificiais: o símbolo respira limpo e direto.
+ * Sem ruído, sem teias de aranha e sem poluição visual: 100% legível em 24px, 32px ou 48px.
  */
 export function BrandIconMark({
-  size = 36,
+  size = 32,
   className = "",
   hasBackground = false,
-  priority = false,
+  inverted = false,
 }: {
   size?: number;
   className?: string;
   hasBackground?: boolean;
-  priority?: boolean;
+  inverted?: boolean;
 }) {
-  const [imgError, setImgError] = useState(false);
-
-  // Proporção original do símbolo do RastreiaCardio: 909 x 794 (1.145 : 1)
-  const markHeight = Math.round(size * (794 / 909));
-
   return (
     <div
       aria-hidden="true"
       className={cn(
         "relative flex shrink-0 items-center justify-center select-none transition-transform duration-200",
         hasBackground &&
-          "p-1.5 rounded-xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 dark:border-orange-500/30",
+          "rounded-xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 dark:border-orange-500/30 p-1.5",
         className,
       )}
       style={{ width: size, height: size }}
     >
-      {!imgError ? (
-        <Image
-          alt="Símbolo RastreiaCardio"
-          className="w-full h-full object-contain pointer-events-none drop-shadow-sm select-none"
-          height={markHeight}
-          priority={priority}
-          quality={95}
-          src="/brand-mark.webp"
-          width={size}
-          onError={() => setImgError(true)}
+      <svg
+        className="w-full h-full object-contain pointer-events-none"
+        fill="none"
+        viewBox="0 0 32 32"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient
+            id="rc-clean-orange"
+            x1="2"
+            y1="4"
+            x2="30"
+            y2="30"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#FB923C" />
+            <stop offset="100%" stopColor="#EA580C" />
+          </linearGradient>
+        </defs>
+
+        {/* Preenchimento sutil e translúcido para dar volume sem poluir */}
+        <path
+          d="M16 26.5C16 26.5 5 19 5 11.5C5 7.2 8.2 4 12.2 4C14.5 4 15.4 5 16 6.2C16.6 5 17.5 4 19.8 4C23.8 4 27 7.2 27 11.5C27 19 16 26.5 16 26.5Z"
+          fill="url(#rc-clean-orange)"
+          fillOpacity={inverted ? 0.16 : 0.08}
         />
-      ) : (
-        /* Fallback vetorial SVG de alta precisão */
-        <svg
-          className="w-full h-full object-contain pointer-events-none"
-          fill="none"
-          viewBox="0 0 32 32"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient
-              id="rc-vector-grad"
-              x1="2"
-              y1="4"
-              x2="30"
-              y2="30"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop offset="0%" stopColor="#FB923C" />
-              <stop offset="50%" stopColor="#F97316" />
-              <stop offset="100%" stopColor="#EA580C" />
-            </linearGradient>
-          </defs>
 
-          {/* Lado Esquerdo do Coração (Faixa) */}
-          <path
-            d="M15.5 8.2C13.8 6.2 10.8 5 8 5C4.2 5 2 7.8 2 12C2 17.5 7.5 22.8 15.5 28C15.8 28.2 16.2 28.2 16.5 28C14.5 25.5 11 21.8 10 18.5C9.2 15.8 9.5 13.5 10.8 11.5C11.8 9.8 13.5 8.8 15.5 8.2Z"
-            fill="url(#rc-vector-grad)"
-          />
+        {/* Contorno Geométrico Limpo do Coração */}
+        <path
+          d="M16 26.5C16 26.5 5 19 5 11.5C5 7.2 8.2 4 12.2 4C14.5 4 15.4 5 16 6.2C16.6 5 17.5 4 19.8 4C23.8 4 27 7.2 27 11.5C27 19 16 26.5 16 26.5Z"
+          stroke="url(#rc-clean-orange)"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.2"
+        />
 
-          {/* Malha Digital (Lado Direito) */}
-          <g stroke="url(#rc-vector-grad)" strokeWidth="0.8" opacity="0.85">
-            <line x1="25.5" y1="6.5" x2="20.5" y2="10.5" />
-            <line x1="25.5" y1="6.5" x2="28.5" y2="14" />
-            <line x1="20.5" y1="10.5" x2="28.5" y2="14" />
-            <line x1="20.5" y1="10.5" x2="24" y2="19.5" />
-            <line x1="28.5" y1="14" x2="24" y2="19.5" />
-            <line x1="24" y1="19.5" x2="19" y2="24" />
-          </g>
-
-          <circle cx="25.5" cy="6.5" r="1.6" fill="url(#rc-vector-grad)" />
-          <circle cx="20.5" cy="10.5" r="1.3" fill="url(#rc-vector-grad)" />
-          <circle cx="28.5" cy="14" r="1.4" fill="url(#rc-vector-grad)" />
-          <circle cx="24" cy="19.5" r="1.3" fill="url(#rc-vector-grad)" />
-          <circle cx="19" cy="24" r="1.2" fill="url(#rc-vector-grad)" />
-
-          {/* Onda ECG */}
-          <path
-            d="M1 18H8.5L10 16.5L12 21L14.5 9L17.5 23L19.5 16L21 18H25"
-            stroke="url(#rc-vector-grad)"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.8"
-          />
-        </svg>
-      )}
+        {/* Onda de Ritmo Cardíaco / Eletrocardiograma (Rastreia) */}
+        <path
+          d="M3 15H9.5L11.5 10.5L14.5 20.5L17.5 7.5L20.5 17.5L22 15H29"
+          stroke={inverted ? "#FFFFFF" : "#EA580C"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.3"
+        />
+      </svg>
     </div>
   );
 }
 
 /**
  * Componente oficial e padronizado do Logotipo RastreiaCardio para toda a aplicação.
- * Fiel à identidade visual original, limpo, direto e profissional.
+ * Fiel aos princípios do Refactoring UI e Taste Skill: limpo, moderno, legível e direto.
  */
 export function BrandLogo({
   variant = "horizontal",
@@ -139,88 +112,44 @@ export function BrandLogo({
   subtitle = true,
   className = "",
   inverted = false,
-  useOfficialImage = false,
+  badge = false,
 }: BrandLogoProps) {
   // Configurações de dimensão por tamanho
   const sizeMap = {
     xs: {
-      iconSize: 24,
-      imageHeight: 22,
+      iconSize: 22,
       text: "text-sm",
       sub: "text-[9px]",
     },
     sm: {
-      iconSize: 30,
-      imageHeight: 26,
+      iconSize: 28,
       text: "text-base",
       sub: "text-[10px]",
     },
     md: {
-      iconSize: 38,
-      imageHeight: 32,
+      iconSize: 34,
       text: "text-lg",
-      sub: "text-[11px]",
+      sub: "text-[10px]",
     },
     lg: {
-      iconSize: 48,
-      imageHeight: 40,
+      iconSize: 42,
       text: "text-2xl",
       sub: "text-xs",
     },
     xl: {
-      iconSize: 62,
-      imageHeight: 52,
+      iconSize: 52,
       text: "text-3xl md:text-4xl",
       sub: "text-xs",
     },
   };
 
-  const { iconSize, imageHeight, text: textSizeClass, sub: subSizeClass } =
-    sizeMap[size];
+  const { iconSize, text: textSizeClass, sub: subSizeClass } = sizeMap[size];
 
   // Determina o texto de subtítulo padrão
   const defaultSubtitleText =
     typeof subtitle === "string" ? subtitle : "Atenção Primária à Saúde";
   const showSubtitle =
     variant === "full" && subtitle !== false && subtitle !== undefined;
-
-  // Renderização direta da imagem oficial completa se solicitada
-  if (variant === "image" || useOfficialImage) {
-    const imageSrc = inverted
-      ? "/RastreiaCardio-dark.png"
-      : "/RastreiaCardio.png";
-
-    const imageElement = (
-      <div
-        className={cn(
-          "inline-flex items-center transition-opacity hover:opacity-95 select-none",
-          className,
-        )}
-      >
-        <Image
-          alt="RastreiaCardio - Atenção Primária à Saúde"
-          className="w-auto object-contain"
-          height={imageHeight}
-          priority
-          src={imageSrc}
-          width={Math.round(imageHeight * (3030 / 952))}
-        />
-      </div>
-    );
-
-    if (href) {
-      return (
-        <Link
-          aria-label="RastreiaCardio - Início"
-          className="inline-flex rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-          href={href}
-        >
-          {imageElement}
-        </Link>
-      );
-    }
-    return imageElement;
-  }
 
   // Renderização apenas do ícone
   if (variant === "icon" || variant === "mark-only") {
@@ -231,7 +160,11 @@ export function BrandLogo({
           className,
         )}
       >
-        <BrandIconMark size={iconSize} />
+        <BrandIconMark
+          hasBackground={badge}
+          inverted={inverted}
+          size={iconSize}
+        />
       </div>
     );
 
@@ -250,7 +183,7 @@ export function BrandLogo({
   }
 
   // Renderização responsiva padrão (Horizontal ou Full):
-  // RASTREIA em Laranja Vibrante Oficial + CARDIO em Carvão/Branco + Símbolo do Coração
+  // Rastreia em Laranja Vibrante + Cardio em Carvão/Branco + Símbolo Limpo
   const content = (
     <div
       className={cn(
@@ -258,13 +191,17 @@ export function BrandLogo({
         className,
       )}
     >
-      <BrandIconMark size={iconSize} />
+      <BrandIconMark
+        hasBackground={badge}
+        inverted={inverted}
+        size={iconSize}
+      />
 
       <div className="flex flex-col min-w-0 leading-tight">
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              "font-black tracking-tight font-heading uppercase",
+              "font-extrabold tracking-tight font-heading",
               textSizeClass,
               "text-primary",
             )}
@@ -272,10 +209,10 @@ export function BrandLogo({
             Rastreia
             <span
               className={cn(
-                "ml-1 font-extrabold",
+                "ml-0.5 font-bold",
                 inverted
                   ? "text-white"
-                  : "text-slate-800 dark:text-zinc-100",
+                  : "text-slate-900 dark:text-zinc-100",
               )}
             >
               Cardio
