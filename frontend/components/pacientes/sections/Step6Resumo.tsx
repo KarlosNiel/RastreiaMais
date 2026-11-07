@@ -68,6 +68,16 @@ const FRAMINGHAM_MAP: Record<string, string> = {
   ">20": ">20% — risco ALTO",
 };
 
+const HIGH_RISK_CONDITIONS_MAP: Record<string, string> = {
+  avc: "AVE/AVC",
+  infarto: "IAM",
+  ait: "AIT",
+  loa: "LOA",
+  renal: "Nefropatia/Doença Renal",
+  dm: "Diabetes Mellitus",
+  outra: "Outra complicação",
+};
+
 const TREATMENT_MAP: Record<string, string> = {
   sim: "REGULAR",
   nao: "NÃO USA",
@@ -521,11 +531,23 @@ export default function Step6Resumo() {
 
     let riscoCv: string | null = null;
 
+    const highRiskConditions = (
+      (hasData?.complicacoes as string[] | undefined) ?? []
+    ).filter((c) => c !== "sem_complicacoes");
+
     if (hasData?.framingham) {
       const framLabel =
         FRAMINGHAM_MAP[hasData.framingham] ?? hasData.framingham;
 
-      riscoCv = `Score de Framingham: ${framLabel}.`;
+      if (highRiskConditions.length > 0) {
+        const condLabels = highRiskConditions
+          .map((c) => HIGH_RISK_CONDITIONS_MAP[c] ?? c)
+          .join(", ");
+        riscoCv = `Alto Risco Cardiovascular Direto (${condLabels}). Score de Framingham: ${framLabel}.`;
+      } else {
+        riscoCv = `Score de Framingham: ${framLabel}.`;
+      }
+
       if (antroSrc?.imc)
         riscoCv +=
           " IMC e circunferência abdominal contribuem para risco metabólico.";

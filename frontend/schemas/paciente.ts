@@ -199,7 +199,18 @@ export const ClinicaHASZ = z.object({
   medicamentos: StrOpt.optional(),
   historico_familiar: YesNoMaybeZ,
   complicacoes: z
-    .array(z.enum(["avc", "infarto", "renal", "outra", "sem_complicacoes"]))
+    .array(
+      z.enum([
+        "avc",
+        "infarto",
+        "ait",
+        "loa",
+        "renal",
+        "dm",
+        "outra",
+        "sem_complicacoes",
+      ]),
+    )
     .optional(),
   complicacao_outra: StrOpt.optional(),
 

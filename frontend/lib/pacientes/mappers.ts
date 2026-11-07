@@ -199,8 +199,18 @@ export function calculateRiskFromClinicalData(
   // 0 = sem dados, 1 = Seguro, 2 = Moderado, 3 = Crítico
   let maxRisk = 0;
 
-  /* ── HAS: Framingham (prioridade) ou classificação PA ── */
+  /* ── HAS: Condições de Alto Risco / Framingham / classificação PA ── */
   if (condicoes.has && has) {
+    const complicacoes = Array.isArray(has.complicacoes) ? has.complicacoes : [];
+    const hasHighRiskDirect =
+      complicacoes.some((c: string) =>
+        ["avc", "infarto", "ait", "loa", "renal", "dm"].includes(c),
+      ) || !!condicoes.dm;
+
+    if (hasHighRiskDirect) {
+      maxRisk = Math.max(maxRisk, 3); // Alto Risco / Crítico
+    }
+
     const framingham = has.framingham as string | undefined;
 
     if (framingham) {
@@ -888,7 +898,8 @@ export function formToHasApi(
 
     if (!arr || arr.length === 0) return null;
 
-    const first = arr.find((v) => v !== "outra") ?? arr[0];
+    const first =
+      arr.find((v) => v !== "outra" && v !== "sem_complicacoes") ?? arr[0];
 
     return hasComplicationsMap[first] ?? null;
   })();

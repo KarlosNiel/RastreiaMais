@@ -20,5 +20,9 @@ class BloodPressureClassificationChoices(models.TextChoices):
 class HypertensionComplicationsChoices(models.TextChoices):
     AVC = "AVC", "AVC"
     INFARTO = "INFARTO", "Infarto"
+    AIT = "AIT", "AIT"
+    LOA = "LOA", "Lesão de Órgão-Alvo"
     DOENCA_RENAL = "DOENCA_RENAL", "Doença renal"
+    DIABETES = "DIABETES", "Diabetes Mellitus"
+    OUTRA = "OUTRA", "Outra"
     SEM_COMPLICACOES = "SEM_COMPLICACOES", "Sem complicações"

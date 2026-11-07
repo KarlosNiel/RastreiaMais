@@ -96,14 +96,22 @@ export const conductHasBackToFront: ChoiceMap = {
 export const hasComplicationsMap: ChoiceMap = {
   avc: "AVC",
   infarto: "INFARTO",
+  ait: "AIT",
+  loa: "LOA",
   renal: "DOENCA_RENAL",
+  dm: "DIABETES",
+  outra: "OUTRA",
   sem_complicacoes: "SEM_COMPLICACOES",
 };
 
 export const hasComplicationsBackToFront: ChoiceMap = {
   AVC: "avc",
   INFARTO: "infarto",
+  AIT: "ait",
+  LOA: "loa",
   DOENCA_RENAL: "renal",
+  DIABETES: "dm",
+  OUTRA: "outra",
   SEM_COMPLICACOES: "sem_complicacoes",
 };
 

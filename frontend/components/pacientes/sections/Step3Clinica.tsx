@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardBody, Divider } from "@heroui/react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
@@ -176,7 +176,7 @@ function BlocoHAS() {
     }
   }, [pesoHas, alturaHas, setValue]);
 
-  // ===== Cálculo automático do Framingham =====
+  // ===== Cálculo automático do Framingham e Condições de Alto Risco =====
   const watchedFields = useWatch({
     control,
     name: [
@@ -189,6 +189,7 @@ function BlocoHAS() {
       "clinica.has.usa_medicacao",
       "clinica.has.tabagismo",
       "condicoes.dm",
+      "clinica.has.complicacoes",
     ],
   });
 
@@ -202,9 +203,70 @@ function BlocoHAS() {
     usaMedicacao,
     tabagismo,
     isDm,
+    watchedComplicacoes,
   ] = watchedFields;
 
-  const { result: framinghamResult, reason: missingReason } = useMemo(() => {
+  const complicacoesList = (watchedComplicacoes || complicacoes) as
+    | string[]
+    | undefined;
+
+  const isHighRiskDirect = useMemo(() => {
+    const list = Array.isArray(complicacoesList) ? complicacoesList : [];
+    const hasCondition = list.some((c) =>
+      ["avc", "infarto", "ait", "loa", "renal", "dm", "outra"].includes(c),
+    );
+
+    return hasCondition || !!isDm;
+  }, [complicacoesList, isDm]);
+
+  // Se DM selecionada no Step 2, sincroniza a marcação no campo de alto risco
+  useEffect(() => {
+    if (isDm) {
+      const current = Array.isArray(complicacoesList) ? complicacoesList : [];
+
+      if (!current.includes("dm")) {
+        setValue(
+          "clinica.has.complicacoes",
+          [...current.filter((c) => c !== "sem_complicacoes"), "dm"],
+          { shouldDirty: true },
+        );
+      }
+    }
+  }, [isDm, complicacoesList, setValue]);
+
+  const handleComplicacoesChange = useCallback(
+    (newVal: any) => {
+      if (!Array.isArray(newVal)) return;
+      const last = newVal[newVal.length - 1];
+
+      if (last === "sem_complicacoes") {
+        setValue("clinica.has.complicacoes", ["sem_complicacoes"], {
+          shouldDirty: true,
+        });
+      } else if (newVal.includes("sem_complicacoes")) {
+        setValue(
+          "clinica.has.complicacoes",
+          newVal.filter((v: string) => v !== "sem_complicacoes"),
+          { shouldDirty: true },
+        );
+      }
+    },
+    [setValue],
+  );
+
+  const {
+    result: framinghamResult,
+    reason: missingReason,
+    isDirectRisk,
+  } = useMemo(() => {
+    if (isHighRiskDirect) {
+      return {
+        result: { score: 30, category: ">20" as const },
+        reason: null,
+        isDirectRisk: true,
+      };
+    }
+
     const age = calcAgeFromBirth(nascimento);
     const parseNumberStr = (v: any) =>
       typeof v === "string"
@@ -214,12 +276,14 @@ function BlocoHAS() {
     const hdlNum = parseNumberStr(hdl);
     const sbp = Number(pa1Sis || pa2Sis);
 
-    if (!age) return { result: null, reason: "idade" };
-    if (age < 30 || age > 74) return { result: null, reason: "faixa_etaria" };
+    if (!age) return { result: null, reason: "idade", isDirectRisk: false };
+    if (age < 30 || age > 74)
+      return { result: null, reason: "faixa_etaria", isDirectRisk: false };
     if (!genero || (genero !== "M" && genero !== "F"))
-      return { result: null, reason: "genero" };
-    if (!tc || !hdlNum) return { result: null, reason: "colesterol" };
-    if (!sbp) return { result: null, reason: "pressao" };
+      return { result: null, reason: "genero", isDirectRisk: false };
+    if (!tc || !hdlNum)
+      return { result: null, reason: "colesterol", isDirectRisk: false };
+    if (!sbp) return { result: null, reason: "pressao", isDirectRisk: false };
 
     const res = calculateFraminghamScore({
       age,
@@ -232,8 +296,9 @@ function BlocoHAS() {
       isDiabetic: !!isDm,
     });
 
-    return { result: res, reason: null };
+    return { result: res, reason: null, isDirectRisk: false };
   }, [
+    isHighRiskDirect,
     nascimento,
     genero,
     colTotal,
@@ -318,25 +383,6 @@ function BlocoHAS() {
                 { value: "nao_sabe", label: "Não sabe" },
               ]}
             />
-            <RHFChipGroup
-              multiple
-              label="Complicações relacionadas"
-              name="clinica.has.complicacoes"
-              options={[
-                { value: "avc", label: "AVC" },
-                { value: "infarto", label: "Infarto" },
-                { value: "renal", label: "Doença renal" },
-                { value: "outra", label: "Outra" },
-                { value: "sem_complicacoes", label: "Sem complicações" },
-              ]}
-            />
-            {showOutra && (
-              <RHFInput
-                label="Descrever complicação"
-                name="clinica.has.complicacao_outra"
-                placeholder="Ex.: Retinopatia"
-              />
-            )}
           </div>
         </div>
       </fieldset>
@@ -477,25 +523,72 @@ function BlocoHAS() {
         </legend>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RHFChipGroup
-            single
-            label="Classificação da P.A"
-            name="clinica.has.classificacao_pa"
-            options={[
-              { value: "normal", label: "Normal" },
-              { value: "pre_hipertenso", label: "Pré-hipertenso" },
-              { value: "estagio1", label: "Estágio 1" },
-              { value: "estagio2", label: "Estágio 2" },
-              { value: "estagio3", label: "Estágio 3" },
-            ]}
-          />
+          <div className="space-y-5">
+            <RHFChipGroup
+              single
+              label="Classificação da P.A"
+              name="clinica.has.classificacao_pa"
+              options={[
+                { value: "normal", label: "Normal" },
+                { value: "pre_hipertenso", label: "Pré-hipertenso" },
+                { value: "estagio1", label: "Estágio 1" },
+                { value: "estagio2", label: "Estágio 2" },
+                { value: "estagio3", label: "Estágio 3" },
+              ]}
+            />
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">
+                  Condições de alto risco / Complicações
+                </span>
+                {isHighRiskDirect && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded border border-red-200 dark:border-red-800">
+                    Alto Risco Direto (&gt;20%)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-foreground-500">
+                Se o paciente apresentar qualquer condição abaixo, o risco cardiovascular é automaticamente definido como Alto Risco, independente do colesterol.
+              </p>
+              <RHFChipGroup
+                multiple
+                name="clinica.has.complicacoes"
+                onValueChange={handleComplicacoesChange}
+                options={[
+                  { value: "avc", label: "AVE / AVC" },
+                  { value: "infarto", label: "IAM (Infarto)" },
+                  { value: "ait", label: "AIT" },
+                  { value: "loa", label: "LOA (Lesão Órgão-Alvo)" },
+                  { value: "renal", label: "Nefropatia / Doença renal" },
+                  {
+                    value: "dm",
+                    label: isDm ? "Diabetes Mellitus (Passo 2)" : "Diabetes Mellitus",
+                  },
+                  { value: "outra", label: "Outra" },
+                  { value: "sem_complicacoes", label: "Sem complicações / Nenhuma" },
+                ]}
+              />
+              {showOutra && (
+                <RHFInput
+                  label="Descrever complicação / condição"
+                  name="clinica.has.complicacao_outra"
+                  placeholder="Ex.: Retinopatia, DAOP..."
+                />
+              )}
+            </div>
+          </div>
 
           <div className="space-y-4 rounded-xl bg-primary-50/50 p-4 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                 Calculadora de Framingham
               </h4>
-              {framinghamResult ? (
+              {isDirectRisk ? (
+                <span className="text-xs font-semibold px-2.5 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 rounded-md border border-red-200 dark:border-red-800">
+                  Alto Risco Clínico Direto (&gt;20%)
+                </span>
+              ) : framinghamResult ? (
                 <span className="text-xs font-semibold px-2 py-0.5 bg-primary-100 dark:bg-primary-900/60 text-primary-700 dark:text-primary-300 rounded-md border border-primary-200 dark:border-primary-800">
                   {framinghamResult.score.toFixed(1)}% de risco
                 </span>
@@ -505,6 +598,12 @@ function BlocoHAS() {
                 </span>
               )}
             </div>
+
+            {isDirectRisk && (
+              <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50/90 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 leading-relaxed">
+                Estratificação de <strong>Alto Risco</strong> estabelecida por comorbidade/evento prévio (AVE, IAM, AIT, LOA, Nefropatia ou DM). Os valores de Colesterol e HDL são complementares e não bloqueiam a estratificação.
+              </p>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <RHFInput

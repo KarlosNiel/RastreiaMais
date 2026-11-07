@@ -84,7 +84,11 @@ _CONDUCT_DM_MAP = {
 _COMPLICATION_MAP = {
     "AVC": "AVC",
     "INFARTO": "Infarto",
+    "AIT": "AIT",
+    "LOA": "Lesão de Órgão-Alvo",
     "DOENCA_RENAL": "Doença renal",
+    "DIABETES": "Diabetes Mellitus",
+    "OUTRA": "Outra complicação",
     "SEM_COMPLICACOES": "sem complicações",
 }
 
