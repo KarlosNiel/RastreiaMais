@@ -4,7 +4,7 @@ import { Presentation } from "@/components/home/Presentation";
 
 export default function RastreiaLanding() {
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen bg-white transition-colors duration-300 dark:bg-zinc-950">
       <Presentation />
       <Features />
       <RoleCards />

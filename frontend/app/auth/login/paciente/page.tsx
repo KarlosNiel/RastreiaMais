@@ -1,7 +1,7 @@
 // frontend/app/auth/login/paciente/page.tsx
 "use client";
 
-import { ArrowRight, Eye, EyeOff, Lock, User } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
@@ -64,19 +64,19 @@ export default function LoginPacientePage() {
 
   return (
     <AuthCard
-      heading="Portal do Cidadão"
-      subheading="Acompanhe suas aferições de pressão, exames e agendamentos na sua Unidade de Saúde da Família."
+      heading="Portal do Paciente"
+      subheading="Acompanhe sua pressão, exames e consultas."
     >
       <form
         noValidate
         aria-label="Formulário de login do paciente"
-        className="space-y-4"
+        className="flex flex-col gap-5"
         onSubmit={handleSubmit}
       >
         {/* Banner de Erro Humanizado */}
         {error && (
           <div
-            className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
+            className="flex items-start gap-3 p-4 mb-1 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
             role="alert"
           >
             <ExclamationCircleIcon className="size-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
@@ -92,13 +92,10 @@ export default function LoginPacientePage() {
           autoCapitalize="none"
           autoComplete="username"
           enterKeyHint="next"
-          label="CPF ou E-mail do Paciente"
+          label="CPF ou E-mail"
           name="login"
-          placeholder="000.000.000-00 ou seu e-mail"
+          placeholder="000.000.000-00"
           spellCheck="false"
-          startContent={
-            <User className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
-          }
           type="text"
           value={login}
           onValueChange={setLogin}
@@ -127,9 +124,6 @@ export default function LoginPacientePage() {
           label="Senha"
           name="password"
           placeholder="••••••••"
-          startContent={
-            <Lock className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
-          }
           type={showPassword ? "text" : "password"}
           value={password}
           onValueChange={setPassword}
@@ -139,18 +133,19 @@ export default function LoginPacientePage() {
           <Checkbox
             color="primary"
             isSelected={rememberMe}
+            radius="full"
             size="sm"
             classNames={{
               label:
-                "text-xs text-slate-600 dark:text-zinc-400 select-none font-medium",
+                "text-xs text-slate-700 dark:text-zinc-300 select-none font-medium",
             }}
             onValueChange={setRememberMe}
           >
-            Lembrar meu acesso
+            Lembrar-me
           </Checkbox>
 
           <Link
-            className="text-xs font-semibold text-primary hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+            className="text-xs font-semibold text-brand hover:underline transition-colors"
             href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
@@ -158,12 +153,8 @@ export default function LoginPacientePage() {
         </div>
 
         <div className="pt-2">
-          <SubmitButton
-            disabled={loading}
-            endContent={<ArrowRight className="size-4" />}
-            isLoading={loading}
-          >
-            {loading ? "Acessando..." : "Entrar no Meu Espaço"}
+          <SubmitButton isDisabled={loading} isLoading={loading}>
+            {loading ? "Entrando..." : "Entrar"}
           </SubmitButton>
         </div>
       </form>

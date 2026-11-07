@@ -2,22 +2,15 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import {
-  ArrowLeft,
-  Heart,
-  Moon,
-  ShieldCheck,
-  Stethoscope,
-  Sun,
-  User,
-} from "lucide-react";
+import { ArrowLeft, LifeBuoy, Moon, ShieldCheck, Sun } from "lucide-react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { LandingLogo } from "@/components/home/LandingLogo";
 import { cn } from "@/lib/utils";
 import { app as cfg } from "@/config/rastreiamais";
 
@@ -29,10 +22,68 @@ type Props = {
   className?: string;
 };
 
+/* ====================== Linha de batimento animada (limpa) ====================== */
+function HeartbeatLine() {
+  return (
+    <div className="relative h-10 w-full max-w-[320px] overflow-hidden select-none">
+      <style>{`
+        @keyframes ecgScroll {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
+        .ecg-infinite-flow {
+          animation: ecgScroll 2.8s linear infinite;
+          will-change: transform;
+        }
+      `}</style>
+      <div className="flex h-full w-[200%] ecg-infinite-flow">
+        <svg
+          aria-hidden="true"
+          className="h-full w-1/2 shrink-0"
+          fill="none"
+          preserveAspectRatio="none"
+          viewBox="0 0 320 40"
+        >
+          <path
+            d="M 0 20 L 100 20 L 108 12 L 116 28 L 122 20 L 140 20 L 148 4 L 156 36 L 162 20 L 320 20"
+            stroke="#ec4d23"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+        </svg>
+        <svg
+          aria-hidden="true"
+          className="h-full w-1/2 shrink-0"
+          fill="none"
+          preserveAspectRatio="none"
+          viewBox="0 0 320 40"
+        >
+          <path
+            d="M 0 20 L 100 20 L 108 12 L 116 28 L 122 20 L 140 20 L 148 4 L 156 36 L 162 20 L 320 20"
+            stroke="#ec4d23"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function AuthCard({ children, heading, subheading, className }: Props) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && resolvedTheme === "dark";
   const isProfissional = pathname.includes("/profissional");
   const isPaciente = pathname.includes("/paciente");
   const isLoginFlow = isProfissional || isPaciente;
@@ -40,188 +91,158 @@ export function AuthCard({ children, heading, subheading, className }: Props) {
   const supportEmail =
     (cfg as any)?.links?.supportEmail || "suporte@rastreiamais.com";
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
   return (
-    <div className="min-h-screen w-full flex flex-col lg:grid lg:grid-cols-12 bg-slate-50 dark:bg-zinc-950 transition-colors">
-      {/* ─────────────────────────────────────────────────────────────
-          COLUNA LATERAL ESQUERDA (DESKTOP): Limpa, Direta e Discreta
-         ───────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:col-span-5 xl:col-span-5 relative flex-col justify-between p-10 xl:p-14 overflow-hidden bg-slate-900 dark:bg-zinc-950 text-white border-r border-slate-800/60 select-none">
-        {/* Glow de fundo sutil */}
-        <div className="absolute -top-24 -left-24 size-80 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 size-80 rounded-full bg-orange-600/15 blur-3xl pointer-events-none" />
+    <div className="h-dvh w-full overflow-hidden bg-white transition-colors lg:grid lg:grid-cols-2 dark:bg-zinc-950">
+      {/* ───────────── COLUNA ESQUERDA (desktop) ───────────── */}
+      <aside className="relative hidden h-full select-none flex-col justify-between overflow-hidden bg-[#141a2e] p-8 lg:flex xl:p-12 text-white">
+        {/* gradientes de fundo */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,#283154_0%,transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_100%_100%,rgba(236,77,35,0.22)_0%,transparent_70%)]" />
 
-        {/* Topo: Logo & Identidade Oficial */}
         <div className="relative z-10">
-          <BrandLogo
-            href="/"
-            inverted
-            size="md"
-            subtitle="APS Digital"
-            variant="full"
-          />
+          <LandingLogo inverted href="/" />
         </div>
 
-        {/* Centro: Mensagem Direta & Onda de Pulso */}
-        <div className="relative z-10 space-y-4 my-auto max-w-sm">
-          <h2 className="text-2xl xl:text-3xl font-bold tracking-tight text-white leading-snug">
+        <div className="relative z-10 max-w-md">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">
+            APS Digital
+          </p>
+          <h2 className="mt-4 font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-white xl:text-[2.1rem]">
             Cuidado cardiovascular na Atenção Primária.
           </h2>
-
-          <p className="text-sm text-slate-400 leading-relaxed">
-            Estratificação de risco e acompanhamento contínuo de hipertensão e diabetes na rede de saúde.
+          <p className="mt-4 text-[15px] leading-relaxed text-slate-300/90">
+            Estratificação de risco e acompanhamento contínuo de hipertensão e
+            diabetes na rede de saúde.
           </p>
 
-          {/* Linha cardíaca minimalista */}
-          <div className="pt-3">
-            <svg
-              className="w-full h-10 text-primary-400/70 stroke-current"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 300 40"
-            >
-              <path d="M 0 20 L 70 20 L 85 5 L 100 35 L 115 10 L 130 25 L 140 20 L 300 20" />
-            </svg>
+          <div className="mt-8">
+            <HeartbeatLine />
           </div>
         </div>
 
-        {/* Rodapé da Coluna Esquerda */}
-        <div className="relative z-10 text-xs text-slate-500 flex items-center justify-between">
-          <span>e-SUS APS • Ministério da Saúde</span>
-          <span>© {new Date().getFullYear()}</span>
-        </div>
-      </div>
+        <p className="relative z-10 text-xs text-slate-400">
+          e-SUS APS • Ministério da Saúde © {new Date().getFullYear()}
+        </p>
+      </aside>
 
-      {/* ─────────────────────────────────────────────────────────────
-          COLUNA DIREITA: Formulário Limpo e Focado
-         ───────────────────────────────────────────────────────────── */}
-      <div className="col-span-12 lg:col-span-7 xl:col-span-7 flex flex-col justify-between min-h-screen p-6 sm:p-10 lg:p-12 xl:p-16">
-        {/* Barra Superior */}
-        <div className="flex items-center justify-between gap-4">
+      {/* ───────────── COLUNA DIREITA: formulário ───────────── */}
+      <main className="flex h-full flex-col justify-between overflow-y-auto p-6 sm:p-8 lg:p-10">
+        <div className="flex shrink-0 items-center justify-between gap-4">
           <Link
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-600 transition-colors hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             href="/"
           >
             <ArrowLeft className="size-4" />
-            <span>Início</span>
+            Início
           </Link>
 
-          <Button
-            isIconOnly
-            aria-label="Alternar tema"
-            className="size-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
-            size="sm"
-            variant="light"
-            onPress={toggleTheme}
+          <button
+            aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
+            className="flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            type="button"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
           >
-            {theme === "dark" ? (
-              <Sun className="size-4 text-zinc-100" strokeWidth={2} />
-            ) : (
-              <Moon className="size-4 text-slate-700" strokeWidth={2} />
-            )}
-          </Button>
+            {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
         </div>
 
-        {/* Centro: Card Focado */}
-        <div className="w-full max-w-sm mx-auto my-auto py-8">
-          {/* Logo Padronizado no Mobile */}
-          <div className="lg:hidden flex items-center justify-center mb-6">
-            <BrandLogo href="/" size="sm" variant="horizontal" />
+        <div className="my-auto w-full max-w-[360px] mx-auto py-4">
+          {/* logo no mobile */}
+          <div className="mb-6 flex justify-center lg:hidden">
+            <LandingLogo href="/" />
           </div>
 
-          {/* Abas Alternadoras Diretas (Profissional | Paciente) */}
           {isLoginFlow && (
-            <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-zinc-800/60 mb-6 border border-slate-200/60 dark:border-zinc-700/60">
-              <Link
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all",
-                  isProfissional
-                    ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200",
-                )}
-                href="/auth/login/profissional"
-              >
-                <Stethoscope className="size-3.5" />
-                <span>Profissional</span>
-              </Link>
-
-              <Link
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all",
-                  isPaciente
-                    ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200",
-                )}
-                href="/auth/login/paciente"
-              >
-                <User className="size-3.5" />
-                <span>Paciente</span>
-              </Link>
+            <div className="mb-6 grid grid-cols-2 rounded-full bg-slate-100 p-1 dark:bg-zinc-900">
+              {[
+                {
+                  href: "/auth/login/profissional",
+                  label: "Profissional",
+                  active: isProfissional,
+                },
+                {
+                  href: "/auth/login/paciente",
+                  label: "Paciente",
+                  active: isPaciente,
+                },
+              ].map((tab) => (
+                <Link
+                  key={tab.href}
+                  aria-current={tab.active ? "page" : undefined}
+                  className={cn(
+                    "rounded-full py-2 text-center text-xs font-semibold transition-all",
+                    tab.active
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+                      : "text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200",
+                  )}
+                  href={tab.href}
+                >
+                  {tab.label}
+                </Link>
+              ))}
             </div>
           )}
 
-          {/* Título & Subtítulo */}
           <div className="mb-5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="font-display text-2xl font-bold tracking-[-0.01em] text-slate-900 dark:text-white">
               {heading}
             </h1>
             {subheading && (
-              <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+              <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-zinc-400">
                 {subheading}
               </p>
             )}
           </div>
 
-          {/* Formulário */}
-          <div className={cn("space-y-4", className)}>{children}</div>
+          <div className={cn("w-full", className)}>{children}</div>
         </div>
 
-        {/* Rodapé Simples */}
-        <div className="flex items-center justify-between text-xs text-slate-400 dark:text-zinc-500 pt-4">
+        <div className="flex shrink-0 items-center justify-between text-xs pt-4">
           <a
-            className="hover:text-slate-700 dark:hover:text-zinc-300 transition-colors"
+            className="inline-flex items-center gap-1.5 text-slate-500 transition-colors hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200"
             href={`mailto:${supportEmail}`}
           >
+            <LifeBuoy className="size-3.5" />
             Suporte
           </a>
 
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <ShieldCheck className="size-3 text-emerald-600 dark:text-emerald-400" />
-            <span>Ambiente Seguro</span>
-          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <ShieldCheck className="size-3.5" />
+            Ambiente Seguro · LGPD
+          </span>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-/* ====================== Input Limpo ====================== */
+/* ====================== Input ====================== */
 export function TextField({
   className,
   label,
+  classNames,
   ...props
 }: React.ComponentProps<typeof Input>) {
   return (
     <Input
+      className={cn("w-full", className)}
       labelPlacement="outside"
-      radius="lg"
+      radius="full"
       size="md"
       variant="bordered"
       classNames={{
-        label: "text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1",
+        base: "w-full",
+        label:
+          "text-xs font-semibold text-slate-800 dark:text-zinc-200 mb-2 block",
         inputWrapper: cn(
-          "h-11 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-2xs",
+          "h-12 px-4 bg-white dark:bg-zinc-900 border-1 border-slate-200 dark:border-zinc-800 shadow-none",
           "data-[hover=true]:border-slate-300 dark:data-[hover=true]:border-zinc-700",
-          "data-[focus=true]:border-primary dark:data-[focus=true]:border-primary",
-          "transition-all duration-150 rounded-xl",
+          "group-data-[focus=true]:border-brand dark:group-data-[focus=true]:border-brand",
+          "transition-colors duration-150",
         ),
         input:
           "text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500",
+        ...classNames,
       }}
       label={label}
       {...props}
@@ -229,7 +250,7 @@ export function TextField({
   );
 }
 
-/* ====================== Botão Submit Direto ====================== */
+/* ====================== Botão Submit ====================== */
 export function SubmitButton({
   children,
   className,
@@ -239,11 +260,11 @@ export function SubmitButton({
     <Button
       fullWidth
       className={cn(
-        "h-11 text-sm font-semibold rounded-xl text-white shadow-xs",
-        "bg-primary hover:bg-primary-600 active:scale-[0.99] transition-all duration-150",
+        "h-12 rounded-full bg-brand text-sm font-semibold text-white shadow-md shadow-brand/25",
+        "transition-all duration-150 hover:bg-[#d9431b] active:scale-[0.99] data-[disabled=true]:opacity-60",
         className,
       )}
-      radius="lg"
+      radius="full"
       type="submit"
       variant="solid"
       {...props}

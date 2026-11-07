@@ -35,9 +35,9 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isAuthFormRoute) {
     return (
-      <main className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950 transition-colors">
+      <div className="h-dvh w-full overflow-hidden bg-white dark:bg-zinc-950 transition-colors">
         {children}
-      </main>
+      </div>
     );
   }
 
@@ -69,7 +69,7 @@ export function AppShell({ children }: AppShellProps) {
 
   // Rotas de aplicação / dashboard autenticado
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-slate-50/70 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="fixed inset-0 flex h-dvh w-full overflow-hidden bg-slate-50/70 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100">
       {/* Sidebar Colapsável (Desktop) e Gaveta (Mobile) */}
       <AppSidebar
         isMobileOpen={isMobileOpen}
@@ -118,7 +118,7 @@ export function AppShell({ children }: AppShellProps) {
         </header>
 
         {/* Área rolável do conteúdo principal */}
-        <main className="flex-1 overflow-y-auto focus:outline-none">
+        <main className="flex-1 overflow-y-auto overscroll-contain focus:outline-none relative">
           {children}
         </main>
       </div>

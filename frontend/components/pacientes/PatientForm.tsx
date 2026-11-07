@@ -824,15 +824,9 @@ export default function PatientForm(props: Props) {
         id="patient-form"
         onSubmit={submitHandler}
       >
-        <Card
-          className="border-none shadow-soft bg-transparent"
-          classNames={{ base: "overflow-visible" }}
-          shadow="none"
-        >
-          <CardBody className="p-0">
-            <PatientWizard onSubmit={submitHandler} />
-          </CardBody>
-        </Card>
+        <div className="w-full">
+          <PatientWizard onSubmit={submitHandler} />
+        </div>
 
         {/* Submit “fantasma” para Enter em inputs */}
         <button className="hidden" disabled={isSubmitting} type="submit" />

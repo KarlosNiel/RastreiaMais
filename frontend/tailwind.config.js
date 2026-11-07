@@ -19,6 +19,7 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)"],
         heading: ["var(--font-heading)"],
+        display: ["var(--font-display)"],
         mono: ["var(--font-mono)"],
       },
       // auxiliares próprias (opcional)

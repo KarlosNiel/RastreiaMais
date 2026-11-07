@@ -65,13 +65,17 @@ export async function login(
     let msg = "Credenciais inválidas.";
 
     try {
-      const data = await res.json();
+      const text = await res.text();
 
-      msg = (data?.detail as string) || msg;
+      try {
+        const data = JSON.parse(text);
+
+        msg = (data?.detail as string) || (data?.message as string) || msg;
+      } catch {
+        if (text) msg = text;
+      }
     } catch {
-      const txt = await res.text();
-
-      if (txt) msg = txt;
+      // Ignora erro de leitura e mantém mensagem padrão
     }
     throw new Error(msg);
   }

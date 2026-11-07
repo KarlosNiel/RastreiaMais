@@ -45,7 +45,7 @@ export default function Providers({ children }: ProvidersProps) {
       defaultTheme="system"
       storageKey="rastreia-theme"
     >
-      <HeroUIProvider className="font-sans" locale="pt-BR">
+      <HeroUIProvider className="font-sans h-full" locale="pt-BR">
         <ToastProvider />
         <QueryClientProvider client={queryClient}>
           <AuthProvider>{children}</AuthProvider>

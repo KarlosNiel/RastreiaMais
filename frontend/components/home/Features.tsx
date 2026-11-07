@@ -1,88 +1,63 @@
 "use client";
 
-import { Card, CardBody } from "@heroui/react";
-import {
-  HeartIcon,
-  DocumentTextIcon,
-  WindowIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
+import { FileText, HeartPulse, Sparkles, Stethoscope } from "lucide-react";
+
+const FEATURES = [
+  {
+    Icon: HeartPulse,
+    title: "Doenças Crônicas",
+    desc: "Gestão especializada para hipertensão, diabetes e outras condições crônicas.",
+    tone: "bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-400",
+  },
+  {
+    Icon: FileText,
+    title: "Prontuário Digital",
+    desc: "Consultas, exames e medicações organizados em formato digital.",
+    tone: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
+  },
+  {
+    Icon: Stethoscope,
+    title: "Avaliação Multiprofissional",
+    desc: "Avaliação integrada considerando os determinantes sociais de saúde.",
+    tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+  },
+  {
+    Icon: Sparkles,
+    title: "Interface Agradável",
+    desc: "Moderna e intuitiva para usuários de todas as idades.",
+    tone: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+  },
+];
 
 export const Features = () => {
-  const features = [
-    {
-      icon: HeartIcon,
-      title: "Doenças Crônicas",
-      description:
-        "Gestão especializada para hipertensão, diabetes e outras condições crônicas",
-      color: "text-primary",
-      bgColor: "bg-orange-100 dark:bg-orange-500/10",
-    },
-    {
-      icon: DocumentTextIcon,
-      title: "Prontuário Digital",
-      description:
-        "Tabelas de consultas, exames e medicações em formato digital",
-      color: "text-secondary",
-      bgColor: "bg-secondary-100 dark:bg-secondary-500/10",
-    },
-    {
-      icon: UserGroupIcon,
-      title: "Avaliação Multiprofissional",
-      description:
-        "Avaliação integrada considerando os determinantes e condicionantes de saúde",
-      color: "text-success",
-      bgColor: "bg-success-100 dark:bg-success-500/10",
-    },
-    {
-      icon: WindowIcon,
-      title: "Interface Agradável",
-      description:
-        "Interface moderna e intuitiva para usuários de todas as idades",
-      color: "text-danger",
-      bgColor: "bg-danger-100 dark:bg-danger-500/10",
-    },
-  ];
-
   return (
-    <section className="py-20  dark:bg-gray-950 transition-colors duration-300">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground dark:text-white">
+    <section className="scroll-mt-20 py-24" id="recursos">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="mx-auto mb-16 max-w-xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand">
+            Recursos
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-[2.5rem] dark:text-zinc-50">
             Recursos Completos para Gestão de Saúde
           </h2>
-          <p className="text-lg text-default-600 dark:text-gray-400">
-            Tudo que você precisa para gerenciar o cuidado de pacientes com
-            doenças crônicas
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {features.map((feature, i) => {
-            const Icon = feature.icon;
-
-            return (
-              <Card
-                key={i}
-                className="border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 shadow-2xs transition-all duration-200"
-                shadow="none"
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map(({ Icon, title, desc, tone }) => (
+            <div key={title}>
+              <div
+                className={`mb-5 flex size-10 items-center justify-center rounded-full ${tone}`}
               >
-                <CardBody className="p-6">
-                  <div
-                    className={`w-14 h-14 rounded-xl ${feature.bgColor} flex items-center justify-center mb-4`}
-                  >
-                    <Icon className={`w-7 h-7 ${feature.color}`} />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3 text-foreground dark:text-gray-100">
-                    {feature.title}
-                  </h3>
-                  <p className="text-default-600 dark:text-gray-400 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardBody>
-              </Card>
-            );
-          })}
+                <Icon className="size-[18px]" strokeWidth={2} />
+              </div>
+              <h3 className="font-display text-base font-semibold text-slate-900 dark:text-zinc-100">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-zinc-400">
+                {desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

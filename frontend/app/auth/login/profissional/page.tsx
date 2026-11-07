@@ -1,7 +1,7 @@
 // frontend/app/auth/login/profissional/page.tsx
 "use client";
 
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Checkbox } from "@heroui/checkbox";
 import { useRouter } from "next/navigation";
@@ -65,22 +65,22 @@ export default function LoginProfissionalPage() {
   return (
     <AuthCard
       heading="Acesso Profissional"
-      subheading="Entre com seu e-mail ou usuário para continuar."
+      subheading="Entre para acompanhar seus pacientes."
     >
       <form
         noValidate
         aria-label="Formulário de login do profissional"
-        className="space-y-4"
+        className="flex flex-col gap-5"
         onSubmit={handleSubmit}
       >
         {/* Banner de Erro Direto */}
         {errorMsg && (
           <div
-            className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
+            className="flex items-center gap-3 p-4 mb-1 rounded-2xl bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-xs animate-in fade-in duration-150"
             role="alert"
           >
-            <ExclamationCircleIcon className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
-            <span className="font-medium">{errorMsg}</span>
+            <ExclamationCircleIcon className="size-5 shrink-0 text-rose-600 dark:text-rose-400" />
+            <span className="font-medium leading-relaxed">{errorMsg}</span>
           </div>
         )}
 
@@ -91,11 +91,8 @@ export default function LoginProfissionalPage() {
           enterKeyHint="next"
           label="E-mail ou Usuário"
           name="username"
-          placeholder="seu.email@saude.gov.br ou usuario"
+          placeholder="seu.email@usf.gov.br"
           spellCheck="false"
-          startContent={
-            <Mail className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
-          }
           type="text"
           value={email}
           onValueChange={setEmail}
@@ -124,9 +121,6 @@ export default function LoginProfissionalPage() {
           label="Senha"
           name="password"
           placeholder="••••••••"
-          startContent={
-            <Lock className="size-4 text-slate-400 dark:text-zinc-500 mr-1.5" />
-          }
           type={showPwd ? "text" : "password"}
           value={pwd}
           onValueChange={setPwd}
@@ -136,10 +130,11 @@ export default function LoginProfissionalPage() {
           <Checkbox
             color="primary"
             isSelected={rememberMe}
+            radius="full"
             size="sm"
             classNames={{
               label:
-                "text-xs text-slate-600 dark:text-zinc-400 select-none font-medium",
+                "text-xs text-slate-700 dark:text-zinc-300 select-none font-medium",
             }}
             onValueChange={setRememberMe}
           >
@@ -147,7 +142,7 @@ export default function LoginProfissionalPage() {
           </Checkbox>
 
           <Link
-            className="text-xs font-medium text-primary hover:underline transition-colors"
+            className="text-xs font-semibold text-brand hover:underline transition-colors"
             href="/auth/recuperar-senha"
           >
             Esqueceu a senha?
@@ -156,7 +151,7 @@ export default function LoginProfissionalPage() {
 
         <div className="pt-2">
           <SubmitButton
-            disabled={loading || !isValid}
+            isDisabled={loading || !isValid}
             isLoading={loading}
           >
             {loading ? "Entrando..." : "Entrar"}

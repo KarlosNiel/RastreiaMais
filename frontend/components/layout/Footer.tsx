@@ -1,122 +1,70 @@
 // frontend/components/layout/Footer.tsx
 import Link from "next/link";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+
+import { LandingLogo } from "@/components/home/LandingLogo";
+
+const LINK_GROUPS = [
+  {
+    title: "Plataforma",
+    links: [
+      { label: "Recursos", href: "/auth/login#recursos" },
+      { label: "Perfis de acesso", href: "/auth/login#entrar" },
+    ],
+  },
+  {
+    title: "Acesso",
+    links: [
+      { label: "Profissional", href: "/auth/login/profissional" },
+      { label: "Paciente", href: "/auth/login/paciente" },
+      { label: "Recuperar senha", href: "/auth/recuperar-senha" },
+    ],
+  },
+];
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer
-      className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+      className="border-t border-slate-100 bg-white dark:border-zinc-800/80 dark:bg-zinc-950"
       id="sobre"
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div className="mb-3">
-              <BrandLogo href="/" size="sm" subtitle="Gestão Cardiovascular APS" variant="full" />
-            </div>
-            <div className="w-[85%]">
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                Gestão inteligente e rastreamento de risco cardiovascular para UBS e APS.
-              </p>
-            </div>
+      <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <div className="flex flex-col gap-10 md:flex-row md:justify-between">
+          <div className="max-w-xs">
+            <LandingLogo href="/" />
+            <p className="mt-4 text-sm leading-relaxed text-slate-500 dark:text-zinc-400">
+              Gestão inteligente e rastreamento de risco cardiovascular para UBS
+              e APS.
+            </p>
           </div>
 
-          <div>
-            <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">
-              Plataforma
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Recursos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Segurança
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">
-              Suporte
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Documentação
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Contato
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">
-              Legal
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Privacidade
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  Termos de Uso
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="text-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
-                  href=""
-                >
-                  LGPD
-                </Link>
-              </li>
-            </ul>
+          <div className="grid grid-cols-2 gap-12 sm:gap-20">
+            {LINK_GROUPS.map((group) => (
+              <div key={group.title}>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                  {group.title}
+                </h3>
+                <ul className="mt-3 space-y-2">
+                  {group.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        className="text-sm text-slate-500 transition-colors hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        href={link.href}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="pt-8 border-t border-gray-200 dark:border-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-            © {currentYear} RastreiaCardio. Todos os direitos reservados.
-          </p>
-        </div>
+        <p className="mt-10 border-t border-slate-100 pt-6 text-xs text-slate-500 dark:border-zinc-800 dark:text-zinc-500">
+          © {currentYear} RastreiaCardio. Todos os direitos reservados.
+        </p>
       </div>
     </footer>
   );

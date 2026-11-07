@@ -400,8 +400,8 @@ export default function PatientWizard({
         </ModalContent>
       </Modal>
 
-      <section className="overflow-hidden rounded-lg border-none bg-transparent backdrop-blur-sm container mx-auto px-4 sm:px-6 lg:px-8 my-8 transition-colors">
-        <header className="pt-6 pb-4 bg-transparent backdrop-blur-sm rounded-t-lg border-gray-800 transition-colors">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-0 transition-colors">
+        <header className="pt-2 pb-4 bg-transparent backdrop-blur-sm transition-colors">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <ol
               aria-label="Passos do cadastro"
@@ -510,7 +510,7 @@ export default function PatientWizard({
           </div>
         </header>
 
-        <div className="py-6 md:py-8 space-y-8 transition-colors">
+        <div className="py-6 space-y-8 transition-colors">
           {step === 0 && <Step1 />}
           {step === 1 && <Step2 />}
           {step === 2 && <Step3 />}
@@ -519,7 +519,7 @@ export default function PatientWizard({
           {step === 5 && <Step6 />}
         </div>
 
-        <footer className="sticky bottom-0 z-30 -mx-4 -mb-6 sm:-mx-6 sm:-mb-6 lg:-mx-8 lg:-mb-8 px-4 sm:px-6 lg:px-8 py-3.5 border-t border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-b-xl shadow-lg transition-colors">
+        <footer className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3.5 border-t border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-lg transition-colors">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Button

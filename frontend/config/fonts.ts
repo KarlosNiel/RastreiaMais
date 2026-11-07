@@ -1,5 +1,20 @@
 // frontend/config/fonts.ts
-import { Poppins, Roboto, Roboto_Mono } from "next/font/google";
+import {
+  Plus_Jakarta_Sans,
+  Poppins,
+  Roboto,
+  Roboto_Mono,
+} from "next/font/google";
+
+/** Display / títulos da landing page */
+export const fontDisplay = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  style: ["normal"],
+  variable: "--font-display",
+  display: "swap",
+  fallback: ["system-ui", "Segoe UI", "Arial", "sans-serif"],
+});
 
 /** Texto corrido */
 export const fontSans = Roboto({
