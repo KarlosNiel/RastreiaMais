@@ -68,7 +68,8 @@ export default function ProfessionalAppointmentDetailsModal({
       backdrop="blur"
       classNames={{
         base: "rounded-2xl shadow-2xl dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 overflow-hidden",
-        header: "border-b border-slate-100 dark:border-zinc-800/80 pb-4 pt-5 px-6",
+        header:
+          "border-b border-slate-100 dark:border-zinc-800/80 pb-4 pt-5 px-6",
         body: "py-5 px-6 space-y-3",
         footer:
           "border-t border-slate-100 dark:border-zinc-800/80 py-4 px-6 bg-slate-50/50 dark:bg-zinc-900/50",

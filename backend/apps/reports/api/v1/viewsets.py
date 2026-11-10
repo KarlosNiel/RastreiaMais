@@ -256,3 +256,23 @@ class DashboardKPIsViewSet(ViewSet):
         cache.set(cache_key, data, timeout=300)
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Reports - Analytics'])
+class ClinicalAnalyticsViewSet(ViewSet):
+    """
+    ViewSet para métricas clínicas consolidadas de DCNTs (Hipertensão, Diabetes),
+    estratificação de risco cardiovascular (Framingham) e controle clínico na APS.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Obter Analytics Clínicos de DCNTs",
+        description="Retorna indicadores agregados de HAS, DM, controle de PA/Glicemia e Framingham.",
+    )
+    def list(self, request):
+        from apps.reports.clinical_analytics_service import get_clinical_analytics_data
+        scope = request.query_params.get("scope", "all")
+        data = get_clinical_analytics_data(request.user, scope=scope)
+        return Response(data, status=status.HTTP_200_OK)
+

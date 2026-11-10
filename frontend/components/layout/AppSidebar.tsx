@@ -4,6 +4,7 @@ import {
   ArrowRightOnRectangleIcon,
   CalendarDaysIcon,
   ChartBarIcon,
+  ChartBarSquareIcon,
   ChevronDoubleLeftIcon,
   Cog6ToothIcon,
   EllipsisVerticalIcon,
@@ -51,9 +52,16 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: "Dashboard Clínico",
+    label: "Atendimentos",
     href: "/profissional",
     icon: CalendarDaysIcon,
+    roles: ["PROFESSIONAL", "MANAGER"],
+    section: "main",
+  },
+  {
+    label: "Dashboard Clínico",
+    href: "/profissional/dashboard",
+    icon: ChartBarSquareIcon,
     roles: ["PROFESSIONAL", "MANAGER"],
     section: "main",
   },
@@ -157,6 +165,17 @@ export function AppSidebar({ isMobileOpen, setIsMobileOpen }: AppSidebarProps) {
         pathname === "/pacientes" ||
         (pathname.startsWith("/pacientes/") &&
           !pathname.startsWith("/pacientes/novo"))
+      );
+    }
+
+    if (href === "/profissional") {
+      return pathname === "/profissional";
+    }
+
+    if (href === "/profissional/dashboard") {
+      return (
+        pathname === "/profissional/dashboard" ||
+        pathname.startsWith("/profissional/dashboard/")
       );
     }
 

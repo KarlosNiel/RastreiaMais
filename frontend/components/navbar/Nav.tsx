@@ -10,8 +10,13 @@ type Role = "PATIENT" | "PROFESSIONAL" | "MANAGER" | null;
 const NAV: { label: string; href: string; roles: Exclude<Role, null>[] }[] = [
   { label: "Dashboard Gestor", href: "/gestor", roles: ["MANAGER"] },
   {
-    label: "Profissional",
+    label: "Atendimentos",
     href: "/profissional",
+    roles: ["PROFESSIONAL", "MANAGER"],
+  },
+  {
+    label: "Dashboard Clínico",
+    href: "/profissional/dashboard",
     roles: ["PROFESSIONAL", "MANAGER"],
   },
   {

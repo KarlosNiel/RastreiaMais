@@ -51,12 +51,14 @@ export default function GlobalError({
 
   async function copyErrorId() {
     const idToCopy = error?.digest || error?.message || "unknown";
+
     try {
       await navigator.clipboard.writeText(idToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
       const el = document.createElement("textarea");
+
       el.value = idToCopy;
       document.body.appendChild(el);
       el.select();
@@ -96,15 +98,20 @@ export default function GlobalError({
 
           <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto">
             Não se preocupe: os dados clínicos dos seus pacientes continuam
-            <strong className="text-slate-800 dark:text-zinc-200 font-semibold"> 100% seguros e preservados</strong>.
-            Ocorreu apenas uma falha momentânea na exibição desta tela.
+            <strong className="text-slate-800 dark:text-zinc-200 font-semibold">
+              {" "}
+              100% seguros e preservados
+            </strong>
+            . Ocorreu apenas uma falha momentânea na exibição desta tela.
           </p>
 
           {/* Botões de Ação Principais */}
           <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               className="w-full sm:w-auto h-11 px-6 font-semibold bg-orange-600 hover:bg-orange-700 text-white shadow-sm rounded-xl text-sm transition-all"
-              startContent={<ArrowPathIcon className="size-4" strokeWidth={2.2} />}
+              startContent={
+                <ArrowPathIcon className="size-4" strokeWidth={2.2} />
+              }
               onPress={handleReload}
             >
               Recarregar Tela
@@ -114,7 +121,9 @@ export default function GlobalError({
               as={Link}
               className="w-full sm:w-auto h-11 px-5 font-medium text-slate-700 dark:text-zinc-300 bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-slate-200/80 dark:border-zinc-700 rounded-xl text-sm transition-all"
               href="/"
-              startContent={<HomeIcon className="size-4 text-slate-500 dark:text-zinc-400" />}
+              startContent={
+                <HomeIcon className="size-4 text-slate-500 dark:text-zinc-400" />
+              }
             >
               Voltar ao Início
             </Button>
@@ -141,7 +150,12 @@ export default function GlobalError({
             <div className="p-3.5 pt-0 text-xs border-t border-slate-200/60 dark:border-zinc-800/80 space-y-2">
               {error?.digest && (
                 <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 font-mono text-[11px]">
-                  <span>ID do Evento: <code className="text-slate-700 dark:text-zinc-300">{error.digest}</code></span>
+                  <span>
+                    ID do Evento:{" "}
+                    <code className="text-slate-700 dark:text-zinc-300">
+                      {error.digest}
+                    </code>
+                  </span>
                   <button
                     className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
                     type="button"
@@ -150,7 +164,9 @@ export default function GlobalError({
                     {copied ? (
                       <>
                         <CheckIcon className="size-3 text-emerald-600" />
-                        <span className="text-emerald-600 font-sans">Copiado</span>
+                        <span className="text-emerald-600 font-sans">
+                          Copiado
+                        </span>
                       </>
                     ) : (
                       <>

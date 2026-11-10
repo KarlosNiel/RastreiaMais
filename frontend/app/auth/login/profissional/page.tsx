@@ -128,14 +128,14 @@ export default function LoginProfissionalPage() {
 
         <div className="flex items-center justify-between pt-1">
           <Checkbox
-            color="primary"
-            isSelected={rememberMe}
-            radius="full"
-            size="sm"
             classNames={{
               label:
                 "text-xs text-slate-700 dark:text-zinc-300 select-none font-medium",
             }}
+            color="primary"
+            isSelected={rememberMe}
+            radius="full"
+            size="sm"
             onValueChange={setRememberMe}
           >
             Lembrar-me
@@ -150,10 +150,7 @@ export default function LoginProfissionalPage() {
         </div>
 
         <div className="pt-2">
-          <SubmitButton
-            isDisabled={loading || !isValid}
-            isLoading={loading}
-          >
+          <SubmitButton isDisabled={loading || !isValid} isLoading={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </SubmitButton>
         </div>

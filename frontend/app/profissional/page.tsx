@@ -3,6 +3,7 @@
 import {
   BellAlertIcon,
   CalendarDaysIcon,
+  ChartBarSquareIcon,
   PlusIcon,
   UserGroupIcon,
   UserPlusIcon,
@@ -106,6 +107,7 @@ export default function ProfissionalPage() {
     ) {
       return (rawAlerts as any).results as any[];
     }
+
     return [];
   }, [rawAlerts]);
 
@@ -152,6 +154,7 @@ export default function ProfissionalPage() {
     ) {
       return (appointments as any).results as AppointmentResponse[];
     }
+
     return [];
   }, [appointments]);
 
@@ -174,21 +177,18 @@ export default function ProfissionalPage() {
       >(["appointments"]);
 
       if (previousAppointments) {
-        queryClient.setQueryData<any>(
-          ["appointments"],
-          (old: any) => {
-            if (!old) return [];
-            const list = Array.isArray(old)
-              ? old
-              : Array.isArray(old?.results)
-                ? old.results
-                : [];
+        queryClient.setQueryData<any>(["appointments"], (old: any) => {
+          if (!old) return [];
+          const list = Array.isArray(old)
+            ? old
+            : Array.isArray(old?.results)
+              ? old.results
+              : [];
 
-            return list.map((appt: any) =>
-              String(appt.id) === String(id) ? { ...appt, status } : appt,
-            );
-          },
-        );
+          return list.map((appt: any) =>
+            String(appt.id) === String(id) ? { ...appt, status } : appt,
+          );
+        });
       }
 
       return { previousAppointments };
@@ -216,31 +216,29 @@ export default function ProfissionalPage() {
   });
 
   const AGENDA_ROWS: AgendaRow[] = useMemo(() => {
-    return (
-      safeAppointments.map((a) => {
-        const rawName =
-          `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
-          "Desconhecido";
+    return safeAppointments.map((a) => {
+      const rawName =
+        `${a.patient?.user?.first_name ?? ""} ${a.patient?.user?.last_name ?? ""}`.trim() ||
+        "Desconhecido";
 
-        return {
-          id: String(a.id),
-          patientId: a.patient?.id ? String(a.patient.id) : undefined,
-          paciente: capitalizeWords(rawName),
-          hora: new Date(a.scheduled_datetime).toLocaleString("pt-BR", {
-            dateStyle: "short",
-            timeStyle: "short",
-          }),
-          rawDate: a.scheduled_datetime,
-          local: a.local?.name ?? "UBS Jardim Magnólia",
-          type: a.type ?? "Consulta",
-          risco: mapRiskLevel(a.risk_level),
-          condicao: a.patient?.conditions ?? "—",
-          description: a.description || "",
-          docMasked: a.patient?.cpf ? formatCpf(a.patient.cpf) : "",
-          status: a.status || "ativo",
-        };
-      })
-    );
+      return {
+        id: String(a.id),
+        patientId: a.patient?.id ? String(a.patient.id) : undefined,
+        paciente: capitalizeWords(rawName),
+        hora: new Date(a.scheduled_datetime).toLocaleString("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }),
+        rawDate: a.scheduled_datetime,
+        local: a.local?.name ?? "UBS Jardim Magnólia",
+        type: a.type ?? "Consulta",
+        risco: mapRiskLevel(a.risk_level),
+        condicao: a.patient?.conditions ?? "—",
+        description: a.description || "",
+        docMasked: a.patient?.cpf ? formatCpf(a.patient.cpf) : "",
+        status: a.status || "ativo",
+      };
+    });
   }, [safeAppointments]);
 
   const handleAction = (action: "done" | "delete" | "open", row: AgendaRow) => {
@@ -307,7 +305,7 @@ export default function ProfissionalPage() {
       <header className="flex flex-col gap-4 pt-8 pb-3 md:flex-row md:items-center md:justify-between border-b border-slate-100 dark:border-zinc-800/80">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
-            Dashboard do Profissional
+            Atendimentos Clínicos
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
             {dateFormatted} &bull;{" "}
@@ -317,6 +315,23 @@ export default function ProfissionalPage() {
           </p>
         </div>
         <nav aria-label="Ações rápidas" className="flex items-center gap-2.5">
+          <Button
+            as={Link}
+            className="font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 shadow-2xs"
+            href="/profissional/dashboard"
+            radius="md"
+            size="md"
+            startContent={
+              <ChartBarSquareIcon
+                className="size-4 text-primary"
+                strokeWidth={2}
+              />
+            }
+            variant="bordered"
+          >
+            Dashboard Clínico
+          </Button>
+
           <Button
             as={Link}
             className="font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 shadow-2xs"

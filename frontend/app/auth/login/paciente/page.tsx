@@ -29,10 +29,12 @@ export default function LoginPacientePage() {
 
     if (!rawLogin) {
       setError("Por favor, informe seu CPF ou e-mail cadastrado.");
+
       return;
     }
     if (!password) {
       setError("Por favor, digite sua senha de acesso.");
+
       return;
     }
 
@@ -131,14 +133,14 @@ export default function LoginPacientePage() {
 
         <div className="flex items-center justify-between pt-1">
           <Checkbox
-            color="primary"
-            isSelected={rememberMe}
-            radius="full"
-            size="sm"
             classNames={{
               label:
                 "text-xs text-slate-700 dark:text-zinc-300 select-none font-medium",
             }}
+            color="primary"
+            isSelected={rememberMe}
+            radius="full"
+            size="sm"
             onValueChange={setRememberMe}
           >
             Lembrar-me

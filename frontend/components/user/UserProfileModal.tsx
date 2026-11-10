@@ -60,15 +60,23 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const handleSave = () => {
     if (!firstName.trim()) {
       notifyError("Campo obrigatório", "Por favor, informe seu primeiro nome.");
+
       return;
     }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      notifyError("E-mail inválido", "Informe um endereço de e-mail institucional válido.");
+      notifyError(
+        "E-mail inválido",
+        "Informe um endereço de e-mail institucional válido.",
+      );
+
       return;
     }
 
     setIsSaved(true);
-    notifySuccess("Perfil atualizado!", "Suas preferências foram salvas com sucesso.");
+    notifySuccess(
+      "Perfil atualizado!",
+      "Suas preferências foram salvas com sucesso.",
+    );
     setTimeout(() => {
       setIsSaved(false);
       onClose();

@@ -28,8 +28,9 @@ def connect_kpi_signals():
     from apps.appointments.models import Appointment
     from apps.alerts.models import Alert
     from apps.accounts.models import PatientUser
+    from apps.conditions.models import HAS, DM, OtherDCNT
 
-    for model in [Appointment, Alert, PatientUser]:
+    for model in [Appointment, Alert, PatientUser, HAS, DM, OtherDCNT]:
         post_save.connect(invalidate_dashboard_kpis_cache, sender=model, weak=False)
         post_delete.connect(invalidate_dashboard_kpis_cache, sender=model, weak=False)
 

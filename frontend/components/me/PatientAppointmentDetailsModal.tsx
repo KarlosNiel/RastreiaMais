@@ -68,9 +68,11 @@ export default function PatientAppointmentDetailsModal({
       backdrop="blur"
       classNames={{
         base: "bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-2xl rounded-2xl",
-        header: "border-b border-slate-100 dark:border-zinc-800/80 px-6 pt-6 pb-4",
+        header:
+          "border-b border-slate-100 dark:border-zinc-800/80 px-6 pt-6 pb-4",
         body: "py-6 px-6 space-y-4",
-        footer: "border-t border-slate-100 dark:border-zinc-800/80 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/50",
+        footer:
+          "border-t border-slate-100 dark:border-zinc-800/80 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/50",
       }}
       isOpen={open}
       size="lg"
@@ -176,7 +178,9 @@ export default function PatientAppointmentDetailsModal({
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                     Status do Agendamento
                   </p>
-                  <p className="text-xs text-slate-400 mt-0.5">Situação atualizada no sistema</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Situação atualizada no sistema
+                  </p>
                 </div>
                 <StatusChip size="md" tone={getStatusTone(data.status)}>
                   {getStatusLabel(data.status)}

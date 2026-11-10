@@ -19,7 +19,8 @@ const PROFILES = [
   {
     href: "/auth/login/paciente",
     Icon: User,
-    iconTone: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+    iconTone:
+      "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
     title: "Portal do Paciente",
     items: [
       "Histórico de saúde completo",

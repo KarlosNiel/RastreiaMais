@@ -2,13 +2,11 @@
 "use client";
 
 import type { SOAPReport } from "@/lib/api/soap";
-import { assistSOAPReport } from "@/lib/api/soap";
 
-import { Button, Card, CardBody, Input } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
-  ArrowPathIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClipboardDocumentCheckIcon,
@@ -18,9 +16,9 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 
+import { assistSOAPReport } from "@/lib/api/soap";
 import SOAPReportModal from "@/components/pacientes/SOAPReportModal";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
-
 
 /* ── Label maps (replicados do backend para montagem client-side) ── */
 
@@ -193,7 +191,9 @@ function SOAPBlock({
 
     navigator.clipboard
       ?.writeText(text)
-      .then(() => notifySuccess(`Bloco ${letter} copiado para a área de transferência.`))
+      .then(() =>
+        notifySuccess(`Bloco ${letter} copiado para a área de transferência.`),
+      )
       .catch(() => notifyWarn("Falha ao copiar bloco."));
   }, [sections, letter]);
 
@@ -202,7 +202,9 @@ function SOAPBlock({
   if (nonEmpty.length === 0) return null;
 
   return (
-    <div className={`rounded-xl border ${colors.border} overflow-hidden shadow-2xs transition-all`}>
+    <div
+      className={`rounded-xl border ${colors.border} overflow-hidden shadow-2xs transition-all`}
+    >
       <div
         className={`${colors.header} px-4 py-2.5 flex items-center justify-between`}
       >
@@ -276,7 +278,6 @@ export default function Step6Resumo() {
   const [isAssisting, setIsAssisting] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState("");
-
 
   /* ── Extrai dados do formulário ── */
   const buildSOAPFromForm = useCallback((): SOAPReport => {
@@ -543,6 +544,7 @@ export default function Step6Resumo() {
         const condLabels = highRiskConditions
           .map((c) => HIGH_RISK_CONDITIONS_MAP[c] ?? c)
           .join(", ");
+
         riscoCv = `Alto Risco Cardiovascular Direto (${condLabels}). Score de Framingham: ${framLabel}.`;
       } else {
         riscoCv = `Score de Framingham: ${framLabel}.`;
@@ -696,7 +698,9 @@ export default function Step6Resumo() {
 
     const lines = [
       `PACIENTE: ${activeReport.paciente.nome || "—"} | CPF: ${activeReport.paciente.cpf || "—"} | IDADE: ${activeReport.paciente.idade ?? "—"} anos`,
-      activeReport.is_ai_enhanced ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]` : null,
+      activeReport.is_ai_enhanced
+        ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]`
+        : null,
       activeReport.alertas_clinicos && activeReport.alertas_clinicos.length > 0
         ? `ALERTAS CLÍNICOS:\n${activeReport.alertas_clinicos.map((a) => `• ${a}`).join("\n")}`
         : null,
@@ -726,13 +730,16 @@ export default function Step6Resumo() {
 
     navigator.clipboard
       ?.writeText(lines)
-      .then(() => notifySuccess("SOAP completo copiado para a área de transferência!"))
+      .then(() =>
+        notifySuccess("SOAP completo copiado para a área de transferência!"),
+      )
       .catch(() => notifyWarn("Falha ao copiar SOAP."));
   }, [activeReport]);
 
   const handleAIAssist = useCallback(
     async (customNotes?: string) => {
       const notesToUse = typeof customNotes === "string" ? customNotes : notes;
+
       try {
         setIsAssisting(true);
         const enhanced = await assistSOAPReport({
@@ -751,7 +758,8 @@ export default function Step6Resumo() {
         let msg = "Erro ao processar assistência clínica.";
 
         if (status === 404) {
-          msg = "O endpoint de IA ainda não foi atualizado no servidor (404). Verifique o deploy do backend.";
+          msg =
+            "O endpoint de IA ainda não foi atualizado no servidor (404). Verifique o deploy do backend.";
         } else if (err?.response?.data?.detail) {
           msg = err.response.data.detail;
         } else if (err?.message) {
@@ -802,7 +810,8 @@ export default function Step6Resumo() {
                 )}
               </div>
               <p className="text-xs text-foreground/70 mt-0.5">
-                Apoio especializado na estratificação de risco, metas do Previne Brasil e RENAME.
+                Apoio especializado na estratificação de risco, metas do Previne
+                Brasil e RENAME.
               </p>
             </div>
           </div>
@@ -813,7 +822,9 @@ export default function Step6Resumo() {
               isLoading={isAssisting}
               radius="lg"
               size="sm"
-              startContent={!isAssisting ? <SparklesIcon className="size-4" /> : undefined}
+              startContent={
+                !isAssisting ? <SparklesIcon className="size-4" /> : undefined
+              }
               type="button"
               onPress={() => handleAIAssist()}
             >
@@ -895,7 +906,9 @@ export default function Step6Resumo() {
                 placeholder="Pedir ajuste à Sofia (ex: paciente relatou tontura matinal, tosse por enalapril, trocar medicação)..."
                 radius="lg"
                 size="sm"
-                startContent={<ChatBubbleLeftRightIcon className="size-4 text-teal-600 shrink-0" />}
+                startContent={
+                  <ChatBubbleLeftRightIcon className="size-4 text-teal-600 shrink-0" />
+                }
                 value={notes}
                 variant="bordered"
                 onChange={(e) => setNotes(e.target.value)}
@@ -941,54 +954,69 @@ export default function Step6Resumo() {
       </div>
 
       {/* ── Card de Alertas e Oportunidades Clínicas ── */}
-      {activeReport.alertas_clinicos && activeReport.alertas_clinicos.length > 0 && (
-        <div className="rounded-xl border border-amber-300/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 shadow-2xs">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center size-6 rounded-lg bg-amber-500 text-white shrink-0">
-                <ExclamationTriangleIcon className="size-3.5" />
-              </span>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
-                Alertas e Oportunidades Clínicas Identificadas por Sofia
-              </h3>
-            </div>
-            <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
-              {activeReport.alertas_clinicos.length} ponto(s) de atenção
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-            {activeReport.alertas_clinicos.map((alerta, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2 bg-white/70 dark:bg-zinc-900/60 rounded-lg p-2.5 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-950 dark:text-amber-200"
-              >
-                <span className="text-amber-600 font-bold shrink-0 mt-0.5">•</span>
-                <span className="leading-relaxed">{alerta}</span>
+      {activeReport.alertas_clinicos &&
+        activeReport.alertas_clinicos.length > 0 && (
+          <div className="rounded-xl border border-amber-300/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 shadow-2xs">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center size-6 rounded-lg bg-amber-500 text-white shrink-0">
+                  <ExclamationTriangleIcon className="size-3.5" />
+                </span>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                  Alertas e Oportunidades Clínicas Identificadas por Sofia
+                </h3>
               </div>
-            ))}
+              <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+                {activeReport.alertas_clinicos.length} ponto(s) de atenção
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+              {activeReport.alertas_clinicos.map((alerta, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start gap-2 bg-white/70 dark:bg-zinc-900/60 rounded-lg p-2.5 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-950 dark:text-amber-200"
+                >
+                  <span className="text-amber-600 font-bold shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <span className="leading-relaxed">{alerta}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* ── Metadados do Paciente ── */}
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-2xs">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           <div>
-            <p className="text-foreground/50 text-xs uppercase font-medium">Paciente</p>
-            <p className="font-semibold text-foreground mt-0.5">{activeReport.paciente.nome || "—"}</p>
+            <p className="text-foreground/50 text-xs uppercase font-medium">
+              Paciente
+            </p>
+            <p className="font-semibold text-foreground mt-0.5">
+              {activeReport.paciente.nome || "—"}
+            </p>
           </div>
           <div>
-            <p className="text-foreground/50 text-xs uppercase font-medium">CPF</p>
-            <p className="font-semibold text-foreground mt-0.5">{activeReport.paciente.cpf || "—"}</p>
+            <p className="text-foreground/50 text-xs uppercase font-medium">
+              CPF
+            </p>
+            <p className="font-semibold text-foreground mt-0.5">
+              {activeReport.paciente.cpf || "—"}
+            </p>
           </div>
           <div>
-            <p className="text-foreground/50 text-xs uppercase font-medium">Nascimento</p>
+            <p className="text-foreground/50 text-xs uppercase font-medium">
+              Nascimento
+            </p>
             <p className="font-semibold text-foreground mt-0.5">
               {activeReport.paciente.nascimento || "—"}
             </p>
           </div>
           <div>
-            <p className="text-foreground/50 text-xs uppercase font-medium">Idade</p>
+            <p className="text-foreground/50 text-xs uppercase font-medium">
+              Idade
+            </p>
             <p className="font-semibold text-foreground mt-0.5">
               {activeReport.paciente.idade != null
                 ? `${activeReport.paciente.idade} anos`
@@ -1103,7 +1131,9 @@ export default function Step6Resumo() {
           <h3 className="text-white font-semibold text-xs uppercase tracking-wider">
             Indicadores de Saúde da APS ativados por este SOAP
           </h3>
-          <span className="text-[11px] text-slate-300">Atenção Primária / e-SUS</span>
+          <span className="text-[11px] text-slate-300">
+            Atenção Primária / e-SUS
+          </span>
         </div>
         <div className="divide-y divide-default-100">
           {activeReport.indicadores_previne.map((ind, i) => (
@@ -1111,7 +1141,9 @@ export default function Step6Resumo() {
               key={i}
               className="flex items-center justify-between px-4 py-3"
             >
-              <span className="text-sm text-foreground/90 font-medium">{ind.indicador}</span>
+              <span className="text-sm text-foreground/90 font-medium">
+                {ind.indicador}
+              </span>
               <StatusBadge status={ind.status} />
             </div>
           ))}

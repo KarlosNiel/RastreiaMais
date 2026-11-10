@@ -201,7 +201,9 @@ export function calculateRiskFromClinicalData(
 
   /* ── HAS: Condições de Alto Risco / Framingham / classificação PA ── */
   if (condicoes.has && has) {
-    const complicacoes = Array.isArray(has.complicacoes) ? has.complicacoes : [];
+    const complicacoes = Array.isArray(has.complicacoes)
+      ? has.complicacoes
+      : [];
     const hasHighRiskDirect =
       complicacoes.some((c: string) =>
         ["avc", "infarto", "ait", "loa", "renal", "dm"].includes(c),

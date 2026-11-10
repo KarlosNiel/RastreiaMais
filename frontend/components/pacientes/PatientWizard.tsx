@@ -373,8 +373,8 @@ export default function PatientWizard({
           </ModalHeader>
           <ModalBody>
             <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
-              Tem certeza que deseja cancelar? Todas as alterações não salvas serão
-              perdidas.
+              Tem certeza que deseja cancelar? Todas as alterações não salvas
+              serão perdidas.
             </p>
           </ModalBody>
           <ModalFooter className="flex justify-end gap-2.5">

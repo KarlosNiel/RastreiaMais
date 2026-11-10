@@ -2,6 +2,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -226,10 +227,6 @@ export function TextField({
   return (
     <Input
       className={cn("w-full", className)}
-      labelPlacement="outside"
-      radius="full"
-      size="md"
-      variant="bordered"
       classNames={{
         base: "w-full",
         label:
@@ -245,6 +242,10 @@ export function TextField({
         ...classNames,
       }}
       label={label}
+      labelPlacement="outside"
+      radius="full"
+      size="md"
+      variant="bordered"
       {...props}
     />
   );

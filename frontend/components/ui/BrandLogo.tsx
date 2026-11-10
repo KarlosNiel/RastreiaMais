@@ -3,6 +3,7 @@
 
 import React from "react";
 import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 
 export interface BrandLogoProps {
@@ -27,7 +28,7 @@ export interface BrandLogoProps {
  * Design limpo, minimalista e de alta precisão vetorial (estilo Linear / Apple Health).
  * Combina o contorno geométrico do Coração (cuidado e vida)
  * com o pulso ativo de Eletrocardiograma (rastreamento contínuo e monitoramento na APS).
- * 
+ *
  * Sem ruído, sem teias de aranha e sem poluição visual: 100% legível em 24px, 32px ou 48px.
  */
 export function BrandIconMark({
@@ -60,12 +61,12 @@ export function BrandIconMark({
       >
         <defs>
           <linearGradient
+            gradientUnits="userSpaceOnUse"
             id="rc-clean-orange"
             x1="2"
-            y1="4"
             x2="30"
+            y1="4"
             y2="30"
-            gradientUnits="userSpaceOnUse"
           >
             <stop offset="0%" stopColor="#FB923C" />
             <stop offset="100%" stopColor="#EA580C" />
@@ -179,6 +180,7 @@ export function BrandLogo({
         </Link>
       );
     }
+
     return iconElement;
   }
 
@@ -210,9 +212,7 @@ export function BrandLogo({
             <span
               className={cn(
                 "ml-0.5 font-bold",
-                inverted
-                  ? "text-white"
-                  : "text-slate-900 dark:text-zinc-100",
+                inverted ? "text-white" : "text-slate-900 dark:text-zinc-100",
               )}
             >
               Cardio
@@ -232,9 +232,7 @@ export function BrandLogo({
             className={cn(
               "font-medium tracking-wide uppercase",
               subSizeClass,
-              inverted
-                ? "text-slate-400"
-                : "text-slate-500 dark:text-zinc-400",
+              inverted ? "text-slate-400" : "text-slate-500 dark:text-zinc-400",
             )}
           >
             {defaultSubtitleText}

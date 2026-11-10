@@ -43,7 +43,9 @@ export default function CreateAlertModal({
   alertData,
 }: Props) {
   const [cpf, setCpf] = useState("");
-  const [risk, setRisk] = useState<"safe" | "moderate" | "critical">("moderate");
+  const [risk, setRisk] = useState<"safe" | "moderate" | "critical">(
+    "moderate",
+  );
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -78,19 +80,28 @@ export default function CreateAlertModal({
 
     if (!cleanCpf) {
       setErrorMessage("Por favor, informe o CPF do paciente.");
-      notifyError("CPF obrigatório", "Informe o CPF para associar o alerta ao paciente.");
+      notifyError(
+        "CPF obrigatório",
+        "Informe o CPF para associar o alerta ao paciente.",
+      );
+
       return;
     }
 
     if (!title.trim()) {
       setErrorMessage("Informe o título do alerta.");
       notifyError("Título obrigatório", "Dê um título resumido ao alerta.");
+
       return;
     }
 
     if (!description.trim()) {
       setErrorMessage("Informe o motivo ou conduta do alerta.");
-      notifyError("Descrição obrigatória", "Descreva o motivo do alerta clínico.");
+      notifyError(
+        "Descrição obrigatória",
+        "Descreva o motivo do alerta clínico.",
+      );
+
       return;
     }
 
@@ -103,7 +114,10 @@ export default function CreateAlertModal({
 
     try {
       await createAlert.mutateAsync(payload);
-      notifySuccess("Alerta criado com sucesso!", "O alerta clínico foi registrado para a equipe de saúde.");
+      notifySuccess(
+        "Alerta criado com sucesso!",
+        "O alerta clínico foi registrado para a equipe de saúde.",
+      );
       onOpenChange(false);
     } catch (err: any) {
       const data = err?.response?.data;
@@ -131,7 +145,11 @@ export default function CreateAlertModal({
       setConfirmDeleteOpen(false);
       onOpenChange(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || "Não foi possível excluir o alerta.";
+      const msg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        "Não foi possível excluir o alerta.";
+
       notifyError("Erro ao excluir", msg);
     }
   };
@@ -155,10 +173,13 @@ export default function CreateAlertModal({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    {alertData ? "Detalhes do Alerta" : "Criar Novo Alerta Clínico"}
+                    {alertData
+                      ? "Detalhes do Alerta"
+                      : "Criar Novo Alerta Clínico"}
                   </h2>
                   <p className="text-xs font-normal text-slate-500 dark:text-zinc-400">
-                    Notifique a equipe de saúde sobre riscos ou queixas prioritárias
+                    Notifique a equipe de saúde sobre riscos ou queixas
+                    prioritárias
                   </p>
                 </div>
               </ModalHeader>
@@ -168,7 +189,9 @@ export default function CreateAlertModal({
                   <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5 shadow-2xs">
                     <ExclamationCircleIcon className="size-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                     <div className="flex-1">
-                      <span className="font-semibold block">Atenção ao salvar:</span>
+                      <span className="font-semibold block">
+                        Atenção ao salvar:
+                      </span>
                       <span>{errorMessage}</span>
                     </div>
                   </div>
@@ -176,7 +199,9 @@ export default function CreateAlertModal({
 
                 <Input
                   isRequired
-                  errorMessage={submitted && !cpf ? "Informe o CPF do paciente" : ""}
+                  errorMessage={
+                    submitted && !cpf ? "Informe o CPF do paciente" : ""
+                  }
                   isDisabled={!!alertData}
                   isInvalid={submitted && !cpf}
                   label="CPF do Paciente *"
@@ -186,6 +211,7 @@ export default function CreateAlertModal({
                   variant="bordered"
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "").slice(0, 11);
+
                     setCpf(raw);
                     setErrorMessage(null);
                   }}
@@ -198,16 +224,26 @@ export default function CreateAlertModal({
                   radius="lg"
                   selectedKeys={[risk]}
                   variant="bordered"
-                  onChange={(e) => setRisk((e.target.value as any) || "moderate")}
+                  onChange={(e) =>
+                    setRisk((e.target.value as any) || "moderate")
+                  }
                 >
                   <SelectItem key="safe">Seguro (Baixo Risco)</SelectItem>
-                  <SelectItem key="moderate">Moderado (Acompanhamento)</SelectItem>
-                  <SelectItem key="critical">Crítico (Atenção Imediata)</SelectItem>
+                  <SelectItem key="moderate">
+                    Moderado (Acompanhamento)
+                  </SelectItem>
+                  <SelectItem key="critical">
+                    Crítico (Atenção Imediata)
+                  </SelectItem>
                 </Select>
 
                 <Input
                   isRequired
-                  errorMessage={submitted && !title.trim() ? "Informe o título do alerta" : ""}
+                  errorMessage={
+                    submitted && !title.trim()
+                      ? "Informe o título do alerta"
+                      : ""
+                  }
                   isDisabled={!!alertData}
                   isInvalid={submitted && !title.trim()}
                   label="Título do Alerta *"
@@ -223,7 +259,11 @@ export default function CreateAlertModal({
 
                 <Textarea
                   isRequired
-                  errorMessage={submitted && !description.trim() ? "Informe a descrição do alerta" : ""}
+                  errorMessage={
+                    submitted && !description.trim()
+                      ? "Informe a descrição do alerta"
+                      : ""
+                  }
                   isDisabled={!!alertData}
                   isInvalid={submitted && !description.trim()}
                   label="Descrição / Conduta Sugerida *"
@@ -300,7 +340,8 @@ export default function CreateAlertModal({
               </ModalHeader>
 
               <ModalBody className="text-sm text-slate-600 dark:text-zinc-400 px-6 py-2">
-                Tem certeza que deseja excluir este alerta clínico? O histórico de monitoramento deste alerta será removido.
+                Tem certeza que deseja excluir este alerta clínico? O histórico
+                de monitoramento deste alerta será removido.
               </ModalBody>
 
               <ModalFooter className="px-6 pb-6 pt-4">

@@ -22,7 +22,6 @@ import {
 import { assistSOAPReport } from "@/lib/api/soap";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
 
-
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -164,8 +163,11 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
 
     const sections = [
       `PACIENTE: ${currentReport.paciente.nome} | CPF: ${currentReport.paciente.cpf || "—"} | Idade: ${currentReport.paciente.idade ?? "—"} anos`,
-      currentReport.is_ai_enhanced ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]` : null,
-      currentReport.alertas_clinicos && currentReport.alertas_clinicos.length > 0
+      currentReport.is_ai_enhanced
+        ? `[RELATÓRIO CLÍNICO APRIMORADO — ASSISTENTE SOFIA]`
+        : null,
+      currentReport.alertas_clinicos &&
+      currentReport.alertas_clinicos.length > 0
         ? `ALERTAS CLÍNICOS (APS):\n${currentReport.alertas_clinicos.map((a) => `• ${a}`).join("\n")}`
         : null,
       `--- SUBJETIVO (S) ---`,
@@ -219,7 +221,8 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
       let msg = "Erro ao processar assistência com IA.";
 
       if (status === 404) {
-        msg = "O endpoint de IA ainda não foi atualizado no servidor (404). Verifique o deploy do backend.";
+        msg =
+          "O endpoint de IA ainda não foi atualizado no servidor (404). Verifique o deploy do backend.";
       } else if (err?.response?.data?.detail) {
         msg = err.response.data.detail;
       } else if (err?.message) {
@@ -295,11 +298,15 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-foreground/60 text-xs">Paciente</p>
-                <p className="font-semibold">{currentReport.paciente.nome || "—"}</p>
+                <p className="font-semibold">
+                  {currentReport.paciente.nome || "—"}
+                </p>
               </div>
               <div>
                 <p className="text-foreground/60 text-xs">CPF</p>
-                <p className="font-semibold">{currentReport.paciente.cpf || "—"}</p>
+                <p className="font-semibold">
+                  {currentReport.paciente.cpf || "—"}
+                </p>
               </div>
               <div>
                 <p className="text-foreground/60 text-xs">Nascimento</p>
@@ -319,21 +326,22 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
           </div>
 
           {/* Alertas Clínicos (se houver) */}
-          {currentReport.alertas_clinicos && currentReport.alertas_clinicos.length > 0 && (
-            <div className="rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <ExclamationTriangleIcon className="size-4 text-amber-600 dark:text-amber-400" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                  Alertas e Oportunidades Clínicas Identificadas por Sofia
-                </h4>
+          {currentReport.alertas_clinicos &&
+            currentReport.alertas_clinicos.length > 0 && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <ExclamationTriangleIcon className="size-4 text-amber-600 dark:text-amber-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                    Alertas e Oportunidades Clínicas Identificadas por Sofia
+                  </h4>
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-xs text-amber-900 dark:text-amber-200">
+                  {currentReport.alertas_clinicos.map((alerta, idx) => (
+                    <li key={idx}>{alerta}</li>
+                  ))}
+                </ul>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-xs text-amber-900 dark:text-amber-200">
-                {currentReport.alertas_clinicos.map((alerta, idx) => (
-                  <li key={idx}>{alerta}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            )}
 
           {/* Blocos SOAP */}
           <SOAPBlock
@@ -351,7 +359,10 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
                 label: "Determinantes sociais e psicossociais",
                 text: currentReport.subjetivo.determinantes,
               },
-              { label: "Estilo de vida", text: currentReport.subjetivo.estilo_vida },
+              {
+                label: "Estilo de vida",
+                text: currentReport.subjetivo.estilo_vida,
+              },
             ]}
             title="Subjetivo — o que o paciente relata e a história clínica"
           />
@@ -363,7 +374,10 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
                 label: "Pressão arterial",
                 text: currentReport.objetivo.pressao_arterial,
               },
-              { label: "Antropometria", text: currentReport.objetivo.antropometria },
+              {
+                label: "Antropometria",
+                text: currentReport.objetivo.antropometria,
+              },
               {
                 label: "Glicemia e metabólico",
                 text: currentReport.objetivo.glicemia_metabolico,

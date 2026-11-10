@@ -102,21 +102,31 @@ function DashboardPreview() {
       <div className="mb-4 grid grid-cols-2 gap-3">
         <div className="flex items-end justify-between gap-2 rounded-2xl bg-slate-50 p-3.5 dark:bg-zinc-800/60">
           <div>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">Pacientes</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
+              Pacientes
+            </p>
             <p className="font-display text-xl font-bold tabular-nums text-slate-900 dark:text-zinc-100">
               3.198
             </p>
           </div>
-          <Sparkline color="#2563eb" points="2,26 16,20 28,20 40,15 54,10 70,4" />
+          <Sparkline
+            color="#2563eb"
+            points="2,26 16,20 28,20 40,15 54,10 70,4"
+          />
         </div>
         <div className="flex items-end justify-between gap-2 rounded-2xl bg-slate-50 p-3.5 dark:bg-zinc-800/60">
           <div>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">Hipertensos</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
+              Hipertensos
+            </p>
             <p className="font-display text-xl font-bold tabular-nums text-slate-900 dark:text-zinc-100">
               1.023
             </p>
           </div>
-          <Sparkline color="#ec4d23" points="2,22 14,18 26,22 40,12 54,10 70,4" />
+          <Sparkline
+            color="#ec4d23"
+            points="2,22 14,18 26,22 40,12 54,10 70,4"
+          />
         </div>
       </div>
 

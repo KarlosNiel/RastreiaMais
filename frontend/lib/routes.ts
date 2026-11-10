@@ -9,6 +9,7 @@ export const routes = {
 
   // profissional
   professional: "/profissional",
+  clinicalDashboard: "/profissional/dashboard",
   patients: "/pacientes",
   patientNew: "/pacientes/novo",
   patientEdit: (id: string | number) => `/pacientes/${id}/editar`,

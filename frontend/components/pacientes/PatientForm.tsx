@@ -3,8 +3,6 @@
 
 import {
   Button,
-  Card,
-  CardBody,
   Modal,
   ModalBody,
   ModalContent,
@@ -16,12 +14,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
-
 import {
   KeyIcon,
   ClipboardDocumentCheckIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
+
 import PatientWizard from "@/components/pacientes/PatientWizard";
 import { notifyError, notifySuccess, notifyWarn } from "@/components/ui/notify";
 import { apiGet } from "@/lib/api";
@@ -877,8 +875,9 @@ export default function PatientForm(props: Props) {
 
               <ModalBody className="space-y-3.5 text-sm">
                 <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed">
-                  Entregue esta senha provisória ao paciente. Ela será solicitada no
-                  primeiro acesso e poderá ser alterada pelo próprio cidadão.
+                  Entregue esta senha provisória ao paciente. Ela será
+                  solicitada no primeiro acesso e poderá ser alterada pelo
+                  próprio cidadão.
                 </p>
 
                 <div className="flex items-center justify-between rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 p-3.5">
@@ -896,7 +895,9 @@ export default function PatientForm(props: Props) {
                     color="primary"
                     radius="md"
                     size="sm"
-                    startContent={<ClipboardDocumentCheckIcon className="size-4" />}
+                    startContent={
+                      <ClipboardDocumentCheckIcon className="size-4" />
+                    }
                     variant="flat"
                     onPress={() => {
                       if (
@@ -912,7 +913,9 @@ export default function PatientForm(props: Props) {
                             ),
                           )
                           .catch(() =>
-                            notifyWarn("Não foi possível copiar automaticamente."),
+                            notifyWarn(
+                              "Não foi possível copiar automaticamente.",
+                            ),
                           );
                       }
                     }}
@@ -922,8 +925,8 @@ export default function PatientForm(props: Props) {
                 </div>
 
                 <p className="text-[11px] text-amber-700 dark:text-amber-400/90 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/50 p-2.5 rounded-lg">
-                  ⚠️ Por segurança e conformidade LGPD, esta senha não poderá ser
-                  consultada novamente após fechar esta janela.
+                  ⚠️ Por segurança e conformidade LGPD, esta senha não poderá
+                  ser consultada novamente após fechar esta janela.
                 </p>
               </ModalBody>
 
@@ -975,10 +978,12 @@ export default function PatientForm(props: Props) {
           </ModalHeader>
           <ModalBody className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
             <p>
-              Identificamos um cadastro de paciente não finalizado neste dispositivo.
+              Identificamos um cadastro de paciente não finalizado neste
+              dispositivo.
             </p>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-              Deseja recuperar as informações preenchidas ou iniciar um novo cadastro do zero?
+              Deseja recuperar as informações preenchidas ou iniciar um novo
+              cadastro do zero?
             </p>
           </ModalBody>
           <ModalFooter className="flex justify-end gap-2.5">

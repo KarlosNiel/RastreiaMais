@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDaysIcon,
   ExclamationCircleIcon,
-  UserIcon,
 } from "@heroicons/react/24/outline";
 
 import { apiGet } from "@/lib/api";
@@ -19,6 +18,7 @@ import { capitalizeWords, formatCpf } from "@/lib/utils";
 
 function getTomorrowDefaultTime(): string {
   const d = new Date();
+
   d.setDate(d.getDate() + 1);
   d.setHours(9, 0, 0, 0);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -27,6 +27,7 @@ function getTomorrowDefaultTime(): string {
   const dd = pad(d.getDate());
   const hh = pad(d.getHours());
   const min = pad(d.getMinutes());
+
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
@@ -59,6 +60,7 @@ export default function CreateAppointmentsModal({
     queryKey: ["patient", preSelectedPatientId],
     queryFn: async () => {
       if (!preSelectedPatientId) return null;
+
       return apiGet<any>(`/api/v1/accounts/patients/${preSelectedPatientId}/`);
     },
     enabled: open && !!preSelectedPatientId,
@@ -69,38 +71,45 @@ export default function CreateAppointmentsModal({
     queryKey: ["patients-selector"],
     queryFn: async () => {
       const resp = await apiGet<any>("/api/v1/accounts/patients/");
+
       if (Array.isArray(resp)) return resp;
       if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
         return resp.results;
       }
+
       return [];
     },
     enabled: open && !preSelectedPatientId,
   });
 
   // Lista de profissionais de saúde
-  const { data: professionals = [], isLoading: loadingProfessionals } = useQuery({
-    queryKey: ["professionals"],
-    queryFn: async () => {
-      const resp = await apiGet<any>("/api/v1/accounts/professionals/");
-      if (Array.isArray(resp)) return resp;
-      if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
-        return resp.results;
-      }
-      return [];
-    },
-    enabled: open,
-  });
+  const { data: professionals = [], isLoading: loadingProfessionals } =
+    useQuery({
+      queryKey: ["professionals"],
+      queryFn: async () => {
+        const resp = await apiGet<any>("/api/v1/accounts/professionals/");
+
+        if (Array.isArray(resp)) return resp;
+        if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
+          return resp.results;
+        }
+
+        return [];
+      },
+      enabled: open,
+    });
 
   // Lista de instituições / UBS
   const { data: institutions = [], isLoading: loadingInstitutions } = useQuery({
     queryKey: ["institutions"],
     queryFn: async () => {
       const resp = await apiGet<any>("/api/v1/locations/institutions/");
+
       if (Array.isArray(resp)) return resp;
       if (resp && typeof resp === "object" && Array.isArray(resp.results)) {
         return resp.results;
       }
+
       return [];
     },
     enabled: open,
@@ -150,10 +159,18 @@ export default function CreateAppointmentsModal({
       return preSelectedPatient;
     }
     if (selectedPatientId) {
-      return allPatients.find((p: any) => String(p.id) === String(selectedPatientId));
+      return allPatients.find(
+        (p: any) => String(p.id) === String(selectedPatientId),
+      );
     }
+
     return null;
-  }, [preSelectedPatientId, preSelectedPatient, selectedPatientId, allPatients]);
+  }, [
+    preSelectedPatientId,
+    preSelectedPatient,
+    selectedPatientId,
+    allPatients,
+  ]);
 
   const onSubmit = async () => {
     setSubmitted(true);
@@ -163,25 +180,38 @@ export default function CreateAppointmentsModal({
 
     if (!targetPatientId) {
       setErrorMessage("Por favor, selecione um paciente para o agendamento.");
-      notifyError("Paciente não selecionado", "Selecione o paciente que será atendido.");
+      notifyError(
+        "Paciente não selecionado",
+        "Selecione o paciente que será atendido.",
+      );
+
       return;
     }
 
     if (!form.professional_id) {
       setErrorMessage("Por favor, selecione um profissional de saúde.");
-      notifyError("Profissional não selecionado", "Escolha o profissional responsável.");
+      notifyError(
+        "Profissional não selecionado",
+        "Escolha o profissional responsável.",
+      );
+
       return;
     }
 
     if (!form.local_id) {
       setErrorMessage("Por favor, selecione a instituição de atendimento.");
       notifyError("Local obrigatório", "Selecione a Unidade de Saúde (UBS).");
+
       return;
     }
 
     if (!form.scheduled_datetime) {
       setErrorMessage("Por favor, defina a data e o horário da consulta.");
-      notifyError("Data e hora obrigatórias", "Informe quando a consulta ocorrerá.");
+      notifyError(
+        "Data e hora obrigatórias",
+        "Informe quando a consulta ocorrerá.",
+      );
+
       return;
     }
 
@@ -201,7 +231,10 @@ export default function CreateAppointmentsModal({
 
     try {
       await create.mutateAsync(payload);
-      notifySuccess("Agendamento criado com sucesso!", "A consulta já está registrada na agenda.");
+      notifySuccess(
+        "Agendamento criado com sucesso!",
+        "A consulta já está registrada na agenda.",
+      );
       onOpenChange(false);
     } catch (err: any) {
       const data = err?.response?.data;
@@ -269,7 +302,9 @@ export default function CreateAppointmentsModal({
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Spinner color="warning" size="md" />
-              <span className="text-xs text-slate-500">Carregando dados da unidade...</span>
+              <span className="text-xs text-slate-500">
+                Carregando dados da unidade...
+              </span>
             </div>
           ) : (
             <>
@@ -285,7 +320,9 @@ export default function CreateAppointmentsModal({
                     </span>
                   </div>
                   <p className="font-bold text-slate-900 dark:text-zinc-100 text-base">
-                    {capitalizeWords(`${activePatient.user?.first_name || ""} ${activePatient.user?.last_name || ""}`)}
+                    {capitalizeWords(
+                      `${activePatient.user?.first_name || ""} ${activePatient.user?.last_name || ""}`,
+                    )}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
                     CPF: {formatCpf(activePatient.cpf) || "Não informado"}
@@ -294,7 +331,11 @@ export default function CreateAppointmentsModal({
               ) : (
                 <Select
                   isRequired
-                  errorMessage={submitted && !selectedPatientId ? "Selecione um paciente para o atendimento" : ""}
+                  errorMessage={
+                    submitted && !selectedPatientId
+                      ? "Selecione um paciente para o atendimento"
+                      : ""
+                  }
                   isInvalid={submitted && !selectedPatientId}
                   label="Paciente *"
                   placeholder="Selecione o paciente cadastrado"
@@ -303,12 +344,15 @@ export default function CreateAppointmentsModal({
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0];
+
                     setSelectedPatientId(String(key || ""));
                     setErrorMessage(null);
                   }}
                 >
                   {allPatients.map((p: any) => {
-                    const name = capitalizeWords(`${p.user?.first_name || ""} ${p.user?.last_name || ""}`);
+                    const name = capitalizeWords(
+                      `${p.user?.first_name || ""} ${p.user?.last_name || ""}`,
+                    );
                     const cpfMasked = formatCpf(p.cpf);
                     const label = `${name} (${cpfMasked || "Sem CPF"})`;
 
@@ -319,7 +363,8 @@ export default function CreateAppointmentsModal({
                             {name}
                           </span>
                           <span className="text-[11px] text-slate-400 font-mono">
-                            CPF: {cpfMasked || "—"} {p.conditions ? `• ${p.conditions}` : ""}
+                            CPF: {cpfMasked || "—"}{" "}
+                            {p.conditions ? `• ${p.conditions}` : ""}
                           </span>
                         </div>
                       </SelectItem>
@@ -331,15 +376,22 @@ export default function CreateAppointmentsModal({
               {/* Profissional */}
               <Select
                 isRequired
-                errorMessage={submitted && !form.professional_id ? "Selecione o profissional de saúde" : ""}
+                errorMessage={
+                  submitted && !form.professional_id
+                    ? "Selecione o profissional de saúde"
+                    : ""
+                }
                 isInvalid={submitted && !form.professional_id}
                 label="Profissional *"
                 placeholder="Selecione um profissional"
                 radius="lg"
-                selectedKeys={form.professional_id ? [form.professional_id] : []}
+                selectedKeys={
+                  form.professional_id ? [form.professional_id] : []
+                }
                 variant="bordered"
                 onSelectionChange={(keys) => {
                   const key = Array.from(keys)[0];
+
                   setForm({ ...form, professional_id: String(key || "") });
                   setErrorMessage(null);
                 }}
@@ -358,7 +410,11 @@ export default function CreateAppointmentsModal({
               {/* Instituição / Local */}
               <Select
                 isRequired
-                errorMessage={submitted && !form.local_id ? "Selecione a Unidade de Saúde (UBS)" : ""}
+                errorMessage={
+                  submitted && !form.local_id
+                    ? "Selecione a Unidade de Saúde (UBS)"
+                    : ""
+                }
                 isInvalid={submitted && !form.local_id}
                 label="Instituição / UBS *"
                 placeholder="Selecione a unidade de saúde"
@@ -367,6 +423,7 @@ export default function CreateAppointmentsModal({
                 variant="bordered"
                 onSelectionChange={(keys) => {
                   const key = Array.from(keys)[0];
+
                   setForm({ ...form, local_id: String(key || "") });
                   setErrorMessage(null);
                 }}
@@ -381,7 +438,11 @@ export default function CreateAppointmentsModal({
               {/* Data e Hora */}
               <Input
                 isRequired
-                errorMessage={submitted && !form.scheduled_datetime ? "Defina a data e o horário da consulta" : ""}
+                errorMessage={
+                  submitted && !form.scheduled_datetime
+                    ? "Defina a data e o horário da consulta"
+                    : ""
+                }
                 isInvalid={submitted && !form.scheduled_datetime}
                 label="Data e Hora *"
                 placeholder="dd/mm/aaaa, --:--"
@@ -417,7 +478,9 @@ export default function CreateAppointmentsModal({
                   radius="lg"
                   selectedKeys={[form.risk_level]}
                   variant="bordered"
-                  onChange={(e) => setForm({ ...form, risk_level: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, risk_level: e.target.value })
+                  }
                 >
                   <SelectItem key="Seguro">Seguro (Baixo)</SelectItem>
                   <SelectItem key="Moderado">Moderado</SelectItem>
@@ -433,7 +496,9 @@ export default function CreateAppointmentsModal({
                 radius="lg"
                 value={form.description}
                 variant="bordered"
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
               />
 
               {/* Botões de Ação */}

@@ -81,6 +81,7 @@ export default function AppointmentsModal({
       setErrorMessage(
         "Por favor, preencha todos os campos obrigatórios assinalados.",
       );
+
       return;
     }
 
@@ -94,6 +95,7 @@ export default function AppointmentsModal({
         err?.response?.data?.message ||
         err?.message ||
         "Não foi possível salvar o agendamento.";
+
       setErrorMessage(detail);
       notifyError("Erro ao salvar agendamento", detail);
     }
@@ -110,6 +112,7 @@ export default function AppointmentsModal({
         err?.response?.data?.detail ||
         err?.message ||
         "Falha ao excluir agendamento.";
+
       notifyError("Erro ao remover", detail);
     }
   };

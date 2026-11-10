@@ -12,12 +12,14 @@ export type Role = "PATIENT" | "PROFESSIONAL" | "MANAGER";
 export const navByRole: Record<Role, { label: string; href: string }[]> = {
   MANAGER: [
     { label: "Gestor", href: "/gestor" },
-    { label: "Profissional", href: "/profissional" },
+    { label: "Atendimentos", href: "/profissional" },
+    { label: "Dashboard Clínico", href: "/profissional/dashboard" },
     { label: "Pacientes", href: "/pacientes" },
     { label: "Configuração", href: "/config/usuarios-e-permissoes" },
   ],
   PROFESSIONAL: [
-    { label: "Dashboard", href: "/profissional" },
+    { label: "Atendimentos", href: "/profissional" },
+    { label: "Dashboard Clínico", href: "/profissional/dashboard" },
     { label: "Pacientes", href: "/pacientes" },
   ],
   PATIENT: [{ label: "Meu Portal", href: "/me" }],

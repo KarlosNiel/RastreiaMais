@@ -549,12 +549,13 @@ function BlocoHAS() {
                 )}
               </div>
               <p className="text-xs text-foreground-500">
-                Se o paciente apresentar qualquer condição abaixo, o risco cardiovascular é automaticamente definido como Alto Risco, independente do colesterol.
+                Se o paciente apresentar qualquer condição abaixo, o risco
+                cardiovascular é automaticamente definido como Alto Risco,
+                independente do colesterol.
               </p>
               <RHFChipGroup
                 multiple
                 name="clinica.has.complicacoes"
-                onValueChange={handleComplicacoesChange}
                 options={[
                   { value: "avc", label: "AVE / AVC" },
                   { value: "infarto", label: "IAM (Infarto)" },
@@ -563,11 +564,17 @@ function BlocoHAS() {
                   { value: "renal", label: "Nefropatia / Doença renal" },
                   {
                     value: "dm",
-                    label: isDm ? "Diabetes Mellitus (Passo 2)" : "Diabetes Mellitus",
+                    label: isDm
+                      ? "Diabetes Mellitus (Passo 2)"
+                      : "Diabetes Mellitus",
                   },
                   { value: "outra", label: "Outra" },
-                  { value: "sem_complicacoes", label: "Sem complicações / Nenhuma" },
+                  {
+                    value: "sem_complicacoes",
+                    label: "Sem complicações / Nenhuma",
+                  },
                 ]}
+                onValueChange={handleComplicacoesChange}
               />
               {showOutra && (
                 <RHFInput
@@ -601,7 +608,10 @@ function BlocoHAS() {
 
             {isDirectRisk && (
               <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50/90 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 leading-relaxed">
-                Estratificação de <strong>Alto Risco</strong> estabelecida por comorbidade/evento prévio (AVE, IAM, AIT, LOA, Nefropatia ou DM). Os valores de Colesterol e HDL são complementares e não bloqueiam a estratificação.
+                Estratificação de <strong>Alto Risco</strong> estabelecida por
+                comorbidade/evento prévio (AVE, IAM, AIT, LOA, Nefropatia ou
+                DM). Os valores de Colesterol e HDL são complementares e não
+                bloqueiam a estratificação.
               </p>
             )}
 

@@ -4,12 +4,7 @@ import type { Metadata, Viewport } from "next";
 import Providers from "./providers";
 
 import { AppShell } from "@/components/layout/AppShell";
-import {
-  fontDisplay,
-  fontHeading,
-  fontMono,
-  fontSans,
-} from "@/config/fonts";
+import { fontDisplay, fontHeading, fontMono, fontSans } from "@/config/fonts";
 import { app as cfg } from "@/config/rastreiamais";
 import { cn } from "@/lib/utils";
 
