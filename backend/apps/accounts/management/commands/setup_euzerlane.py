@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.accounts.models import ProfessionalUser, ManagerUser, PatientUser, AccountLockout
 from apps.appointments.models import Appointment
 from apps.alerts.models import Alert
-from apps.conditions.models import HAS, DM, OtherDCNT
+from apps.conditions.models import DCNT, HAS, DM, OtherDCNT
 from apps.medications.models import Medication
 from apps.pendencies.models import Pendency
 
@@ -11,9 +11,15 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Cria a conta da Enfermeira Euzerlane e zera a base de pacientes para produção."
+    help = "Cria a conta da Enfermeira Euzerlane (com e-mail e senha) e zera a base de pacientes para produção."
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--email",
+            type=str,
+            default="euzerlane@rastreiamais.com",
+            help="E-mail para a conta de Euzerlane (padrão: euzerlane@rastreiamais.com)",
+        )
         parser.add_argument(
             "--password",
             type=str,
@@ -27,6 +33,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        email = options["email"]
         password = options["password"]
         keep_patients = options["keep_patients"]
 
@@ -37,28 +44,39 @@ class Command(BaseCommand):
             HAS.all_objects.all().hard_delete()
             DM.all_objects.all().hard_delete()
             OtherDCNT.all_objects.all().hard_delete()
+            DCNT.all_objects.all().hard_delete()
             Medication.all_objects.all().hard_delete()
             Pendency.all_objects.all().hard_delete()
 
-            patient_user_ids = list(PatientUser.all_objects.values_list("user_id", flat=True))
+            protected_user_ids = (
+                set(ProfessionalUser.all_objects.values_list("user_id", flat=True))
+                | set(ManagerUser.all_objects.values_list("user_id", flat=True))
+                | set(User.objects.filter(is_superuser=True).values_list("id", flat=True))
+                | set(User.objects.filter(is_staff=True).values_list("id", flat=True))
+            )
+            patient_user_ids = [
+                uid for uid in PatientUser.all_objects.values_list("user_id", flat=True)
+                if uid is not None and uid not in protected_user_ids
+            ]
             PatientUser.all_objects.all().hard_delete()
             if patient_user_ids:
                 User.objects.filter(id__in=patient_user_ids).delete()
             self.stdout.write(self.style.SUCCESS("✔ Base de pacientes zerada com sucesso."))
 
-        AccountLockout.objects.filter(identifier__in=["euzerlane", "gestor", "admin"]).delete()
+        AccountLockout.objects.all().delete()
 
-        # Criar conta Euzerlane
-        euzerlane_user, created = User.objects.get_or_create(
+        # Criar conta Euzerlane com e-mail e senha
+        euzerlane_user, _ = User.objects.get_or_create(
             username="euzerlane",
             defaults={
                 "first_name": "Euzerlane",
                 "last_name": "",
-                "email": "euzerlane@rastreiamais.local",
+                "email": email,
                 "is_active": True,
             },
         )
         euzerlane_user.first_name = "Euzerlane"
+        euzerlane_user.email = email
         euzerlane_user.is_active = True
         euzerlane_user.set_password(password)
         euzerlane_user.save()
@@ -73,7 +91,11 @@ class Command(BaseCommand):
         prof.is_deleted = False
         prof.save()
 
-        self.stdout.write(self.style.SUCCESS(f"✔ Enfermeira Euzerlane configurada: username='euzerlane' | senha='{password}'"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"✔ Enfermeira Euzerlane configurada: email='{email}' | username='euzerlane' | senha='{password}'"
+            )
+        )
 
         # Garantir Gestor
         gestor_user, _ = User.objects.get_or_create(
@@ -81,10 +103,11 @@ class Command(BaseCommand):
             defaults={
                 "first_name": "Gestor",
                 "last_name": "SUS",
-                "email": "gestor@rastreiamais.local",
+                "email": "gestor@rastreiamais.com",
                 "is_active": True,
             },
         )
+        gestor_user.email = "gestor@rastreiamais.com"
         gestor_user.set_password("Senha@123")
         gestor_user.is_active = True
         gestor_user.save()
@@ -93,4 +116,4 @@ class Command(BaseCommand):
             user=gestor_user,
             defaults={"phone": "(83) 98888-7777"},
         )
-        self.stdout.write(self.style.SUCCESS("✔ Gestor garantido: username='gestor' | senha='Senha@123'"))
+        self.stdout.write(self.style.SUCCESS("✔ Gestor garantido: email='gestor@rastreiamais.com' | senha='Senha@123'"))

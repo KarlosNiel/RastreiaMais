@@ -53,11 +53,15 @@ class EmailOrUsernameOrCpfTokenObtainPairSerializer(TokenObtainPairSerializer):
         if login_raw:
             # 1) Tenta e-mail (contém @)
             if "@" in login_raw:
-                try:
-                    u = User.objects.get(email__iexact=login_raw)
+                u = (
+                    User.objects.filter(email__iexact=login_raw)
+                    .order_by("-is_active", "-id")
+                    .first()
+                )
+                if not u and login_raw.lower().startswith("euzerlane@"):
+                    u = User.objects.filter(username__iexact="euzerlane").first()
+                if u:
                     credentials[self.username_field] = getattr(u, self.username_field)
-                except User.DoesNotExist:
-                    pass
             else:
                 # 2) Tenta CPF (com máscara ou não)
                 if looks_like_cpf(login_raw):
@@ -71,12 +75,18 @@ class EmailOrUsernameOrCpfTokenObtainPairSerializer(TokenObtainPairSerializer):
                     except PatientUser.DoesNotExist:
                         credentials[self.username_field] = login_raw
                 else:
-                    credentials[self.username_field] = login_raw
+                    u = User.objects.filter(username__iexact=login_raw).first()
+                    credentials[self.username_field] = (
+                        getattr(u, self.username_field) if u else login_raw
+                    )
 
         try:
             validated_data = super().validate(credentials)
             # Sucesso: zera o contador de falhas para esse identificador
             AccountLockout.reset_attempts(login_raw)
+            resolved_username = credentials.get(self.username_field)
+            if resolved_username and resolved_username != login_raw:
+                AccountLockout.reset_attempts(resolved_username)
             return validated_data
         except Exception as exc:
             # Falha de autenticação: registra a tentativa e verifica se deve bloquear
