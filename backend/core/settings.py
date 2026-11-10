@@ -142,8 +142,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-db_env = os.environ.get('DATABASE_URL', '')
-if db_env.startswith('sqlite:///') and not db_env.startswith('sqlite:////') and db_env != 'sqlite:///:memory:':
+db_env = os.environ.get('DATABASE_URL', '').strip()
+if not db_env:
+    os.environ.pop('DATABASE_URL', None)
+elif db_env.startswith('sqlite:///') and not db_env.startswith('sqlite:////') and db_env != 'sqlite:///:memory:':
     rel_part = db_env[len('sqlite:///'):]
     os.environ['DATABASE_URL'] = f"sqlite:///{BASE_DIR / rel_part}"
 
