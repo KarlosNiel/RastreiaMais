@@ -98,6 +98,12 @@ class SOAPReportResponseSerializer(serializers.Serializer):
     sugestoes_conduta = serializers.ListField(
         child=serializers.CharField(), required=False, default=list
     )
+    sugestoes_exames = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+    sugestoes_encaminhamentos = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
     is_ai_enhanced = serializers.BooleanField(required=False, default=False)
     ai_disclaimer = serializers.CharField(
         required=False, allow_null=True, allow_blank=True, default=None

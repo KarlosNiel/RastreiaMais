@@ -52,6 +52,8 @@ export type SOAPReport = {
   gerado_em: string;
   alertas_clinicos?: string[];
   sugestoes_conduta?: string[];
+  sugestoes_exames?: string[];
+  sugestoes_encaminhamentos?: string[];
   is_ai_enhanced?: boolean;
   ai_disclaimer?: string | null;
 };

@@ -152,6 +152,68 @@ def verificar_indicadores_previne_brasil(
     return "\n".join(res)
 
 
+def fetch_patient_clinical_context_from_db(patient_id: Optional[int]) -> str:
+    """
+    Consulta dados clínicos complementares do paciente diretamente no banco de dados
+    de forma estritamente desidentificada (sem Nome, CPF, CNS ou contato).
+    """
+    if not patient_id or patient_id <= 0:
+        return "Paciente em rascunho no formulário (sem histórico prévio persistido no banco de dados)."
+
+    try:
+        from apps.accounts.models import PatientUser
+        from apps.conditions.models import HAS, DM, OtherDCNT
+
+        patient = PatientUser.objects.filter(id=patient_id).first()
+        if not patient:
+            return "Registro do paciente não localizado no banco de dados."
+
+        has_obj = HAS.objects.filter(patient=patient).first()
+        dm_obj = DM.objects.filter(patient=patient).first()
+        other_dcnts = list(OtherDCNT.objects.filter(patient=patient).values_list("name", flat=True))
+
+        lines = ["CONTEXTO CLÍNICO COMPLEMENTAR DO BANCO (DESIDENTIFICADO):"]
+        if patient.last_consultation:
+            lines.append(f"- Última consulta registrada: {patient.last_consultation}.")
+        if has_obj:
+            lines.append(
+                f"- HAS: diagnosticada={'Sim' if has_obj.is_diagnosed else 'Não'}, "
+                f"medicação={has_obj.uses_medication or 'não informado'}, "
+                f"Framingham={has_obj.framingham_score or 'não calculado'}, "
+                f"complicações={has_obj.any_complications_HBP or 'não informadas'}."
+            )
+            if has_obj.cholesterol_data or has_obj.HDL_data:
+                lines.append(
+                    f"- Datas lipídicas: colesterol_total={has_obj.cholesterol_data or 'N/D'}, "
+                    f"HDL={has_obj.HDL_data or 'N/D'}."
+                )
+        if dm_obj:
+            lines.append(
+                f"- DM: diagnosticada={'Sim' if dm_obj.is_diagnosed else 'Não'}, "
+                f"tratamento={dm_obj.treatment_type or 'não informado'}, "
+                f"HbA1c={dm_obj.glycated_hemoglobin if dm_obj.glycated_hemoglobin is not None else 'N/D'}, "
+                f"pé diabético={'Sim' if dm_obj.diabetic_foot else 'Não'}."
+            )
+        if other_dcnts:
+            lines.append(f"- Outras DCNTs registradas: {', '.join(other_dcnts)}.")
+        return "\n".join(lines)
+    except Exception as exc:
+        logger.warning(f"Erro ao consultar histórico clínico desidentificado do paciente {patient_id}: {exc}")
+        return "Não foi possível consultar o histórico complementar no banco neste momento."
+
+
+def make_patient_db_tool(patient_id: Optional[int]):
+    """Cria uma ferramenta de Function Calling vinculada ao patient_id atual (evita acesso cruzado)."""
+    def consultar_historico_clinico_paciente() -> str:
+        """
+        Consulta dados clínicos complementares do paciente atual no banco de dados (desidentificados),
+        como datas de exames anteriores, complicações registradas, comorbidades e adesão prévia.
+        """
+        return fetch_patient_clinical_context_from_db(patient_id)
+
+    return consultar_historico_clinico_paciente
+
+
 AVAILABLE_CLINICAL_TOOLS = [
     consultar_diretriz_clinica_aps,
     consultar_rename_aps,
@@ -194,82 +256,134 @@ def deidentify_soap_payload(raw_soap: Dict[str, Any], professional_notes: str = 
 # Fallback Clínico Rico e Estruturado (Executa quando a API estiver offline)
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _polish_field_prose(text: str) -> str:
+    """
+    Suaviza textos picotados/telegráficos vindos do formulário (ex.: 'RÓTULO: VALOR')
+    para uma redação clínica mais corrida e natural, sem adicionar nenhum dado novo.
+    """
+    if not text or not text.strip():
+        return ""
+
+    t = text.strip()
+    replacements = [
+        ("Tabagismo: NUNCA FUMOU.", "Nega tabagismo."),
+        ("Tabagismo: EX-FUMANTE.", "Refere ser ex-tabagista."),
+        ("Tabagismo: FUMANTE ATUAL.", "Refere tabagismo ativo."),
+        ("Etilismo: NÃO BEBE.", "Nega etilismo."),
+        ("Etilismo: SOCIALMENTE.", "Refere etilismo social."),
+        ("Etilismo: FREQUENTEMENTE.", "Refere etilismo frequente."),
+        ("Atividade física: SEDENTÁRIO.", "Apresenta hábito sedentário."),
+        ("Atividade física: PRATICA.", "Pratica atividade física regularmente."),
+        ("Alimentação referida: SAUDÁVEL.", "Relata alimentação saudável."),
+        ("Alimentação referida: PARCIALMENTE SAUDÁVEL.", "Relata alimentação parcialmente saudável."),
+        ("Alimentação referida: POUCO SAUDÁVEL.", "Relata alimentação pouco saudável."),
+        ("Consumo de sal: ADEQUADO.", "Refere consumo adequado de sal."),
+        ("Consumo de sal: EXAGERADO.", "Refere consumo elevado de sal."),
+        ("Consumo de sal: NÃO SABE.", "Não soube informar sobre o consumo de sal."),
+        ("Apoio familiar: SIM.", "Conta com apoio de familiares/amigos para o tratamento."),
+        ("Apoio familiar: NÃO.", "Refere ausência de apoio familiar/social para o tratamento."),
+        ("Beneficiário do Bolsa Família: SIM.", "É beneficiário(a) do programa Bolsa Família."),
+        ("Beneficiário do Bolsa Família: NÃO.", "Não é beneficiário(a) do programa Bolsa Família."),
+        ("— uso de medicação: REGULAR", "com uso regular de medicação"),
+        ("— uso de medicação: IRREGULAR", "com uso irregular de medicação"),
+        ("— uso de medicação: NÃO USA", "sem uso atual de medicação"),
+        ("— uso de medicação: NÃO SE APLICA", "sem indicação de uso medicamentoso informada"),
+        ("Edemas: PRESENTE.", "Apresenta edema ao exame."),
+        ("Edemas: AUSENTE.", "Sem edemas ao exame."),
+        ("Dispneia: PRESENTE.", "Refere dispneia."),
+        ("Dispneia: AUSENTE.", "Nega dispneia."),
+        ("Queixas de formigamento ou câimbras: SIM.", "Relata queixas de formigamento ou câimbras."),
+        ("Queixas de formigamento ou câimbras: NÃO.", "Nega formigamento ou câimbras."),
+        ("Dificuldade para caminhar ou realizar atividades: SIM.", "Refere dificuldade para caminhar ou realizar atividades."),
+        ("Dificuldade para caminhar ou realizar atividades: NÃO.", "Sem dificuldade relatada para caminhar ou realizar atividades."),
+        ("HAS — classificação:", "Hipertensão arterial sistêmica classificada como"),
+        ("Adesão medicamentosa: REGULAR.", "Adesão medicamentosa regular."),
+        ("Adesão medicamentosa: IRREGULAR.", "Adesão medicamentosa irregular."),
+        ("Adesão medicamentosa: NÃO USA.", "Não faz uso de medicação."),
+        ("Adesão medicamentosa: NÃO SE APLICA.", "Uso de medicação não aplicável."),
+        ("DM CONFIRMADA.", "Diabetes Mellitus confirmada."),
+        ("1ª aferição:", "Primeira aferição de pressão arterial:"),
+        ("2ª aferição:", "Segunda aferição:"),
+        ("— classificação:", "— classificado como"),
+        ("INTERFERE", "interfere"),
+        ("NÃO INTERFERE", "não interfere"),
+        ("DIFICULTAM", "dificultam"),
+        ("NÃO DIFICULTAM", "não dificultam"),
+    ]
+    for old, new in replacements:
+        t = t.replace(old, new)
+
+    # Remove espaços duplos preservando quebras de linha
+    lines = [" ".join(line.split()) for line in t.splitlines()]
+    return "\n".join(line for line in lines if line).strip()
+
+
 def _enrich_soap_deterministically(
     base_soap: Dict[str, Any],
     professional_notes: str = ""
 ) -> Dict[str, Any]:
     """
-    Enriquece o SOAP de forma articulada e clínica (Sofia Engine),
-    garantindo que mesmo offline o resumo seja fluido, profissional e completo.
+    Preserva os blocos SOAP (S, O, A, P) fielmente a partir dos dados do banco/formulário
+    (polindo a redação para texto clínico fluido e incorporando apenas notas do profissional)
+    e gera alertas e sugestões clínicas da Sofia em campos separados.
     """
     enhanced = dict(base_soap)
-    sub = dict(base_soap.get("subjetivo", {}))
-    obj = dict(base_soap.get("objetivo", {}))
-    av = dict(base_soap.get("avaliacao", {}))
-    pl = dict(base_soap.get("plano", {}))
+    sub = {k: _polish_field_prose(str(v)) if v else "" for k, v in base_soap.get("subjetivo", {}).items()}
+    obj = {k: _polish_field_prose(str(v)) if v else "" for k, v in base_soap.get("objetivo", {}).items()}
+    av = {k: _polish_field_prose(str(v)) if v else "" for k, v in base_soap.get("avaliacao", {}).items()}
+    pl = {k: _polish_field_prose(str(v)) if v else "" for k, v in base_soap.get("plano", {}).items()}
     indicadores = list(base_soap.get("indicadores_previne", []))
     paciente = base_soap.get("paciente", {})
     idade = paciente.get("idade")
 
     alertas: List[str] = []
-    sugestoes: List[str] = []
+    sugestoes_conduta: List[str] = []
+    sugestoes_exames: List[str] = []
+    sugestoes_encaminhamentos: List[str] = []
 
     pa_texto = obj.get("pressao_arterial", "") or ""
-    tem_has = "HAS" in av.get("hipertensao", "") or "hipertensão" in sub.get("identificacao", "").lower()
-    tem_dm = "DM" in av.get("diabetes", "") or "diabetes" in sub.get("identificacao", "").lower()
+    av_has_texto = av.get("hipertensao", "") or ""
+    av_dm_texto = av.get("diabetes", "") or ""
+    tem_has = "HAS" in av_has_texto or "hipertensão" in (sub.get("identificacao", "") or "").lower()
+    tem_dm = "DM" in av_dm_texto or "diabetes" in (sub.get("identificacao", "") or "").lower()
 
-    # 1. Subjetivo rico
-    partes_sub = [
-        f"Paciente em acompanhamento regular na Atenção Primária à Saúde para manejo de DCNT.",
-    ]
+    # 1. Subjetivo: mantém apenas o que veio do banco/formulário + notas do profissional (se houver)
+    if professional_notes and professional_notes.strip():
+        nota = professional_notes.strip()
+        ident_atual = (sub.get("identificacao") or "").strip()
+        sub["identificacao"] = (
+            f"{ident_atual}\nObservações clínicas registradas pelo profissional: {nota}"
+            if ident_atual
+            else f"Observações clínicas registradas pelo profissional: {nota}"
+        )
+
+    # 2. Alertas e sugestões em campos separados (baseados nas diretrizes APS / RENAME / Previne)
+    if pa_texto and (
+        "15" in pa_texto
+        or "16" in pa_texto
+        or "Estágio 1" in pa_texto
+        or "Estágio 2" in pa_texto
+        or "Estágio 3" in pa_texto
+    ):
+        alertas.append("Pressão arterial acima da meta preconizada pelas Diretrizes Brasileiras (< 130/80 mmHg para alto risco ou < 140/90 mmHg).")
+        sugestoes_conduta.append("Avaliar titulação ou associação de anti-hipertensivos conforme RENAME (IECA/BRA + BCC ou Tiazídico).")
+
     if tem_has:
-        partes_sub.append("Refere diagnóstico de Hipertensão Arterial Sistêmica com tratamento farmacológico contínuo.")
+        sugestoes_conduta.append("Reforçar medidas não farmacológicas: dieta hipossódica (DASH, < 5g sal/dia) e atividade física aeróbica (150 min/semana).")
+        sugestoes_exames.append("Rastreio anual de lesão de órgão-alvo (HAS): Creatinina sérica com TFGe, EAS/urina tipo 1 (proteinúria/microalbuminúria), ECG de repouso e Perfil Lipídico.")
+        sugestoes_encaminhamentos.append("Avaliar apoio multiprofissional (Nutrição / Academia da Saúde) e retorno ambulatorial conforme controle pressórico.")
+
     if tem_dm:
-        partes_sub.append("Refere diagnóstico de Diabetes Mellitus com seguimento metabólico.")
-    if sub.get("determinantes"):
-        partes_sub.append(f"Contexto psicossocial: {sub.get('determinantes')}")
-    if sub.get("estilo_vida"):
-        partes_sub.append(f"Estilo de vida referido: {sub.get('estilo_vida')}")
-    if professional_notes:
-        partes_sub.append(f"Observações clínicas adicionais registradas: {professional_notes.strip()}.")
+        alertas.append("Paciente com Diabetes Mellitus: verificar meta de HbA1c (< 7,0% na maioria dos adultos) e exame físico anual dos pés.")
+        sugestoes_conduta.append("Revisar adesão ao esquema hipoglicemiante (RENAME: Metformina, Glibenclamida, Insulinas NPH/Regular) e prevenção de hipoglicemia.")
+        sugestoes_exames.append("Solicitar/acompanhar HbA1c, creatinina sérica, relação albumina/creatinina (RAC) urinária e fundo de olho anual.")
 
-    sub["identificacao"] = " ".join(partes_sub)
+    if idade and idade >= 60 and not alertas:
+        alertas.append("Pessoa idosa (>= 60 anos): atentar para estratificação de risco cardiovascular global e prevenção de hipotensão postural/hipoglicemia.")
 
-    # 2. Objetivo interpretado
-    if pa_texto:
-        if "15" in pa_texto or "16" in pa_texto or "Estágio 2" in pa_texto or "Estágio 1" in pa_texto:
-            alertas.append("Pressão arterial acima da meta preconizada pelas Diretrizes Brasileiras (< 130/80 mmHg).")
-            sugestoes.append("Avaliar titulação ou associação de anti-hipertensivos conforme RENAME (IECA/BRA + BCC ou Tiazídico).")
-
-    # 3. Avaliação estruturada em tópicos clínicos
-    av_items = []
-    if tem_has:
-        av_items.append("1. Hipertensão Arterial Sistêmica: Avaliação de controle pressórico e adesão ao esquema farmacológico.")
-    if tem_dm:
-        av_items.append("2. Diabetes Mellitus: Monitoramento glicêmico e rastreio de complicações micro e macrovasculares.")
-    if idade and idade >= 60:
-        av_items.append("3. Estratificação de Risco Cardiovascular: Risco global moderado a aumentado por faixa etária e comorbidades crônicas.")
-    av_items.append("4. Rastreio de Lesão de Órgão-Alvo (LOA): Indicação de rotina laboratorial na Atenção Primária.")
-    if professional_notes:
-        av_items.append(f"5. Fatores adicionais correlacionados: {professional_notes.strip()}.")
-
-    av["hipertensao"] = "\n".join(av_items)
-
-    # 4. Plano Terapêutico Singular (PTS) completo
-    pl["conduta_clinica"] = (
-        "1. Otimização Terapêutica: Manter/ajustar medicação anti-hipertensiva e hipoglicemiante conforme RENAME/SUS.\n"
-        "2. Medidas Não Farmacológicas: Aconselhamento sobre dieta hipossódica (DASH), restrição de ultraprocessados e incentivo à atividade física orientada (150 min/semana).\n"
-        "3. Monitoramento: Registro ambulatorial de PA e rastreio de queixas associadas."
-    )
-    pl["exames_solicitados"] = (
-        "Rastreio de rotina APS: Creatinina sérica com estimativa de TFGe, Urina tipo 1 (EAS com microalbuminúria), "
-        "Eletrocardiograma (ECG) de repouso e Perfil Lipídico completo."
-        + (" Solicitação de Hemoglobina Glicada (HbA1c) para controle de DM." if tem_dm else "")
-    )
-    pl["encaminhamentos"] = (
-        "1. Suporte Multiprofissional: Apoio da equipe de Saúde da Família (Nutrição e Educador Físico da Academia da Saúde).\n"
-        "2. Retorno: Reavaliação ambulatorial agendada em 30 a 45 dias na UBS."
-    )
+    for ind in indicadores:
+        if isinstance(ind, dict) and ind.get("status") == "PENDENTE":
+            alertas.append(f"Indicador APS pendente: {ind.get('indicador', 'Indicador clínico')}.")
 
     enhanced["subjetivo"] = sub
     enhanced["objetivo"] = obj
@@ -277,7 +391,9 @@ def _enrich_soap_deterministically(
     enhanced["plano"] = pl
     enhanced["indicadores_previne"] = indicadores
     enhanced["alertas_clinicos"] = alertas
-    enhanced["sugestoes_conduta"] = sugestoes
+    enhanced["sugestoes_conduta"] = sugestoes_conduta
+    enhanced["sugestoes_exames"] = sugestoes_exames
+    enhanced["sugestoes_encaminhamentos"] = sugestoes_encaminhamentos
     enhanced["is_ai_enhanced"] = True
     enhanced["ai_disclaimer"] = AI_CLINICAL_DISCLAIMER
     return enhanced
@@ -328,10 +444,22 @@ def _normalize_dict_fields_to_strings(d: Dict[str, Any]) -> Dict[str, str]:
     return res
 
 
+def _normalize_str_list(val: Any) -> List[str]:
+    """Garante que campos de listas de sugestões/alertas sejam sempre List[str]."""
+    if not val:
+        return []
+    if isinstance(val, list):
+        return [str(item).strip() for item in val if item is not None and str(item).strip()]
+    if isinstance(val, str):
+        return [line.strip("•- \t") for line in val.splitlines() if line.strip("•- \t")]
+    return [str(val).strip()]
+
+
 
 def generate_ai_assisted_soap(
     base_soap: Dict[str, Any],
     professional_notes: str = "",
+    patient_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Aciona a Assistente Sofia utilizando o modelo Gemini com Function Calling.
@@ -351,47 +479,76 @@ def generate_ai_assisted_soap(
         from google import genai
         from google.genai import types
 
+        resolved_patient_id = patient_id or (base_soap.get("paciente", {}) or {}).get("id")
+        tools_for_call = [
+            *AVAILABLE_CLINICAL_TOOLS,
+            make_patient_db_tool(resolved_patient_id),
+        ]
+
         client = genai.Client(api_key=api_key)
         deidentified = deidentify_soap_payload(base_soap, professional_notes)
 
         system_instruction = (
             "Você é Sofia, a Assistente Clínica Especialista em Atenção Primária à Saúde (APS) e Medicina de Família e Comunidade (MFC) do Rastreia+.\n"
-            "Sua missão é transformar os dados brutos e rascunhos do formulário em um Relatório SOAP rico, profissional, articulado e altamente técnico para o prontuário eletrônico (PEC / e-SUS).\n\n"
-            "DIRETRIZES TÉCNICAS E ESTILO:\n"
-            "1. NUNCA mencione que você é um modelo de linguagem ou IA genérica. Apresente-se como a Assistente Clínica Sofia.\n"
-            "2. Subjetivo (S): Escreva uma narrativa clínica fluida e coesa em parágrafos bem articulados. Sintetize identificação, queixa e histórico de acompanhamento, adesão aos medicamentos, determinantes psicossociais e hábitos de vida.\n"
-            "3. Objetivo (O): Integre os dados medidos com interpretação clínica imediata: calcule a média das aferições de PA e seu estadiamento pelas Diretrizes Brasileiras; interprete o IMC e o risco metabólico da circunferência abdominal; descreva o exame físico sumário.\n"
-            "4. Avaliação (A): Formule um raciocínio clínico diagnóstico aprofundado e estratificado em tópicos numerados: 1. Controle e descompensação de HAS/DM; 2. Estratificação de Risco Cardiovascular Global (Framingham) correlacionada com idade e antropometria; 3. Risco de Lesão de Órgão-Alvo; 4. Alertas de metas do Previne Brasil.\n"
-            "5. Plano (P): Desenvolva um Plano Terapêutico Singular (PTS) completo e pragmático para a Unidade Básica de Saúde:\n"
-            "   - Condutas terapêuticas e opções de ajuste farmacológico conforme a RENAME (com doses habituais de referência para validação médica).\n"
-            "   - Rastreio de Lesão de Órgão-Alvo (LOA) no SUS: exames formais a solicitar (Creatinina com TFGe, EAS com microalbuminúria, ECG, perfil lipídico).\n"
-            "   - Orientações de autocuidado e estilo de vida (dieta DASH, controle de sal, atividade física aeróbica 150 min/sem).\n"
-            "   - Encaminhamentos multiprofissionais (Nutrição, Academia da Saúde, etc.).\n"
-            "   - Periodicidade de retorno e agendamento ambulatorial na APS.\n"
-            "6. Alertas Clínicos: Destaque de 2 a 4 alertas prioritários e objetivos para a atenção do profissional.\n"
-            "7. Retorne estritamente um JSON estruturado com os blocos 'subjetivo', 'objetivo', 'avaliacao', 'plano', 'alertas_clinicos' e 'sugestoes_conduta'."
+            "Sua missão tem DUAS partes rigorosamente separadas:\n\n"
+            "PARTE 1 — PRONTUÁRIO SOAP ('subjetivo', 'objetivo', 'avaliacao', 'plano'):\n"
+            "- Redija os 4 blocos em PROSA CLÍNICA FLUIDA, COESA E CORRIDA, pronta para o prontuário eletrônico (PEC/e-SUS).\n"
+            "- Transforme rótulos picotados ou telegráficos do formulário (ex.: 'Tabagismo: NUNCA FUMOU. Etilismo: NÃO BEBE. Atividade física: SEDENTÁRIO.') em frases médicas naturais e bem conectadas (ex.: 'Nega tabagismo e etilismo, referindo hábito sedentário.'), eliminando CAIXA ALTA desnecessária e conectando os achados de forma elegante.\n"
+            "- REGRA DE FIDELIDADE ABSOLUTA AO BANCO/FORMULÁRIO: Use EXCLUSIVAMENTE os fatos, valores, diagnósticos, medicamentos, exames e condutas já presentes no JSON de entrada ('subjetivo', 'objetivo', 'avaliacao', 'plano', 'indicadores_atuais' e 'observacoes_adicionais_profissional') ou retornados por 'consultar_historico_clinico_paciente'.\n"
+            "- NUNCA invente, presuma ou adicione dentro de 'subjetivo', 'objetivo', 'avaliacao' ou 'plano' qualquer exame não solicitado, medicamento não informado, encaminhamento não registrado ou meta/diretriz externa que não conste nos dados preenchidos.\n"
+            "- Se um subcampo de entrada estiver vazio ('') e não houver dado correspondente na entrada, mantenha-o vazio ('').\n"
+            "- Preserve as chaves originais: subjetivo(identificacao, historico, determinantes, estilo_vida), objetivo(pressao_arterial, antropometria, glicemia_metabolico, exame_fisico), avaliacao(hipertensao, diabetes, risco_cardiovascular, riscos_psicossociais, outras_dcnts), plano(conduta_clinica, exames_solicitados, encaminhamentos).\n\n"
+            "PARTE 2 — SUGESTÕES DA SOFIA EM CAMPOS SEPARADOS (Function Calling):\n"
+            "- Consulte obrigatoriamente as ferramentas clínicas disponíveis (consultar_diretriz_clinica_aps, consultar_rename_aps, verificar_indicadores_previne_brasil, consultar_historico_clinico_paciente) conforme o quadro clínico do paciente.\n"
+            "- Coloque TODAS as suas recomendações, diretrizes, opções da RENAME, exames de rastreio sugeridos e alertas EXCLUSIVAMENTE nos campos separados abaixo (nunca dentro do SOAP):\n"
+            "  * 'alertas_clinicos': lista de strings com alertas prioritários, metas pressóricas/glicêmicas e pendências do Previne Brasil.\n"
+            "  * 'sugestoes_conduta': lista de strings com sugestões de conduta terapêutica, opções da RENAME e medidas não farmacológicas.\n"
+            "  * 'sugestoes_exames': lista de strings com sugestões de exames de rastreio de lesão de órgão-alvo (LOA) e controle metabólico.\n"
+            "  * 'sugestoes_encaminhamentos': lista de strings com sugestões de apoio multiprofissional e periodicidade de retorno.\n\n"
+            "NUNCA mencione que é um modelo de linguagem. Retorne estritamente um JSON estruturado com as chaves: "
+            "'subjetivo', 'objetivo', 'avaliacao', 'plano', 'alertas_clinicos', 'sugestoes_conduta', 'sugestoes_exames' e 'sugestoes_encaminhamentos'."
         )
 
         user_content = (
-            f"Por favor, Sofia, analise e aprimore o seguinte prontuário clínico desidentificado da APS:\n\n"
+            f"Por favor, Sofia, analise o seguinte prontuário clínico desidentificado da APS:\n\n"
             f"{json.dumps(deidentified, ensure_ascii=False, indent=2)}\n\n"
-            f"Consulte as ferramentas necessárias e gere a versão SOAP completa e aprimorada em JSON estruturado."
+            f"1) Organize o SOAP ('subjetivo', 'objetivo', 'avaliacao', 'plano') em texto clínico profissional usando APENAS os dados fornecidos.\n"
+            f"2) Consulte as ferramentas clínicas (Function Calling) e preencha suas recomendações nos campos separados "
+            f"('alertas_clinicos', 'sugestoes_conduta', 'sugestoes_exames', 'sugestoes_encaminhamentos')."
         )
 
-        config = types.GenerateContentConfig(
+        config_json_tools = types.GenerateContentConfig(
             system_instruction=system_instruction,
-            temperature=0.3,
+            temperature=0.2,
+            tools=tools_for_call,
             response_mime_type="application/json",
+        )
+        config_tools_only = types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            temperature=0.2,
+            tools=tools_for_call,
         )
 
         last_error = None
         for model_name in models_to_try:
             try:
-                chat = client.chats.create(
-                    model=model_name,
-                    config=config,
-                )
-                response = chat.send_message(user_content)
+                try:
+                    chat = client.chats.create(
+                        model=model_name,
+                        config=config_json_tools,
+                    )
+                    response = chat.send_message(user_content)
+                except Exception as json_tool_err:
+                    # Alguns modelos/endpoints rejeitam tools + response_mime_type='application/json';
+                    # tenta novamente com tools sem response_mime_type e extrai o JSON do texto.
+                    logger.info(
+                        f"Modelo {model_name} falhou com tools+JSON ({json_tool_err}); tentando tools sem response_mime_type."
+                    )
+                    chat = client.chats.create(
+                        model=model_name,
+                        config=config_tools_only,
+                    )
+                    response = chat.send_message(user_content)
                 response_text = (response.text or "{}").strip()
 
                 if response_text.startswith("```json"):
@@ -506,8 +663,10 @@ def generate_ai_assisted_soap(
                         }
 
 
-                enhanced["alertas_clinicos"] = parsed_json.get("alertas_clinicos", [])
-                enhanced["sugestoes_conduta"] = parsed_json.get("sugestoes_conduta", [])
+                enhanced["alertas_clinicos"] = _normalize_str_list(parsed_json.get("alertas_clinicos"))
+                enhanced["sugestoes_conduta"] = _normalize_str_list(parsed_json.get("sugestoes_conduta"))
+                enhanced["sugestoes_exames"] = _normalize_str_list(parsed_json.get("sugestoes_exames"))
+                enhanced["sugestoes_encaminhamentos"] = _normalize_str_list(parsed_json.get("sugestoes_encaminhamentos"))
                 enhanced["is_ai_enhanced"] = True
                 enhanced["ai_disclaimer"] = AI_CLINICAL_DISCLAIMER
                 logger.info(f"Relatório SOAP aprimorado com sucesso pela Assistente Sofia usando modelo {model_name}.")

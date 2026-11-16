@@ -10,6 +10,8 @@ from apps.reports.soap_ai_service import (
     consultar_diretriz_clinica_aps,
     consultar_rename_aps,
     verificar_indicadores_previne_brasil,
+    fetch_patient_clinical_context_from_db,
+    _polish_field_prose,
     generate_ai_assisted_soap,
 )
 
@@ -102,12 +104,18 @@ class SOAPAiAssistServiceTest(APITestCase):
             "indicadores_previne": [],
         }
 
-        # Com chave de API vazia ou ausente, deve enriquecer deterministicamente
+        # Com chave de API vazia ou ausente, preserva o SOAP do banco/formulário e separa sugestões
         result = generate_ai_assisted_soap(sample_soap, professional_notes="Tosse seca com anti-hipertensivo")
         self.assertTrue(result["is_ai_enhanced"])
         self.assertIn("Assistente Sofia", result["ai_disclaimer"])
         self.assertTrue(len(result["alertas_clinicos"]) > 0)
+        self.assertTrue(len(result["sugestoes_conduta"]) > 0)
+        self.assertTrue(len(result["sugestoes_exames"]) > 0)
+        self.assertTrue(len(result["sugestoes_encaminhamentos"]) > 0)
         self.assertIn("Tosse seca", result["subjetivo"]["identificacao"])
+        # Não inventa exames ou condutas dentro do bloco Plano quando não preenchidos
+        self.assertEqual(result["plano"]["conduta_clinica"], "")
+        self.assertEqual(result["plano"]["exames_solicitados"], "")
 
     @patch("google.genai.Client")
     def test_gemini_chat_function_calling_flow(self, mock_client_cls):
@@ -116,7 +124,11 @@ class SOAPAiAssistServiceTest(APITestCase):
         mock_chat = MagicMock()
         mock_client.chats.create.return_value = mock_chat
         mock_response = MagicMock()
-        mock_response.text = '{"subjetivo": {"identificacao": "Sintese IA"}, "objetivo": {}, "avaliacao": {}, "plano": {}, "alertas_clinicos": ["Alerta Mock Gemini"], "sugestoes_conduta": ["Conduta 1"]}'
+        mock_response.text = (
+            '{"subjetivo": {"identificacao": "Sintese IA"}, "objetivo": {}, "avaliacao": {}, "plano": {}, '
+            '"alertas_clinicos": ["Alerta Mock Gemini"], "sugestoes_conduta": ["Conduta 1"], '
+            '"sugestoes_exames": ["ECG de repouso"], "sugestoes_encaminhamentos": ["Retorno em 30 dias"]}'
+        )
         mock_chat.send_message.return_value = mock_response
 
         sample_soap = {
@@ -132,9 +144,55 @@ class SOAPAiAssistServiceTest(APITestCase):
             res = generate_ai_assisted_soap(sample_soap, professional_notes="Sem queixas")
             self.assertTrue(res["is_ai_enhanced"])
             self.assertEqual(res["alertas_clinicos"], ["Alerta Mock Gemini"])
+            self.assertEqual(res["sugestoes_conduta"], ["Conduta 1"])
+            self.assertEqual(res["sugestoes_exames"], ["ECG de repouso"])
+            self.assertEqual(res["sugestoes_encaminhamentos"], ["Retorno em 30 dias"])
             self.assertEqual(res["subjetivo"]["identificacao"], "Sintese IA")
             mock_client.chats.create.assert_called_once()
+            _, create_kwargs = mock_client.chats.create.call_args
+            self.assertTrue(create_kwargs["config"].tools)
             mock_chat.send_message.assert_called_once()
+
+    @patch("google.genai.Client")
+    def test_gemini_retries_tools_without_json_mime_type_when_rejected(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_chat = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            '```json\n{"subjetivo": {"identificacao": "Prosa fluida"}, "objetivo": {}, "avaliacao": {}, "plano": {}, '
+            '"alertas_clinicos": ["Alerta"], "sugestoes_conduta": [], "sugestoes_exames": [], "sugestoes_encaminhamentos": []}\n```'
+        )
+        mock_chat.send_message.return_value = mock_response
+        # Primeira chamada (tools + JSON) falha; segunda (tools sem response_mime_type) funciona
+        mock_client.chats.create.side_effect = [RuntimeError("JSON mode with tools unsupported"), mock_chat]
+
+        sample_soap = {
+            "paciente": {"id": 0, "nome": "Rascunho", "cpf": None, "nascimento": None, "idade": 40},
+            "subjetivo": {}, "objetivo": {}, "avaliacao": {}, "plano": {}, "indicadores_previne": [],
+        }
+
+        with override_settings(GEMINI_API_KEY="test-api-key"):
+            res = generate_ai_assisted_soap(sample_soap)
+            self.assertEqual(res["subjetivo"]["identificacao"], "Prosa fluida")
+            self.assertEqual(mock_client.chats.create.call_count, 2)
+            second_config = mock_client.chats.create.call_args_list[1].kwargs["config"]
+            self.assertTrue(second_config.tools)
+            self.assertIsNone(second_config.response_mime_type)
+
+    def test_polish_field_prose_covers_objetivo_and_avaliacao(self):
+        obj_text = _polish_field_prose("1ª aferição: 150/95 mmHg. Edemas: AUSENTE. Dispneia: PRESENTE.")
+        self.assertIn("Primeira aferição de pressão arterial: 150/95 mmHg.", obj_text)
+        self.assertIn("Sem edemas ao exame.", obj_text)
+        self.assertIn("Refere dispneia.", obj_text)
+
+        av_text = _polish_field_prose("HAS — classificação: Hipertenso Estágio 1. Adesão medicamentosa: IRREGULAR.")
+        self.assertIn("Hipertensão arterial sistêmica classificada como Hipertenso Estágio 1.", av_text)
+        self.assertIn("Adesão medicamentosa irregular.", av_text)
+
+    def test_fetch_patient_clinical_context_from_db_unsaved(self):
+        msg = fetch_patient_clinical_context_from_db(None)
+        self.assertIn("sem histórico prévio", msg)
 
 
 
@@ -231,4 +289,10 @@ class SOAPAiAssistEndpointTest(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_fetch_patient_clinical_context_from_db_returns_deidentified_data(self):
+        ctx = fetch_patient_clinical_context_from_db(self.patient.id)
+        self.assertIn("HAS: diagnosticada=Sim", ctx)
+        self.assertNotIn("11111111111", ctx)
+        self.assertNotIn("patient1", ctx)
 

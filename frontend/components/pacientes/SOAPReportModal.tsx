@@ -235,6 +235,36 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
     }
   }, [currentReport]);
 
+  const handleAdoptSuggestion = useCallback(
+    (
+      field: "conduta_clinica" | "exames_solicitados" | "encaminhamentos",
+      suggestion: string,
+    ) => {
+      if (!currentReport) return;
+      const currentText = (currentReport.plano?.[field] || "").trim();
+
+      if (currentText.includes(suggestion)) {
+        notifyWarn("Essa sugestão já está incluída no Plano.");
+
+        return;
+      }
+
+      const updatedText = currentText
+        ? `${currentText}\n• ${suggestion}`
+        : `• ${suggestion}`;
+
+      setCurrentReport({
+        ...currentReport,
+        plano: {
+          ...currentReport.plano,
+          [field]: updatedText,
+        },
+      });
+      notifySuccess("Sugestão adicionada ao Plano do SOAP.");
+    },
+    [currentReport],
+  );
+
   if (!currentReport) return null;
 
   return (
@@ -342,6 +372,71 @@ export default function SOAPReportModal({ isOpen, onClose, report }: Props) {
                 </ul>
               </div>
             )}
+
+          {/* Sugestões da Sofia em Campos Separados */}
+          {((currentReport.sugestoes_conduta?.length ?? 0) > 0 ||
+            (currentReport.sugestoes_exames?.length ?? 0) > 0 ||
+            (currentReport.sugestoes_encaminhamentos?.length ?? 0) > 0) && (
+            <div className="rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/80 dark:bg-indigo-950/40 p-4 mb-6 space-y-3 print:hidden">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="size-4 text-indigo-600 dark:text-indigo-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
+                  Sugestões da Sofia (Apoio Clínico — fora do SOAP)
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[
+                  {
+                    title: "Condutas e RENAME",
+                    field: "conduta_clinica" as const,
+                    items: currentReport.sugestoes_conduta,
+                  },
+                  {
+                    title: "Exames / Rastreio LOA",
+                    field: "exames_solicitados" as const,
+                    items: currentReport.sugestoes_exames,
+                  },
+                  {
+                    title: "Encaminhamentos e Retorno",
+                    field: "encaminhamentos" as const,
+                    items: currentReport.sugestoes_encaminhamentos,
+                  },
+                ]
+                  .filter((group) => group.items && group.items.length > 0)
+                  .map((group) => (
+                    <div
+                      key={group.title}
+                      className="rounded-md bg-white/80 dark:bg-zinc-900/60 p-2.5 border border-indigo-200/60 dark:border-indigo-900/40"
+                    >
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 mb-1">
+                        {group.title}
+                      </p>
+                      <ul className="space-y-2 text-xs text-indigo-950 dark:text-indigo-200">
+                        {group.items!.map((item, idx) => (
+                          <li key={idx} className="space-y-1">
+                            <div className="flex items-start gap-1.5">
+                              <span className="text-indigo-500 font-bold shrink-0">
+                                •
+                              </span>
+                              <span>{item}</span>
+                            </div>
+                            <button
+                              className="ml-3 inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline underline-offset-2 cursor-pointer"
+                              type="button"
+                              onClick={() =>
+                                handleAdoptSuggestion(group.field, item)
+                              }
+                            >
+                              + Adicionar ao Plano
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Blocos SOAP */}
           <SOAPBlock

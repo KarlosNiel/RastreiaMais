@@ -739,13 +739,22 @@ export default function Step6Resumo() {
   const handleAIAssist = useCallback(
     async (customNotes?: string) => {
       const notesToUse = typeof customNotes === "string" ? customNotes : notes;
+      const vals = getValues();
+      const savedId = Number(vals?.id || vals?.patientId || 0);
 
       try {
         setIsAssisting(true);
-        const enhanced = await assistSOAPReport({
-          baseSoap: formReport,
-          professionalNotes: notesToUse,
-        });
+        const enhanced = await assistSOAPReport(
+          savedId > 0
+            ? {
+                patientId: savedId,
+                professionalNotes: notesToUse,
+              }
+            : {
+                baseSoap: formReport,
+                professionalNotes: notesToUse,
+              },
+        );
 
         if (enhanced) {
           setAiReport(enhanced);
@@ -771,7 +780,38 @@ export default function Step6Resumo() {
         setIsAssisting(false);
       }
     },
-    [formReport, notes],
+    [formReport, getValues, notes],
+  );
+
+  const handleAdoptSuggestion = useCallback(
+    (
+      field: "conduta_clinica" | "exames_solicitados" | "encaminhamentos",
+      suggestion: string,
+    ) => {
+      const base = aiReport ?? formReport;
+      const currentText = (base.plano?.[field] || "").trim();
+
+      if (currentText.includes(suggestion)) {
+        notifyWarn("Essa sugestão já está incluída no Plano.");
+
+        return;
+      }
+
+      const updatedText = currentText
+        ? `${currentText}\n• ${suggestion}`
+        : `• ${suggestion}`;
+
+      setAiReport({
+        ...base,
+        plano: {
+          ...base.plano,
+          [field]: updatedText,
+        },
+      });
+      setActiveMode("ai");
+      notifySuccess("Sugestão adicionada ao Plano do SOAP.");
+    },
+    [aiReport, formReport],
   );
 
   const quickChips = [
@@ -985,6 +1025,79 @@ export default function Step6Resumo() {
             </div>
           </div>
         )}
+
+      {/* ── Card de Sugestões da Sofia em Campos Separados ── */}
+      {((activeReport.sugestoes_conduta?.length ?? 0) > 0 ||
+        (activeReport.sugestoes_exames?.length ?? 0) > 0 ||
+        (activeReport.sugestoes_encaminhamentos?.length ?? 0) > 0) && (
+        <div className="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 p-4 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center size-6 rounded-lg bg-indigo-600 text-white shrink-0">
+                <LightBulbIcon className="size-3.5" />
+              </span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-950 dark:text-indigo-200">
+                Sugestões da Sofia (Apoio à Decisão Clínica — fora do SOAP)
+              </h3>
+            </div>
+            <span className="text-[11px] font-medium text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full">
+              Diretrizes APS / RENAME
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              {
+                title: "Condutas e RENAME",
+                field: "conduta_clinica" as const,
+                items: activeReport.sugestoes_conduta,
+              },
+              {
+                title: "Exames / Rastreio LOA",
+                field: "exames_solicitados" as const,
+                items: activeReport.sugestoes_exames,
+              },
+              {
+                title: "Encaminhamentos e Retorno",
+                field: "encaminhamentos" as const,
+                items: activeReport.sugestoes_encaminhamentos,
+              },
+            ]
+              .filter((group) => group.items && group.items.length > 0)
+              .map((group) => (
+                <div
+                  key={group.title}
+                  className="bg-white/80 dark:bg-zinc-900/60 rounded-lg p-3 border border-indigo-200/60 dark:border-indigo-900/40"
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 mb-1.5">
+                    {group.title}
+                  </p>
+                  <ul className="space-y-2 text-xs text-indigo-950 dark:text-indigo-200">
+                    {group.items!.map((item, idx) => (
+                      <li key={idx} className="space-y-1">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-indigo-500 font-bold shrink-0">
+                            •
+                          </span>
+                          <span className="leading-relaxed">{item}</span>
+                        </div>
+                        <button
+                          className="ml-3 inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline underline-offset-2 cursor-pointer"
+                          type="button"
+                          onClick={() =>
+                            handleAdoptSuggestion(group.field, item)
+                          }
+                        >
+                          + Adicionar ao Plano
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Metadados do Paciente ── */}
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-2xs">

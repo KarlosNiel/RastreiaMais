@@ -113,7 +113,11 @@ class SOAPReportViewSet(ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            enhanced_report = generate_ai_assisted_soap(base_soap, professional_notes=prof_notes)
+            enhanced_report = generate_ai_assisted_soap(
+                base_soap,
+                professional_notes=prof_notes,
+                patient_id=patient_id,
+            )
             log_medical_access(
                 request.user,
                 "SOAP_AI_ASSIST",
