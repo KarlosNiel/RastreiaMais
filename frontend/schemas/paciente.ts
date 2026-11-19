@@ -1,15 +1,15 @@
 import { z } from "zod";
 
+import { parseLocaleNumber } from "@/lib/pacientes/utils";
+
 const emptyToUndef = (v: unknown) =>
   v === "" || v === null || typeof v === "undefined" ? undefined : v;
 
 const parseDecimalString = (v: unknown) => {
   if (v === "" || v === null || typeof v === "undefined") return undefined;
-  if (typeof v === "string") {
-    const parsed = Number(v.replace(/\./g, "").replace(",", "."));
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  return v;
+  const parsed = parseLocaleNumber(v);
+
+  return parsed !== null ? parsed : v;
 };
 
 // string opcional, já tratando "", null, undefined

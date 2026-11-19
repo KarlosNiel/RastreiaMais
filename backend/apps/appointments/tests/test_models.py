@@ -4,8 +4,11 @@ from apps.accounts.models import PatientUser, ProfessionalUser
 from apps.locations.models import Institution
 from apps.appointments.models import Appointment
 from apps.appointments.utils import calculate_risk_from_patient
-from apps.conditions.models import HAS
-from apps.conditions.constants.has_choices import HypertensionComplicationsChoices
+from apps.conditions.models import DM, HAS
+from apps.conditions.constants.has_choices import (
+    FraminghamScoreChoices,
+    HypertensionComplicationsChoices,
+)
 from django.utils.timezone import now, timedelta
 from django.core.exceptions import ValidationError
 
@@ -113,4 +116,69 @@ class AppointmentModelTest(TestCase):
         has.any_complications_HBP = HypertensionComplicationsChoices.LOA
         has.save()
         self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
+        # Com OUTRA -> Crítico
+        has.any_complications_HBP = HypertensionComplicationsChoices.OUTRA
+        has.save()
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
+    def test_calculate_risk_from_patient_dm_hba1c_and_comorbidity(self):
+        dm = DM.objects.create(patient=self.patient, glycated_hemoglobin="6.80")
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Seguro")
+
+        dm.glycated_hemoglobin = "8.50"
+        dm.save()
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Moderado")
+
+        dm.glycated_hemoglobin = "9.50"
+        dm.save()
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
+        # Mesmo com HbA1c < 7 e Framingham baixo sem complicação explícita,
+        # HAS + DM concomitantes devem resultar em risco Crítico.
+        dm.glycated_hemoglobin = "6.80"
+        dm.save()
+        HAS.objects.create(
+            patient=self.patient,
+            framingham_score=FraminghamScoreChoices.BAIXO,
+            any_complications_HBP=None,
+        )
+        self.assertEqual(calculate_risk_from_patient(self.patient), "Crítico")
+
+    def test_signal_updates_active_appointments_including_empty_status(self):
+        dm = DM.objects.create(patient=self.patient, glycated_hemoglobin="6.80")
+        appt_ativo = Appointment.objects.create(
+            patient=self.patient,
+            professional=self.professional,
+            scheduled_datetime=self.scheduled_datetime,
+            risk_level="Seguro",
+            type="Retorno",
+            status="ativo",
+        )
+        appt_empty = Appointment.objects.create(
+            patient=self.patient,
+            professional=self.professional,
+            scheduled_datetime=self.scheduled_datetime + timedelta(hours=1),
+            risk_level="Seguro",
+            type="Consulta",
+            status="",
+        )
+        appt_done = Appointment.objects.create(
+            patient=self.patient,
+            professional=self.professional,
+            scheduled_datetime=self.scheduled_datetime + timedelta(hours=2),
+            risk_level="Seguro",
+            type="Consulta",
+            status="finalizado",
+        )
+
+        dm.glycated_hemoglobin = "8.20"
+        dm.save()
+
+        appt_ativo.refresh_from_db()
+        appt_empty.refresh_from_db()
+        appt_done.refresh_from_db()
+        self.assertEqual(appt_ativo.risk_level, "Moderado")
+        self.assertEqual(appt_empty.risk_level, "Moderado")
+        self.assertEqual(appt_done.risk_level, "Seguro")
 

@@ -10,6 +10,7 @@ import {
   ModalHeader,
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -261,6 +262,49 @@ function splitStreetAndNumber(raw: string | undefined | null): {
   return { street: trimmed, number: 1 };
 }
 
+/**
+ * Cria o agendamento principal (consulta ou retorno) e, se houver data de retorno
+ * distinta da data da consulta, cria também o segundo agendamento de retorno.
+ */
+async function scheduleAppointmentsFromPlan(
+  formData: RegistroPacienteCreate | RegistroPacienteEdit,
+  patientId: number,
+  professionalId: number,
+) {
+  const appointmentPayload = formToAppointmentApi(
+    formData,
+    patientId,
+    professionalId,
+  );
+
+  if (!appointmentPayload) return;
+
+  await createAppointment(appointmentPayload);
+
+  const plano: any = (formData as any).plano ?? {};
+  const dataRetorno = plano.data_retorno;
+
+  if (dataRetorno) {
+    const base = new Date(appointmentPayload.scheduled_datetime);
+    const retornoISO = toDateTimeISO(
+      dataRetorno,
+      base.getHours(),
+      base.getMinutes(),
+    );
+
+    if (retornoISO && retornoISO !== appointmentPayload.scheduled_datetime) {
+      await createAppointment({
+        ...appointmentPayload,
+        type: "Retorno",
+        scheduled_datetime: retornoISO,
+        description:
+          (appointmentPayload.description ?? "") +
+          "\n\n(Agendamento de retorno)",
+      });
+    }
+  }
+}
+
 /* ===========================
    Componente
    =========================== */
@@ -268,6 +312,16 @@ export default function PatientForm(props: Props) {
   const isCreate = props.mode === "create";
   const schema = isCreate ? RegistroPacienteCreateZ : RegistroPacienteEditZ;
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const invalidateClinicalQueries = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["appointments"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] }),
+      queryClient.invalidateQueries({ queryKey: ["alerts"] }),
+      queryClient.invalidateQueries({ queryKey: ["patients"] }),
+      queryClient.invalidateQueries({ queryKey: ["clinical-analytics"] }),
+    ]);
 
   const [passwordModal, setPasswordModal] = useState<{
     open: boolean;
@@ -564,42 +618,11 @@ export default function PatientForm(props: Props) {
         // AGENDAMENTO (Step5) se plano tiver dados suficientes
         try {
           if (isProfessional && professionalId) {
-            const appointmentPayload = formToAppointmentApi(
+            await scheduleAppointmentsFromPlan(
               createData,
               patientId,
               professionalId,
             );
-
-            if (appointmentPayload) {
-              await createAppointment(appointmentPayload);
-
-              // 2) Se TIVER retorno separado, cria um segundo agendamento
-              const plano: any = (createData as any).plano ?? {};
-              const dataRetorno = plano.data_retorno;
-
-              if (dataRetorno) {
-                // Hora base = hora da consulta principal já montada no payload
-                const base = new Date(appointmentPayload.scheduled_datetime);
-                const retornoISO = toDateTimeISO(
-                  dataRetorno,
-                  base.getHours(),
-                  base.getMinutes(),
-                );
-
-                if (
-                  retornoISO &&
-                  retornoISO !== appointmentPayload.scheduled_datetime
-                ) {
-                  await createAppointment({
-                    ...appointmentPayload,
-                    scheduled_datetime: retornoISO,
-                    description:
-                      (appointmentPayload.description ?? "") +
-                      "\n\n(Agendamento de retorno)",
-                  });
-                }
-              }
-            }
           } else {
             console.warn(
               "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático não será criado.",
@@ -614,6 +637,8 @@ export default function PatientForm(props: Props) {
             "Paciente salvo, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois.",
           );
         }
+
+        await invalidateClinicalQueries();
 
         // 3) limpa rascunho deste usuário
         if (typeof window !== "undefined") {
@@ -676,15 +701,7 @@ export default function PatientForm(props: Props) {
 
         try {
           if (isProfessional && professionalId) {
-            const appointmentPayload = formToAppointmentApi(
-              editData,
-              id,
-              professionalId,
-            );
-
-            if (appointmentPayload) {
-              await createAppointment(appointmentPayload);
-            }
+            await scheduleAppointmentsFromPlan(editData, id, professionalId);
           } else {
             console.warn(
               "Usuário logado não é profissional ou não foi possível obter professionalId — agendamento automático (edição) não será criado.",
@@ -699,6 +716,8 @@ export default function PatientForm(props: Props) {
             "Dados do paciente foram atualizados, mas houve um problema ao registrar o agendamento automático. Verifique a agenda depois.",
           );
         }
+
+        await invalidateClinicalQueries();
 
         notifySuccess("Dados do paciente atualizados.");
         router.push("/pacientes");

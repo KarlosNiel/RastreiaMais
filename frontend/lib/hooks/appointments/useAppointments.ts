@@ -22,13 +22,19 @@ export function useAppointments() {
   const create = useMutation({
     mutationFn: (payload: any) =>
       apiPost("/api/v1/appointments/appointments/", payload),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["appointments"] }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["appointments"] });
+      client.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+    },
   });
 
   const remove = useMutation({
     mutationFn: (id: number) =>
       apiDelete(`/api/v1/appointments/appointments/${id}/`),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["appointments"] }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["appointments"] });
+      client.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+    },
   });
 
   return { list, create, remove };

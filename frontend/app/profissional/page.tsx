@@ -58,11 +58,16 @@ interface AppointmentResponse {
   status?: string;
 }
 
-function mapRiskLevel(level: string): RiskTone {
-  switch (level) {
-    case "Moderado":
+function mapRiskLevel(level?: string | null): RiskTone {
+  const normalized = (level ?? "").trim().toLowerCase();
+
+  switch (normalized) {
+    case "moderado":
+    case "moderate":
       return "moderate";
-    case "Crítico":
+    case "crítico":
+    case "critico":
+    case "critical":
       return "critical";
     default:
       return "safe";

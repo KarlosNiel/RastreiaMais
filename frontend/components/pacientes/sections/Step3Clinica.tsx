@@ -1,14 +1,14 @@
 "use client";
 
 import { Card, CardBody, Divider } from "@heroui/react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { RHFChipGroup } from "@/components/form/RHFChipGroup";
 import { RHFDate } from "@/components/form/RHFDate";
 import { RHFInput } from "@/components/form/RHFInput";
 import { calculateFraminghamScore } from "@/lib/pacientes/framingham";
-import { calcAgeFromBirth } from "@/lib/pacientes/utils";
+import { calcAgeFromBirth, parseLocaleNumber } from "@/lib/pacientes/utils";
 
 /** ───────── helpers ───────── */
 const parseDecimal = (raw: string) => {
@@ -135,13 +135,8 @@ function BlocoHAS() {
       const alturaRaw =
         typeof alturaHas === "string" ? parseDecimal(alturaHas) : alturaHas;
 
-      const parseNumberStr = (v: any) =>
-        typeof v === "string"
-          ? Number(v.replace(/\./g, "").replace(",", "."))
-          : Number(v);
-
-      const pesoNum = parseNumberStr(peso);
-      const alturaNum = parseNumberStr(alturaRaw);
+      const pesoNum = parseLocaleNumber(peso);
+      const alturaNum = parseLocaleNumber(alturaRaw);
 
       if (!pesoNum || !alturaNum) {
         setValue("clinica.has.imc", undefined, {
@@ -268,12 +263,8 @@ function BlocoHAS() {
     }
 
     const age = calcAgeFromBirth(nascimento);
-    const parseNumberStr = (v: any) =>
-      typeof v === "string"
-        ? Number(v.replace(/\./g, "").replace(",", "."))
-        : Number(v);
-    const tc = parseNumberStr(colTotal);
-    const hdlNum = parseNumberStr(hdl);
+    const tc = parseLocaleNumber(colTotal);
+    const hdlNum = parseLocaleNumber(hdl);
     const sbp = Number(pa1Sis || pa2Sis);
 
     if (!age) return { result: null, reason: "idade", isDirectRisk: false };
@@ -310,9 +301,17 @@ function BlocoHAS() {
     isDm,
   ]);
 
+  const autoSetFraminghamRef = useRef(false);
+
   useEffect(() => {
     if (framinghamResult) {
+      autoSetFraminghamRef.current = true;
       setValue("clinica.has.framingham", framinghamResult.category, {
+        shouldDirty: true,
+      });
+    } else if (autoSetFraminghamRef.current) {
+      autoSetFraminghamRef.current = false;
+      setValue("clinica.has.framingham", undefined, {
         shouldDirty: true,
       });
     }
@@ -701,13 +700,8 @@ function BlocoDM() {
       const alturaRaw =
         typeof alturaDm === "string" ? parseDecimal(alturaDm) : alturaDm;
 
-      const parseNumberStr = (v: any) =>
-        typeof v === "string"
-          ? Number(v.replace(/\./g, "").replace(",", "."))
-          : Number(v);
-
-      const pesoNum = parseNumberStr(peso);
-      const alturaNum = parseNumberStr(alturaRaw);
+      const pesoNum = parseLocaleNumber(peso);
+      const alturaNum = parseLocaleNumber(alturaRaw);
 
       if (!pesoNum || !alturaNum) {
         setValue("clinica.dm.imc", undefined, {

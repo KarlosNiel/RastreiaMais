@@ -134,3 +134,45 @@ export function optString(v: unknown): string | undefined {
 export function nullableBool(v: unknown): boolean | null {
   return typeof v === "boolean" ? v : null;
 }
+
+/**
+ * Converte números em formato pt-BR ("6,8", "1.500,50") ou en-US ("6.8", "1,500.50")
+ * para number, retornando null quando vazio ou inválido.
+ */
+export function parseLocaleNumber(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+
+  if (!trimmed || !/\d/.test(trimmed)) return null;
+  if (!/^[+-]?[\d.,]+$/.test(trimmed)) return null;
+
+  const hasDot = trimmed.includes(".");
+  const hasComma = trimmed.includes(",");
+  let normalized = trimmed;
+
+  if (hasDot && hasComma) {
+    normalized =
+      trimmed.lastIndexOf(",") > trimmed.lastIndexOf(".")
+        ? trimmed.replace(/\./g, "").replace(",", ".")
+        : trimmed.replace(/,/g, "");
+  } else if (hasComma) {
+    const commaCount = (trimmed.match(/,/g) ?? []).length;
+
+    normalized =
+      commaCount > 1 ? trimmed.replace(/,/g, "") : trimmed.replace(",", ".");
+  } else if (hasDot) {
+    const dotCount = (trimmed.match(/\./g) ?? []).length;
+
+    if (dotCount > 1) {
+      normalized = trimmed.replace(/\./g, "");
+    }
+  }
+
+  const num = Number(normalized);
+
+  return Number.isFinite(num) ? num : null;
+}

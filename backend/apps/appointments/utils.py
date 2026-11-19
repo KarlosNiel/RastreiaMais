@@ -47,6 +47,10 @@ def calculate_risk_from_patient(patient) -> str:
     has_record = _get_has_record(patient)
     dm_record = _get_dm_record(patient)
 
+    # ── Comorbidade concomitante HAS + DM = Alto Risco Direto ──
+    if has_record and dm_record:
+        max_risk = max(max_risk, _RISK_CRITICO)
+
     # ── HAS: Condições de Alto Risco / Framingham / classificação PA ──
     if has_record:
         complications = getattr(has_record, "any_complications_HBP", None)
@@ -57,6 +61,7 @@ def calculate_risk_from_patient(patient) -> str:
             HypertensionComplicationsChoices.LOA,
             HypertensionComplicationsChoices.DOENCA_RENAL,
             HypertensionComplicationsChoices.DIABETES,
+            HypertensionComplicationsChoices.OUTRA,
         }
         if complications in high_risk_complications:
             max_risk = max(max_risk, _RISK_CRITICO)

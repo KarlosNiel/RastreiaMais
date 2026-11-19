@@ -44,6 +44,7 @@ export default function Step5Plano() {
   const dm = watch("condicoes.dm");
   const classPA = watch("clinica.has.classificacao_pa");
   const framingham = watch("clinica.has.framingham");
+  const complicacoes = watch("clinica.has.complicacoes");
   const hba1c = watch("clinica.dm.hba1c");
 
   /* ========= DADOS ESPECÍFICOS DO AGENDAMENTO ========= */
@@ -75,8 +76,10 @@ export default function Step5Plano() {
   const resumoDM = useMemo(() => {
     if (!dm) return null;
 
-    return typeof hba1c !== "undefined" && hba1c !== null
-      ? `HbA1c ${String(hba1c)}%`
+    return typeof hba1c !== "undefined" &&
+      hba1c !== null &&
+      String(hba1c).trim() !== ""
+      ? `HbA1c ${String(hba1c).trim()}%`
       : null;
   }, [dm, hba1c]);
 
@@ -85,7 +88,7 @@ export default function Step5Plano() {
     const formData = getValues();
 
     return calculateRiskFromClinicalData(formData);
-  }, [getValues, has, dm, classPA, framingham, hba1c]);
+  }, [getValues, has, dm, classPA, framingham, complicacoes, hba1c]);
 
   const riscoConfig = useMemo(() => {
     const map: Record<string, { label: string; color: string; bg: string }> = {

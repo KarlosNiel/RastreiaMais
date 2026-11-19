@@ -40,6 +40,7 @@ import {
   nullableBool,
   onlyDigits,
   optString,
+  parseLocaleNumber,
   toDateISO,
   yesNoMaybeToBool,
 } from "@/lib/pacientes/utils";
@@ -199,15 +200,19 @@ export function calculateRiskFromClinicalData(
   // 0 = sem dados, 1 = Seguro, 2 = Moderado, 3 = Crítico
   let maxRisk = 0;
 
+  /* ── Comorbidade concomitante HAS + DM = Alto Risco Direto ── */
+  if (condicoes.has && condicoes.dm) {
+    maxRisk = Math.max(maxRisk, 3);
+  }
+
   /* ── HAS: Condições de Alto Risco / Framingham / classificação PA ── */
   if (condicoes.has && has) {
     const complicacoes = Array.isArray(has.complicacoes)
       ? has.complicacoes
       : [];
-    const hasHighRiskDirect =
-      complicacoes.some((c: string) =>
-        ["avc", "infarto", "ait", "loa", "renal", "dm"].includes(c),
-      ) || !!condicoes.dm;
+    const hasHighRiskDirect = complicacoes.some((c: string) =>
+      ["avc", "infarto", "ait", "loa", "renal", "dm", "outra"].includes(c),
+    );
 
     if (hasHighRiskDirect) {
       maxRisk = Math.max(maxRisk, 3); // Alto Risco / Crítico
@@ -236,10 +241,9 @@ export function calculateRiskFromClinicalData(
 
   /* ── DM: HbA1c ── */
   if (condicoes.dm && dm) {
-    const hba1cRaw = dm.hba1c;
-    const hba1c = typeof hba1cRaw === "number" ? hba1cRaw : Number(hba1cRaw);
+    const hba1c = parseLocaleNumber(dm.hba1c);
 
-    if (!Number.isNaN(hba1c) && hba1c > 0) {
+    if (hba1c !== null && hba1c > 0) {
       if (hba1c < 7)
         maxRisk = Math.max(maxRisk, 1); // Controlada
       else if (hba1c <= 9)
@@ -792,6 +796,20 @@ export function patientApiToForm(api: any): RegistroPacienteCreate {
  * HAS / DM – FRONT → BACK
  * ======================================================================= */
 
+/** Normaliza valor decimal opcional para string compatível com o backend. */
+function formatOptionalDecimal(val: unknown, decimals?: number): string | null {
+  if (val == null || val === "") return null;
+  const parsed = parseLocaleNumber(val);
+
+  if (parsed !== null) {
+    return typeof decimals === "number"
+      ? parsed.toFixed(decimals)
+      : String(parsed);
+  }
+
+  return String(val).replace(",", ".");
+}
+
 function hasClinicaHasData(has: any | undefined | null): boolean {
   if (!has) return false;
 
@@ -840,33 +858,10 @@ export function formToHasApi(
       : null;
 
   // normaliza campos numéricos (mantendo padrão string com 2 casas para decimais)
-  const weight =
-    has && typeof has.peso === "number"
-      ? has.peso.toFixed(2)
-      : has?.peso != null
-        ? String(has.peso).replace(",", ".")
-        : null;
-
-  const height =
-    has && typeof has.altura === "number"
-      ? has.altura.toFixed(2)
-      : has?.altura != null
-        ? String(has.altura).replace(",", ".")
-        : null;
-
-  const imc =
-    has && typeof has.imc === "number"
-      ? has.imc.toFixed(2)
-      : has?.imc != null
-        ? String(has.imc).replace(",", ".")
-        : null;
-
-  const abdominalCirc =
-    has && typeof has.circ_abdominal === "number"
-      ? has.circ_abdominal.toFixed(2)
-      : has?.circ_abdominal != null
-        ? String(has.circ_abdominal).replace(",", ".")
-        : null;
+  const weight = formatOptionalDecimal(has?.peso, 2);
+  const height = formatOptionalDecimal(has?.altura, 2);
+  const imc = formatOptionalDecimal(has?.imc, 2);
+  const abdominalCirc = formatOptionalDecimal(has?.circ_abdominal, 2);
 
   // Colesterol (ClinicalEvaluationHAS)
   const cholesterolData = has?.col_total_data
@@ -948,12 +943,8 @@ export function formToDmApi(
         ] as DmApiPayload["uses_medication"])
       : null;
 
-  //só cria/atualiza DM se a flag do Step 2 estiver marcada
+  // só cria/atualiza DM se a flag do Step 2 estiver marcada
   if (!cond?.dm) {
-    return null;
-  }
-
-  if (!dm) {
     return null;
   }
 
@@ -966,16 +957,11 @@ export function formToDmApi(
         ? dm.medicamentos.trim()
         : null,
     family_history: yesNoMaybeToBool(dm?.historico_familiar),
-    capillary_blood_glucose_random:
-      dm?.glicemia_aleatoria != null
-        ? String(dm.glicemia_aleatoria).replace(",", ".")
-        : null,
-    fasting_capillary_blood_glucose:
-      dm?.glicemia_jejum != null
-        ? String(dm.glicemia_jejum).replace(",", ".")
-        : null,
-    glycated_hemoglobin:
-      dm?.hba1c != null ? String(dm.hba1c).replace(",", ".") : null,
+    capillary_blood_glucose_random: formatOptionalDecimal(
+      dm?.glicemia_aleatoria,
+    ),
+    fasting_capillary_blood_glucose: formatOptionalDecimal(dm?.glicemia_jejum),
+    glycated_hemoglobin: formatOptionalDecimal(dm?.hba1c),
   };
 }
 

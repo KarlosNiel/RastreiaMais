@@ -6,6 +6,7 @@ quando dados clínicos (HAS/DM) do paciente são salvos/atualizados.
 
 import logging
 
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -32,8 +33,8 @@ def update_appointment_risk_on_clinical_change(sender, instance, **kwargs):
 
     # Atualiza apenas agendamentos ativos (não mexe em finalizados/cancelados)
     updated = Appointment.objects.filter(
+        Q(status="ativo") | Q(status__isnull=True) | Q(status=""),
         patient=patient,
-        status="ativo",
     ).exclude(
         risk_level=new_risk,
     ).update(
