@@ -21,5 +21,6 @@ if 'RENDER' in os.environ:
         from django.core.management import call_command
         call_command('migrate', interactive=False)
         call_command('setup_euzerlane', keep_patients=True)
+        call_command('setup_professionals')
     except Exception as exc:
         logging.getLogger(__name__).warning("WSGI startup migration/setup warning: %s", exc)
