@@ -38,6 +38,8 @@ export type AgendaRow = {
   patientId?: string;
   paciente: string;
   docMasked?: string;
+  susMasked?: string;
+  patientPhone?: string;
   condicao: string;
   hora: string;
   rawDate?: string;
@@ -46,6 +48,23 @@ export type AgendaRow = {
   type: string;
   status: string;
   description?: string;
+  professionalName?: string;
+  professionalRole?: string;
+  professionalRegistry?: string;
+};
+
+export type AgendaQuickFilter =
+  | "all"
+  | "today"
+  | "critical"
+  | "active"
+  | "finalized";
+
+export type AgendaViewSnapshot = {
+  rows: AgendaRow[];
+  summary: string;
+  quickFilter: AgendaQuickFilter;
+  hasActiveFilters: boolean;
 };
 
 type Column = {
@@ -108,6 +127,7 @@ export type AgendaTableProps = {
   risks?: "all" | RiskTone[];
   statuses?: "all" | string[];
   onAction?: (action: "done" | "delete" | "open", row: AgendaRow) => void;
+  onFilteredRowsChange?: (snapshot: AgendaViewSnapshot) => void;
 };
 
 /* ===== Utils ===== */
@@ -137,11 +157,11 @@ export function AgendaTable({
   risks = "all",
   statuses = "all",
   onAction,
+  onFilteredRowsChange,
 }: AgendaTableProps) {
   const [filterValue, setFilterValue] = React.useState("");
-  const [quickFilter, setQuickFilter] = React.useState<
-    "all" | "today" | "critical" | "active" | "finalized"
-  >("all");
+  const [quickFilter, setQuickFilter] =
+    React.useState<AgendaQuickFilter>("all");
   const [riskFilter, setRiskFilter] = React.useState<"all" | Set<Key>>("all");
   const [statusFilter, setStatusFilter] = React.useState<"all" | Set<Key>>(
     "all",
@@ -152,6 +172,9 @@ export function AgendaTable({
     column: "hora" as Key,
     direction: "ascending",
   });
+  const onFilteredRowsChangeRef = React.useRef(onFilteredRowsChange);
+
+  onFilteredRowsChangeRef.current = onFilteredRowsChange;
 
   const riskSetFromProps = React.useMemo<"all" | Set<RiskTone>>(
     () => (risks === "all" ? "all" : new Set(risks)),
@@ -228,25 +251,8 @@ export function AgendaTable({
     return data;
   }, [rows, effectiveQuery, effectiveRiskSet, effectiveStatusSet, quickFilter]);
 
-  const totalPages = React.useMemo(
-    () =>
-      totalPagesOverride ??
-      Math.max(1, Math.ceil(filteredItems.length / pageSize)),
-    [filteredItems.length, pageSize, totalPagesOverride],
-  );
-
-  React.useEffect(() => {
-    if (page > totalPages) setPage(1);
-  }, [totalPages, page]);
-
-  const pageItems = React.useMemo(() => {
-    const start = (page - 1) * pageSize;
-
-    return filteredItems.slice(start, start + pageSize);
-  }, [filteredItems, page, pageSize]);
-
-  const sortedItems = React.useMemo<AgendaRow[]>(() => {
-    const arr = [...pageItems];
+  const sortedFilteredItems = React.useMemo<AgendaRow[]>(() => {
+    const arr = [...filteredItems];
     const { column, direction } = sortDescriptor;
     const key = String(column) as keyof AgendaRow | "risco";
 
@@ -281,7 +287,89 @@ export function AgendaTable({
     });
 
     return arr;
-  }, [pageItems, sortDescriptor]);
+  }, [filteredItems, sortDescriptor]);
+
+  const totalPages = React.useMemo(
+    () =>
+      totalPagesOverride ??
+      Math.max(1, Math.ceil(sortedFilteredItems.length / pageSize)),
+    [sortedFilteredItems.length, pageSize, totalPagesOverride],
+  );
+
+  React.useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [totalPages, page]);
+
+  const sortedItems = React.useMemo<AgendaRow[]>(() => {
+    const start = (page - 1) * pageSize;
+
+    return sortedFilteredItems.slice(start, start + pageSize);
+  }, [sortedFilteredItems, page, pageSize]);
+
+  const viewFilterMeta = React.useMemo(() => {
+    const parts: string[] = [];
+    const quickLabels: Record<AgendaQuickFilter, string> = {
+      all: "Todos",
+      active: "Fila de Atendimento",
+      today: "Hoje",
+      critical: "Alto risco",
+      finalized: "Finalizados",
+    };
+
+    if (quickFilter !== "all") {
+      parts.push(`Aba: ${quickLabels[quickFilter]}`);
+    }
+
+    const q = (effectiveQuery || "").trim();
+
+    if (q) {
+      parts.push(`Busca: "${q}"`);
+    }
+
+    if (
+      effectiveRiskSet !== "all" &&
+      effectiveRiskSet.size > 0 &&
+      effectiveRiskSet.size < RISK_OPTIONS.length
+    ) {
+      const labels = RISK_OPTIONS.filter((opt) =>
+        effectiveRiskSet.has(opt.uid),
+      ).map((opt) => opt.name);
+
+      if (labels.length > 0) {
+        parts.push(`Risco: ${labels.join(", ")}`);
+      }
+    }
+
+    if (
+      effectiveStatusSet !== "all" &&
+      effectiveStatusSet.size > 0 &&
+      effectiveStatusSet.size < STATUS_OPTIONS.length
+    ) {
+      const labels = STATUS_OPTIONS.filter((opt) =>
+        effectiveStatusSet.has(opt.uid),
+      ).map((opt) => opt.name);
+
+      if (labels.length > 0) {
+        parts.push(`Status: ${labels.join(", ")}`);
+      }
+    }
+
+    const hasActiveFilters = parts.length > 0;
+    const summary = hasActiveFilters
+      ? parts.join(" • ")
+      : "Todos os agendamentos";
+
+    return { summary, hasActiveFilters };
+  }, [quickFilter, effectiveQuery, effectiveRiskSet, effectiveStatusSet]);
+
+  React.useEffect(() => {
+    onFilteredRowsChangeRef.current?.({
+      rows: sortedFilteredItems,
+      summary: viewFilterMeta.summary,
+      quickFilter,
+      hasActiveFilters: viewFilterMeta.hasActiveFilters,
+    });
+  }, [sortedFilteredItems, viewFilterMeta, quickFilter]);
 
   const renderCell = React.useCallback(
     (row: AgendaRow, colKey: Key) => {
