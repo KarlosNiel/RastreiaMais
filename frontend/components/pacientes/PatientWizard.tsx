@@ -126,7 +126,7 @@ export default function PatientWizard({
     if (step === 2 && !step3Enabled) setStep(3);
   }, [step, step3Enabled]);
 
-  const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
+  const scrollAnchorRef = useRef<HTMLElement | null>(null);
   const percent = useMemo(
     () => Math.round(((step + 1) / total) * 100),
     [step, total],
@@ -218,10 +218,8 @@ export default function PatientWizard({
       const el = scrollAnchorRef.current;
 
       if (!el) return;
-      const top = el.getBoundingClientRect().top + window.scrollY - 24;
-
-      window.scrollTo({
-        top,
+      el.scrollIntoView({
+        block: "start",
         behavior: prefersReducedMotion ? "auto" : "smooth",
       });
     });
@@ -400,183 +398,190 @@ export default function PatientWizard({
         </ModalContent>
       </Modal>
 
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-0 transition-colors">
-        <header className="pt-2 pb-4 bg-transparent backdrop-blur-sm transition-colors">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <ol
-              aria-label="Passos do cadastro"
-              className="flex flex-wrap gap-3"
-            >
-              {STEPS_META.map((s, i) => {
-                const active = i === step;
-                const hasErr = stepHasError(i);
-                const disabled = i === 2 && !step3Enabled;
+      <section
+        ref={scrollAnchorRef}
+        className="flex flex-1 flex-col min-h-full transition-colors"
+      >
+        <div className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
+          <header className="pt-2 pb-4 bg-transparent backdrop-blur-sm transition-colors">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <ol
+                aria-label="Passos do cadastro"
+                className="flex flex-wrap gap-3"
+              >
+                {STEPS_META.map((s, i) => {
+                  const active = i === step;
+                  const hasErr = stepHasError(i);
+                  const disabled = i === 2 && !step3Enabled;
 
-                return (
-                  <li key={s.key}>
-                    <button
-                      aria-current={active ? "step" : undefined}
-                      aria-disabled={disabled || undefined}
-                      className={[
-                        "inline-flex items-center gap-2 h-9 rounded-lg border px-3.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ring-primary/40",
-                        active
-                          ? "bg-primary text-white border-primary shadow-2xs font-semibold"
-                          : "bg-white dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs",
-                        hasErr && !active
-                          ? "border-rose-400 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20"
-                          : "",
-                        disabled
-                          ? "opacity-40 cursor-not-allowed pointer-events-none"
-                          : "",
-                      ].join(" ")}
-                      disabled={disabled}
-                      title={
-                        disabled
-                          ? "Habilite marcando HAS e/ou DM no passo 2"
-                          : undefined
-                      }
-                      type="button"
-                      onClick={() => goTo(i)}
-                    >
-                      <span className="sr-only">
-                        Etapa {i + 1} de {total}:
-                      </span>
-                      <span
-                        aria-hidden
+                  return (
+                    <li key={s.key}>
+                      <button
+                        aria-current={active ? "step" : undefined}
+                        aria-disabled={disabled || undefined}
                         className={[
-                          "grid place-items-center size-5 rounded-full text-[11px] font-semibold",
+                          "inline-flex items-center gap-2 h-9 rounded-lg border px-3.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ring-primary/40",
                           active
-                            ? "bg-white/20 text-white"
-                            : "bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300",
+                            ? "bg-primary text-white border-primary shadow-2xs font-semibold"
+                            : "bg-white dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs",
+                          hasErr && !active
+                            ? "border-rose-400 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20"
+                            : "",
+                          disabled
+                            ? "opacity-40 cursor-not-allowed pointer-events-none"
+                            : "",
                         ].join(" ")}
+                        disabled={disabled}
+                        title={
+                          disabled
+                            ? "Habilite marcando HAS e/ou DM no passo 2"
+                            : undefined
+                        }
+                        type="button"
+                        onClick={() => goTo(i)}
                       >
-                        {i + 1}
-                      </span>
-                      {s.label}
-                      {hasErr && !active && (
-                        <span className="ml-1 inline-block size-1.5 rounded-full bg-rose-500" />
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+                        <span className="sr-only">
+                          Etapa {i + 1} de {total}:
+                        </span>
+                        <span
+                          aria-hidden
+                          className={[
+                            "grid place-items-center size-5 rounded-full text-[11px] font-semibold",
+                            active
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300",
+                          ].join(" ")}
+                        >
+                          {i + 1}
+                        </span>
+                        {s.label}
+                        {hasErr && !active && (
+                          <span className="ml-1 inline-block size-1.5 rounded-full bg-rose-500" />
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
 
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <Button
-                className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
-                isDisabled={isSubmitting}
-                radius="md"
-                size="sm"
-                type="button"
-                variant="bordered"
-                onClick={handleCancel}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
-                isDisabled={isSubmitting}
-                radius="md"
-                size="sm"
-                type="button"
-                variant="bordered"
-                onClick={handleSaveDraft}
-              >
-                Salvar Rascunho
-              </Button>
-              <Button
-                className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
-                color="primary"
-                isDisabled={isSubmitting}
-                radius="md"
-                size="sm"
-                type="button"
-                onClick={handleSubmitClick}
-              >
-                {isSubmitting ? "Enviando…" : "Finalizar Registro"}
-              </Button>
-            </div>
-          </div>
-
-          <div
-            aria-hidden
-            className="mt-4 h-1 w-full rounded-full bg-slate-100 dark:bg-zinc-800 transition-colors"
-          >
-            <div
-              className="h-1 rounded-full bg-primary transition-[width] duration-300 ease-out"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-        </header>
-
-        <div className="py-6 space-y-8 transition-colors">
-          {step === 0 && <Step1 />}
-          {step === 1 && <Step2 />}
-          {step === 2 && <Step3 />}
-          {step === 3 && <Step4 />}
-          {step === 4 && <Step5 />}
-          {step === 5 && <Step6 />}
-        </div>
-
-        <footer className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3.5 border-t border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-lg transition-colors">
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                className="min-w-[100px] font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
-                isDisabled={step === 0 || isSubmitting}
-                radius="md"
-                type="button"
-                variant="bordered"
-                onClick={prev}
-              >
-                Voltar
-              </Button>
-
-              <Button
-                className="hidden sm:inline-flex font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
-                isDisabled={isSubmitting}
-                radius="md"
-                size="sm"
-                type="button"
-                variant="light"
-                onClick={handleSaveDraft}
-              >
-                Salvar Rascunho
-                <kbd className="hidden lg:inline-block ml-1.5 px-1.5 py-0.5 text-[10px] bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-slate-500 dark:text-zinc-400 font-mono">
-                  ⌘S
-                </kbd>
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <span className="hidden sm:inline text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                Etapa {step + 1} de {total}
-              </span>
-
-              {step < total - 1 ? (
+              <div className="flex flex-wrap gap-2 md:justify-end">
                 <Button
-                  className="min-w-[140px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
-                  color="primary"
+                  className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
                   isDisabled={isSubmitting}
                   radius="md"
+                  size="sm"
                   type="button"
-                  onClick={next}
+                  variant="bordered"
+                  onClick={handleCancel}
                 >
-                  Próximo
+                  Cancelar
                 </Button>
-              ) : (
                 <Button
-                  className="min-w-[180px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                  className="font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  isDisabled={isSubmitting}
+                  radius="md"
+                  size="sm"
+                  type="button"
+                  variant="bordered"
+                  onClick={handleSaveDraft}
+                >
+                  Salvar Rascunho
+                </Button>
+                <Button
+                  className="font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
                   color="primary"
                   isDisabled={isSubmitting}
                   radius="md"
+                  size="sm"
                   type="button"
                   onClick={handleSubmitClick}
                 >
                   {isSubmitting ? "Enviando…" : "Finalizar Registro"}
                 </Button>
-              )}
+              </div>
+            </div>
+
+            <div
+              aria-hidden
+              className="mt-4 h-1 w-full rounded-full bg-slate-100 dark:bg-zinc-800 transition-colors"
+            >
+              <div
+                className="h-1 rounded-full bg-primary transition-[width] duration-300 ease-out"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </header>
+
+          <div className="pt-6 space-y-8 transition-colors">
+            {step === 0 && <Step1 />}
+            {step === 1 && <Step2 />}
+            {step === 2 && <Step3 />}
+            {step === 3 && <Step4 />}
+            {step === 4 && <Step5 />}
+            {step === 5 && <Step6 />}
+          </div>
+        </div>
+
+        <footer className="sticky bottom-0 z-30 w-full border-t border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-[0_-4px_16px_-4px_rgba(15,23,42,0.06)] dark:shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.3)] transition-colors">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  className="min-w-[100px] font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-2xs"
+                  isDisabled={step === 0 || isSubmitting}
+                  radius="md"
+                  type="button"
+                  variant="bordered"
+                  onClick={prev}
+                >
+                  Voltar
+                </Button>
+
+                <Button
+                  className="hidden sm:inline-flex font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100"
+                  isDisabled={isSubmitting}
+                  radius="md"
+                  size="sm"
+                  type="button"
+                  variant="light"
+                  onClick={handleSaveDraft}
+                >
+                  Salvar Rascunho
+                  <kbd className="hidden lg:inline-block ml-1.5 px-1.5 py-0.5 text-[10px] bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded text-slate-500 dark:text-zinc-400 font-mono">
+                    ⌘S
+                  </kbd>
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <span className="hidden sm:inline text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                  Etapa {step + 1} de {total}
+                </span>
+
+                {step < total - 1 ? (
+                  <Button
+                    className="min-w-[140px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                    color="primary"
+                    isDisabled={isSubmitting}
+                    radius="md"
+                    type="button"
+                    onClick={next}
+                  >
+                    Próximo
+                  </Button>
+                ) : (
+                  <Button
+                    className="min-w-[180px] font-medium text-white bg-primary hover:bg-primary/90 shadow-2xs"
+                    color="primary"
+                    isDisabled={isSubmitting}
+                    radius="md"
+                    type="button"
+                    onClick={handleSubmitClick}
+                  >
+                    {isSubmitting ? "Enviando…" : "Finalizar Registro"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </footer>

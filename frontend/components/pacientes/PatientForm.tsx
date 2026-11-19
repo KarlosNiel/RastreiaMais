@@ -838,10 +838,11 @@ export default function PatientForm(props: Props) {
       <form
         noValidate
         aria-busy={isSubmitting}
+        className="flex min-h-full flex-col"
         id="patient-form"
         onSubmit={submitHandler}
       >
-        <div className="w-full">
+        <div className="flex w-full flex-1 flex-col">
           <PatientWizard onSubmit={submitHandler} />
         </div>
 

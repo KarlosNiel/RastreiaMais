@@ -49,54 +49,70 @@ export default function Step2Condicoes() {
         <CardBody className="space-y-6">
           <h2 className="text-xl font-semibold">2. Condições Crônicas</h2>
 
-          {/* HAS / DM */}
+          {/* HAS / DM + Em acompanhamento */}
           <section className="space-y-3">
-            <h3 className="text-sm font-medium text-foreground/80">
-              Condições principais
-            </h3>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-start">
+              <div className="md:col-span-7 lg:col-span-8 space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80">
+                  Condições principais
+                </h3>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-              <div className="md:col-span-12 flex flex-wrap gap-7 py-2">
-                <Controller
-                  control={control}
-                  name="condicoes.has"
-                  render={({ field }) => (
-                    <Checkbox
-                      classNames={{
-                        base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
-                        label: "font-medium",
-                        wrapper: "bg-gray-100 dark:bg-gray-800",
-                      }}
-                      isSelected={!!field.value}
-                      onValueChange={field.onChange}
-                    >
-                      Hipertensão Arterial
-                    </Checkbox>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="condicoes.dm"
-                  render={({ field }) => (
-                    <Checkbox
-                      classNames={{
-                        base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
-                        label: "font-medium",
-                        wrapper: "bg-gray-100 dark:bg-gray-800",
-                      }}
-                      isSelected={!!field.value}
-                      onValueChange={field.onChange}
-                    >
-                      Diabetes Mellitus
-                    </Checkbox>
-                  )}
+                <div className="flex flex-wrap items-center gap-4 sm:gap-7">
+                  <Controller
+                    control={control}
+                    name="condicoes.has"
+                    render={({ field }) => (
+                      <Checkbox
+                        classNames={{
+                          base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
+                          label: "font-medium",
+                          wrapper: "bg-gray-100 dark:bg-gray-800",
+                        }}
+                        isSelected={!!field.value}
+                        onValueChange={field.onChange}
+                      >
+                        Hipertensão Arterial
+                      </Checkbox>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="condicoes.dm"
+                    render={({ field }) => (
+                      <Checkbox
+                        classNames={{
+                          base: "px-3 py-2 rounded-xl border-none border-default-200 bg-gray-100 dark:bg-gray-800 hover:bg-content2 transition-colors",
+                          label: "font-medium",
+                          wrapper: "bg-gray-100 dark:bg-gray-800",
+                        }}
+                        isSelected={!!field.value}
+                        onValueChange={field.onChange}
+                      >
+                        Diabetes Mellitus
+                      </Checkbox>
+                    )}
+                  />
+                </div>
+
+                <p className="text-xs text-foreground/60">
+                  O passo 3 (Clínica) é exibido conforme as marcações acima.
+                </p>
+              </div>
+
+              <div className="md:col-span-5 lg:col-span-4">
+                <RHFChipGroup
+                  single
+                  chipsClassName="flex flex-wrap items-center gap-2 pt-2 min-h-10"
+                  label="Em acompanhamento?"
+                  name="condicoes.outras_em_acompanhamento"
+                  options={[
+                    { value: "sim", label: "Sim" },
+                    { value: "nao", label: "Não" },
+                    { value: "nao_se_aplica", label: "N.S.A." },
+                  ]}
                 />
               </div>
             </div>
-
-            <p className="text-xs text-foreground/60">
-              O passo 3 (Clínica) é exibido conforme as marcações acima.
-            </p>
           </section>
 
           <Divider />
@@ -114,7 +130,7 @@ export default function Step2Condicoes() {
                 name="condicoes.outras_dcnts"
                 render={({ field, fieldState }) => (
                   <Input
-                    className="md:col-span-8"
+                    className="md:col-span-12"
                     classNames={{
                       inputWrapper: "dark:bg-gray-800",
                     }}
@@ -132,21 +148,6 @@ export default function Step2Condicoes() {
                   />
                 )}
               />
-
-              <div className="md:col-span-4">
-                <RHFChipGroup
-                  single
-                  chipsClassName="flex flex-wrap gap-2"
-                  className="mt-1"
-                  label="Em acompanhamento?"
-                  name="condicoes.outras_em_acompanhamento"
-                  options={[
-                    { value: "sim", label: "Sim" },
-                    { value: "nao", label: "Não" },
-                    { value: "nao_se_aplica", label: "N.S.A." },
-                  ]}
-                />
-              </div>
             </div>
 
             <p className="text-xs text-foreground/60">

@@ -118,7 +118,7 @@ export function AppShell({ children }: AppShellProps) {
         </header>
 
         {/* Área rolável do conteúdo principal */}
-        <main className="flex-1 overflow-y-auto overscroll-contain focus:outline-none relative">
+        <main className="flex-1 overflow-y-auto overscroll-contain scroll-pb-20 focus:outline-none relative">
           {children}
         </main>
       </div>
