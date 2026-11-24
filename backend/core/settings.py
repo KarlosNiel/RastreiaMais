@@ -508,7 +508,6 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         integrations=[
             DjangoIntegration(
-                transaction_style="url",
                 middleware_spans=True,
             ),
             sentry_logging,
