@@ -18,6 +18,14 @@ DEFAULT_PROFESSIONAL_ACCOUNTS = (
         "password": "Jessica@123",
         "role": "Enfermeiro",
     },
+    {
+        "username": "hellen",
+        "first_name": "Hellen",
+        "last_name": "",
+        "email": "hellen@rastreiamais.com",
+        "password": "Hellen@123",
+        "role": "Enfermeiro",
+    },
 )
 
 
@@ -146,10 +154,14 @@ def ensure_default_professionals(
     manager_model=None,
     reset_password: bool = False,
     unlock: bool = False,
+    usernames=None,
 ):
-    """Provision all configured default professional accounts."""
+    """Provision configured default professional accounts (optionally filtered by usernames)."""
+    target_usernames = {u.lower() for u in usernames} if usernames is not None else None
     results = []
     for account in DEFAULT_PROFESSIONAL_ACCOUNTS:
+        if target_usernames is not None and account["username"].lower() not in target_usernames:
+            continue
         results.append(
             ensure_professional_account(
                 user_model=user_model,

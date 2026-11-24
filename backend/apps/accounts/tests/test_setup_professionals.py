@@ -13,6 +13,7 @@ from apps.accounts.models import (
 )
 from apps.accounts.utils.provisioning import (
     DEFAULT_PROFESSIONAL_ACCOUNTS,
+    ensure_default_professionals,
     ensure_professional_account,
 )
 
@@ -20,7 +21,9 @@ User = get_user_model()
 
 
 class SetupProfessionalsTest(APITestCase):
-    def test_migration_provisioned_carolina_and_jessica(self):
+    def test_migration_provisioned_default_professionals(self):
+        usernames = {spec["username"] for spec in DEFAULT_PROFESSIONAL_ACCOUNTS}
+        self.assertEqual(usernames, {"carolina", "jessica", "hellen"})
         for spec in DEFAULT_PROFESSIONAL_ACCOUNTS:
             user = User.objects.get(username=spec["username"])
             self.assertTrue(user.is_active)
@@ -33,7 +36,7 @@ class SetupProfessionalsTest(APITestCase):
             self.assertEqual(prof.role, spec["role"])
             self.assertFalse(prof.is_deleted)
 
-    def test_carolina_and_jessica_can_login_with_email_and_username(self):
+    def test_default_professionals_can_login_with_email_and_username(self):
         for spec in DEFAULT_PROFESSIONAL_ACCOUNTS:
             for identifier in (spec["email"], spec["username"]):
                 token_resp = self.client.post(
@@ -51,6 +54,27 @@ class SetupProfessionalsTest(APITestCase):
                 self.assertEqual(me_resp.data["roles"], ["PROFESSIONAL"])
                 self.client.credentials()
 
+    def test_filtered_provisioning_updates_only_target_professional(self):
+        carolina = User.objects.get(username="carolina")
+        carolina.set_password("SenhaPersonalizada@2026")
+        carolina.save()
+
+        results = ensure_default_professionals(
+            user_model=User,
+            professional_model=ProfessionalUser,
+            lockout_model=AccountLockout,
+            patient_model=PatientUser,
+            manager_model=ManagerUser,
+            reset_password=True,
+            unlock=True,
+            usernames=("hellen",),
+        )
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][0].username, "hellen")
+        carolina.refresh_from_db()
+        self.assertTrue(carolina.check_password("SenhaPersonalizada@2026"))
+
     def test_setup_professionals_command_preserves_custom_password_by_default(self):
         carolina = User.objects.get(username="carolina")
         carolina.set_password("NovaSenhaSegura@2026")
@@ -62,6 +86,7 @@ class SetupProfessionalsTest(APITestCase):
         carolina.refresh_from_db()
         self.assertTrue(carolina.check_password("NovaSenhaSegura@2026"))
         self.assertIn("carolina@rastreiamais.com", out.getvalue())
+        self.assertIn("hellen@rastreiamais.com", out.getvalue())
 
     def test_setup_professionals_unlock_restores_soft_deleted_and_clears_lockout(self):
         jessica_prof = ProfessionalUser.objects.get(user__username="jessica")

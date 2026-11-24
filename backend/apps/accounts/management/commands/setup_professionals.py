@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Garante as contas das profissionais Carolina e Jessica (Enfermeiras) no banco de dados."
+    help = "Garante as contas das profissionais Carolina, Jessica e Hellen (Enfermeiras) no banco de dados."
 
     def add_arguments(self, parser):
         parser.add_argument(
